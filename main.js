@@ -66,7 +66,46 @@ class MushroomDude {
   }
 }
 
-AM.queueDownload('./img/mushroomdude.png');
+class Tile {
+  constructor(spritesheet, sx, sy, sw, sh, x, y, w, h) {
+    this.spritesheet = spritesheet;
+    this.sx = sx;
+    this.sy = sy;
+    this.sw = sw;
+    this.sh = sh;
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+
+  update() {
+    // Intentionally blank
+  }
+
+  draw(ctx) {
+    ctx.drawImage(this.spritesheet,
+                  this.sx, this.sy, 
+                  this.sw, this.sh,
+                  this.x, this.y,
+                  this.w, this.h);
+  }
+}
+
+class Dirt extends Tile {
+  constructor(spritesheet, x, y, w, h) {
+    super(spritesheet, 0, 0, 16, 16, x, y, w, h);
+  }
+}
+
+class Wall extends Tile {
+  constructor(spritesheet, sx, sy, sw, sh, x, y, w, h) {
+    super(spritesheet, sx, sy, sw, sh, x, y, w, h);
+    this.collision = true;
+  }
+}
+
+AM.queueDownload('./img/tilesheet.png');
 
 AM.downloadAll(function () {
   const canvas = document.getElementById('gameWorld');
@@ -76,7 +115,27 @@ AM.downloadAll(function () {
   gameEngine.init(ctx);
   gameEngine.start();
 
-  gameEngine.addEntity(new MushroomDude(gameEngine, 
-    AM.getAsset('./img/mushroomdude.png')));
+//  gameEngine.addEntity(new MushroomDude(gameEngine, 
+//    AM.getAsset('./img/mushroomdude.png')));
+
+  const level = new Level();
+  // Attach entities to the Level data
+  let tiles = [];
+  const SIZE = 32;
+  for (let i = 0; i < level.tiles[0].length; i++) {
+    for (let j = 0; j < level.tiles.length; j++) {
+      switch (level.tiles[j][i]) {
+        case 'W': tiles.push(new Wall(AM.getAsset('./img/tilesheet.png'), 16, 0,
+          16, 16, i * SIZE, j * SIZE, SIZE, SIZE)); break;
+        case 'D': tiles.push(new Dirt(AM.getAsset('./img/tilesheet.png'), 
+          i * SIZE, j * SIZE, SIZE, SIZE)); break;
+      }
+    }
+  }
+
+  for (let i = 0; i < tiles.length; i++) {
+    gameEngine.addEntity(tiles[i]);
+  }
+
   console.log('Finished downloading assets');
 });
