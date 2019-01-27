@@ -13,7 +13,7 @@ class Animation {
     this.elapsedTime = 0;
     this.loop = loop;
   }
- 
+
   drawFrame(tick, ctx, x, y) {
     this.elapsedTime += tick;
     if (this.isDone()) {
@@ -37,7 +37,7 @@ class Animation {
   currentFrame() {
     return Math.floor(this.elapsedTime / this.frameDuration);
   }
- 
+
   isDone() {
     return (this.elapsedTime >= this.totalTime);
   }
@@ -85,7 +85,7 @@ class Tile {
 
   draw(ctx) {
     ctx.drawImage(this.spritesheet,
-                  this.sx, this.sy, 
+                  this.sx, this.sy,
                   this.sw, this.sh,
                   this.x, this.y,
                   this.w, this.h);
@@ -115,7 +115,7 @@ AM.downloadAll(function () {
   gameEngine.init(ctx);
   gameEngine.start();
 
-//  gameEngine.addEntity(new MushroomDude(gameEngine, 
+//  gameEngine.addEntity(new MushroomDude(gameEngine,
 //    AM.getAsset('./img/mushroomdude.png')));
 
   const level = new Level();
@@ -127,7 +127,7 @@ AM.downloadAll(function () {
       switch (level.tiles[j][i]) {
         case 'W': tiles.push(new Wall(AM.getAsset('./img/tilesheet.png'), 16, 0,
           16, 16, i * SIZE, j * SIZE, SIZE, SIZE)); break;
-        case 'D': tiles.push(new Dirt(AM.getAsset('./img/tilesheet.png'), 
+        case 'D': tiles.push(new Dirt(AM.getAsset('./img/tilesheet.png'),
           i * SIZE, j * SIZE, SIZE, SIZE)); break;
       }
     }
@@ -136,6 +136,8 @@ AM.downloadAll(function () {
   for (let i = 0; i < tiles.length; i++) {
     gameEngine.addEntity(tiles[i]);
   }
+
+  console.log(level.tiles);
 
   console.log('Finished downloading assets');
 });
