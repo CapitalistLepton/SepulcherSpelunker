@@ -175,7 +175,7 @@ AM.downloadAll(function () {
 //  gameEngine.addEntity(new MushroomDude(gameEngine,
 //    AM.getAsset('./img/mushroomdude.png')));
 
-  /* const potions = [
+  /* const powerups = [
     new HealthPotion(gameEngine, AM.getAsset('./img/potion.png'), 0, 0),
     new LifeBuff(gameEngine, AM.getAsset('./img/life.png'), 0, SIZE),
     new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'), 0,
@@ -224,11 +224,11 @@ AM.downloadAll(function () {
           AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE, SIZE));
           break;
       }
-      for (let k = 0; k < potions.length; k++) {
-        if (level.tiles[j][i] === potions[k].name) {
+      for (let k = 0; k < powerups.length; k++) {
+        if (level.tiles[j][i] === powerups[k].name) {
           tiles.push(new Dirt(AM.getAsset('./img/tilesheet.png'), i * SIZE,
             j * SIZE, SIZE, SIZE));
-          tiles.push(potions[k].constructor(i * SIZE, j * SIZE));
+          tiles.push(powerups[k].constructor(i * SIZE, j * SIZE));
         }
       }
     }

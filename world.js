@@ -4,9 +4,9 @@ class World {
   constructor(powerups) {
     this.initTiles();
     this.drunkardsWalk();
+    this.cleanupTiles();
     this.placeEnemies();
     this.placePowerups(powerups);
-    this.cleanupTiles();
   }
 
   /*
@@ -27,8 +27,10 @@ class World {
     let position = { x: WORLD_WIDTH - 2, y: WORLD_HEIGHT - 2 };
     let direction = 'N';
     let possDirection = ['N', 'W'];
+    this.floor = [];
     while (position.x > 5 && position.y > 15) {
       this.tiles[position.y][position.x] = 'F';
+      this.floor.push({ x: position.x, y: position.y });
       switch (direction) {
         case 'N': position.y--; break;
         case 'E': position.x++; break;
@@ -101,13 +103,12 @@ class World {
     }
   }
 
-  // TODO fix this
+  /*
+   * Places the given tile at a random floor location.
+   */
   placeRandomTile(tile) {
-    let pos = { x: 0, y: 0 };
-    while (this.tiles[pos.y][pos.x] !== 'F') {
-      pos.x = randInt(WORLD_WIDTH - 1 - 5) + 5;
-      pos.y = randInt(WORLD_WIDTH - 1 - 15) + 15;
-    }
+    let pos = this.floor[randInt(this.floor.length)];
     this.tiles[pos.y][pos.x] = tile;
+    removeFrom(pos, this.floor);
   }
 }
