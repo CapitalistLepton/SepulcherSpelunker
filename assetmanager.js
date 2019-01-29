@@ -45,6 +45,9 @@ class AssetManager {
   }
 
   getAsset(path) {
+    if (!(path in this.cache)) {
+      console.error('Asset', path, 'does not exist');
+    }
     return this.cache[path];
   }
 }

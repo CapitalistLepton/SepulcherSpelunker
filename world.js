@@ -1,11 +1,11 @@
 const WORLD_WIDTH = 40;
 const WORLD_HEIGHT = 60;
 class World {
-  constructor() {
+  constructor(powerups) {
     this.initTiles();
     this.drunkardsWalk();
     this.placeEnemies();
-    this.placePowerups();
+    this.placePowerups(powerups);
     this.cleanupTiles();
   }
 
@@ -17,6 +17,7 @@ class World {
     for (let i = 0; i < WORLD_HEIGHT; i++) {
       this.tiles.push(new Array(WORLD_WIDTH).fill('E'));
     }
+    console.log('[World] Initialized tiles');
   }
 
   /*
@@ -49,14 +50,23 @@ class World {
       }
       direction = possDirection[randInt(possDirection.length)];
     }
+    console.log('[World] Finished Drunkard\'s Walk');
   }
 
   placeEnemies() {
     // TODO
   }
 
-  placePowerups() {
-    // TODO
+  /*
+   * Randomly places the powerups from the given list.
+   */
+  placePowerups(powerups) {
+    for (let i = 0; i < powerups.length; i++) {
+      for (let j = 0; j < powerups[i].number; j++) {
+        this.placeRandomTile(powerups[i].name);
+      }
+    }
+    console.log('[World] Placed powerups');
   }
 
   /*
@@ -77,12 +87,8 @@ class World {
     }
     // Place start and end points
     this.tiles[WORLD_HEIGHT- 2][WORLD_WIDTH - 2] = 'Start';
-    let pos = { x: 0, y: 0 };
-    while (this.tiles[pos.y][pos.x] !== 'F') {
-      pos.x = randInt(WORLD_WIDTH - 5) + 5;
-      pos.y = randInt(WORLD_HEIGHT - 15) + 15;
-    }
-    this.tiles[pos.y][pos.x] = 'End';
+    this.placeRandomTile('End');
+    console.log('[World] Cleaned up tiles');
   }
 
   /*
@@ -93,5 +99,15 @@ class World {
         this.tiles[y][x] === 'E') {
       this.tiles[y][x] = 'W';
     }
+  }
+
+  // TODO fix this
+  placeRandomTile(tile) {
+    let pos = { x: 0, y: 0 };
+    while (this.tiles[pos.y][pos.x] !== 'F') {
+      pos.x = randInt(WORLD_WIDTH - 1 - 5) + 5;
+      pos.y = randInt(WORLD_WIDTH - 1 - 15) + 15;
+    }
+    this.tiles[pos.y][pos.x] = tile;
   }
 }
