@@ -105,6 +105,13 @@ class Wall extends Tile {
   }
 }
 
+class Staircase extends Tile {
+  constructor(spritesheet, x, y, w, h) {
+    super(spritesheet, 32, 0, 16, 16, x, y, w, h);
+    this.collision = true;
+  }
+}
+
 AM.queueDownload('./img/tilesheet.png');
 
 AM.downloadAll(function () {
@@ -118,7 +125,7 @@ AM.downloadAll(function () {
 //  gameEngine.addEntity(new MushroomDude(gameEngine,
 //    AM.getAsset('./img/mushroomdude.png')));
 
-  const level = new Level();
+  const level = new World();
   // Attach entities to the Level data
   let tiles = [];
   const SIZE = 32;
@@ -127,8 +134,12 @@ AM.downloadAll(function () {
       switch (level.tiles[j][i]) {
         case 'W': tiles.push(new Wall(AM.getAsset('./img/tilesheet.png'), 16, 0,
           16, 16, i * SIZE, j * SIZE, SIZE, SIZE)); break;
-        case 'D': tiles.push(new Dirt(AM.getAsset('./img/tilesheet.png'),
+        case 'F': tiles.push(new Dirt(AM.getAsset('./img/tilesheet.png'),
           i * SIZE, j * SIZE, SIZE, SIZE)); break;
+        case 'End':
+        case 'Start': tiles.push(new Staircase(
+          AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE, SIZE));
+          break;
       }
     }
   }
