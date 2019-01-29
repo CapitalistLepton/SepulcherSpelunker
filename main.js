@@ -112,7 +112,57 @@ class Staircase extends Tile {
   }
 }
 
+class Powerup {
+  constructor(game, animation, x, y) {
+    this.game = game;
+    this.animation = animation;
+    this.x = x;
+    this.y = y;
+  }
+
+  update() {
+    // Need to implement in superclasses
+  }
+
+  draw(ctx) {
+    this.animation.drawFrame(this.game.clockTick, ctx, this.x, this.y);
+  }
+}
+
+class HealthPotion extends Powerup {
+  constructor(game, spritesheet, x, y) {
+    super(game, new Animation(spritesheet, 32, 32, 192, 0.167, 6, true), x, y);
+  }
+
+  update() {
+    // Check for collision with DonJon
+  }
+}
+
+class LifeBuff extends Powerup {
+  constructor(game, spritesheet, x, y) {
+    super(game, new Animation(spritesheet, 32, 32, 128, 0.25, 4, true), x, y);
+  }
+
+  update() {
+    // Check for collision with DonJon
+  }
+}
+
+class StrengthBuff extends Powerup {
+  constructor(game, spritesheet, x, y) {
+    super(game, new Animation(spritesheet, 32, 32, 64, 0.5, 2, true), x, y);
+  }
+
+  update() {
+    // Check for collision with DonJon
+  }
+}
+
 AM.queueDownload('./img/tilesheet.png');
+AM.queueDownload('./img/potion.png');
+AM.queueDownload('./img/life.png');
+AM.queueDownload('./img/strength.png');
 
 AM.downloadAll(function () {
   const canvas = document.getElementById('gameWorld');
@@ -125,7 +175,40 @@ AM.downloadAll(function () {
 //  gameEngine.addEntity(new MushroomDude(gameEngine,
 //    AM.getAsset('./img/mushroomdude.png')));
 
-  const level = new World();
+  /* const powerups = [
+    new HealthPotion(gameEngine, AM.getAsset('./img/potion.png'), 0, 0),
+    new LifeBuff(gameEngine, AM.getAsset('./img/life.png'), 0, SIZE),
+    new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'), 0,
+      2 * SIZE)
+  ]; */
+
+  const powerups = [
+    {
+      name: 'pHealth',
+      constructor: function (x, y) {
+        return new HealthPotion(gameEngine, AM.getAsset('./img/potion.png'),
+          x, y);
+      },
+      number: 2
+    },
+    {
+      name: 'pLife',
+      constructor: function (x, y) {
+        return new LifeBuff(gameEngine, AM.getAsset('./img/life.png'), x, y);
+      },
+      number: 1
+    },
+    {
+      name: 'pStrength',
+      constructor: function (x, y) {
+        return new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'), x,
+          y);
+      },
+      number: 1
+    }
+  ];
+
+  const level = new World(powerups);
   // Attach entities to the Level data
   let tiles = [];
   const SIZE = 32;
@@ -140,6 +223,13 @@ AM.downloadAll(function () {
         case 'Start': tiles.push(new Staircase(
           AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE, SIZE));
           break;
+      }
+      for (let k = 0; k < powerups.length; k++) {
+        if (level.tiles[j][i] === powerups[k].name) {
+          tiles.push(new Dirt(AM.getAsset('./img/tilesheet.png'), i * SIZE,
+            j * SIZE, SIZE, SIZE));
+          tiles.push(powerups[k].constructor(i * SIZE, j * SIZE));
+        }
       }
     }
   }
