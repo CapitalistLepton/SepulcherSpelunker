@@ -43,29 +43,6 @@ class Animation {
   }
 }
 
-class MushroomDude {
-  constructor(game, spritesheet) {
-    this.animation = new Animation(spritesheet, 189, 230, 5, 0.10, 14, true, 1);
-    this.x = 0;
-    this.y = 0;
-    this.speed = 100;
-    this.game = game;
-  }
-
-  draw(ctx) {
-    this.animation.drawFrame(this.game.clockTick, ctx, this.x, this.y);
-  }
-
-  update() {
-    if (this.animation.elapsedTime < this.animation.totalTime * 8 / 14) {
-      this.x += this.game.clockTick * this.speed;
-    }
-    if (this.x > 800) {
-      this.x = -230;
-    }
-  }
-}
-
 class Tile {
   constructor(spritesheet, sx, sy, sw, sh, x, y, w, h) {
     this.spritesheet = spritesheet;
@@ -94,13 +71,13 @@ class Tile {
 
 class Dirt extends Tile {
   constructor(spritesheet, x, y, w, h) {
-    super(spritesheet, 0, 0, 16, 16, x, y, w, h);
+    super(spritesheet, 0, 0, 64, 64, x, y, w, h);
   }
 }
 
 class Wall extends Tile {
-  constructor(spritesheet, sx, sy, sw, sh, x, y, w, h) {
-    super(spritesheet, sx, sy, sw, sh, x, y, w, h);
+  constructor(spritesheet, x, y, w, h) {
+    super(spritesheet, 64, 0, 64, 64, x, y, w, h);
     this.collision = true;
   }
 }
@@ -163,6 +140,7 @@ AM.queueDownload('./img/tilesheet.png');
 AM.queueDownload('./img/potion.png');
 AM.queueDownload('./img/life.png');
 AM.queueDownload('./img/strength.png');
+AM.queueDownload('./img/map.png');
 
 AM.downloadAll(function () {
   const canvas = document.getElementById('gameWorld');
@@ -171,16 +149,6 @@ AM.downloadAll(function () {
   const gameEngine = new GameEngine();
   gameEngine.init(ctx);
   gameEngine.start();
-
-//  gameEngine.addEntity(new MushroomDude(gameEngine,
-//    AM.getAsset('./img/mushroomdude.png')));
-
-  /* const powerups = [
-    new HealthPotion(gameEngine, AM.getAsset('./img/potion.png'), 0, 0),
-    new LifeBuff(gameEngine, AM.getAsset('./img/life.png'), 0, SIZE),
-    new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'), 0,
-      2 * SIZE)
-  ]; */
 
   const powerups = [
     {
@@ -215,9 +183,9 @@ AM.downloadAll(function () {
   for (let i = 0; i < level.tiles[0].length; i++) {
     for (let j = 0; j < level.tiles.length; j++) {
       switch (level.tiles[j][i]) {
-        case 'W': tiles.push(new Wall(AM.getAsset('./img/tilesheet.png'), 16, 0,
-          16, 16, i * SIZE, j * SIZE, SIZE, SIZE)); break;
-        case 'F': tiles.push(new Dirt(AM.getAsset('./img/tilesheet.png'),
+        case 'W': tiles.push(new Wall(AM.getAsset('./img/map.png'),
+          i * SIZE, j * SIZE, SIZE, SIZE)); break;
+        case 'F': tiles.push(new Dirt(AM.getAsset('./img/map.png'),
           i * SIZE, j * SIZE, SIZE, SIZE)); break;
         case 'End':
         case 'Start': tiles.push(new Staircase(
@@ -226,7 +194,7 @@ AM.downloadAll(function () {
       }
       for (let k = 0; k < powerups.length; k++) {
         if (level.tiles[j][i] === powerups[k].name) {
-          tiles.push(new Dirt(AM.getAsset('./img/tilesheet.png'), i * SIZE,
+          tiles.push(new Dirt(AM.getAsset('./img/map.png'), i * SIZE,
             j * SIZE, SIZE, SIZE));
           tiles.push(powerups[k].constructor(i * SIZE, j * SIZE));
         }
@@ -237,8 +205,6 @@ AM.downloadAll(function () {
   for (let i = 0; i < tiles.length; i++) {
     gameEngine.addEntity(tiles[i]);
   }
-
-  console.log(level.tiles);
 
   console.log('Finished downloading assets');
 });
