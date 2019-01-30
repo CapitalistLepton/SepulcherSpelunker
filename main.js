@@ -191,7 +191,8 @@ class Beholder extends Enemy {
 }
 
 class DonJon {
-  constructor(spritesheet, x, y, w, h) {
+  constructor(gameEngine, spritesheet, x, y, w, h) {
+    this.game = gameEngine;
     this.spritesheet = spritesheet;
     this.sx = 0;
     this.sy = 0;
@@ -204,21 +205,21 @@ class DonJon {
     this.bounding = new Rectangle(x, y, w, h);
     this.prevX = x;
     this.prevY = y;
+    this.speed = 100; // in px/s
     this.health = 24;
   }
 
   update() {
     /* Here we check to see if any buttons where pressed if so move DonJon */
     if (cursor.rightPressed) {
-      // TODO gain an instance of the clockTick in order to change position
-      // this.x += this.clockTick * this.speed;
-    } else if (cursor.game.leftPressed) {
-      // this.x -= this.game.clockTick * this.speed;
+      this.x += this.game.clockTick * this.speed;
+    } else if (cursor.leftPressed) {
+      this.x -= this.game.clockTick * this.speed;
     }
     if (cursor.upPressed) {
-      // this.y -= this.game.clockTick * this.speed;
+      this.y -= this.game.clockTick * this.speed;
     } else if (cursor.downPressed && this.y >= 0) {
-      // this.y += this.game.clockTick * this.speed;
+      this.y += this.game.clockTick * this.speed;
     }
   }
 
@@ -317,7 +318,8 @@ AM.downloadAll(function () {
         case 'End':
         case 'Start': stationary.push(new Staircase(
           AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE, SIZE));
-          don = new DonJon(AM.getAsset('./img/main_dude.png'), i * SIZE, (j - 1) * SIZE, SIZE, SIZE * 2);
+          don = new DonJon(gameEngine, AM.getAsset('./img/main_dude.png'), i * SIZE, 
+            (j - 1) * SIZE, SIZE, SIZE * 2);
           break;
       }
       for (let k = 0; k < powerups.length; k++) {
