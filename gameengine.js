@@ -54,19 +54,9 @@ class GameEngine {
   }
 
   startInput() {
-    this.ctx.canvas.addEventListener('keydown', function (e) {
-      switch (e.key) {
-        case 'W':
-        case 'w': console.log('up'); break;
-        case 'S':
-        case 's': console.log('down'); break;
-        case 'A':
-        case 'a': console.log('left'); break;
-        case 'D':
-        case 'd': console.log('right'); break;
-        default: console.log('Unknown ' + e.key);
-      }
-    }, false);
+    this.ctx.canvas.addEventListener('keydown', keyDownHandler);
+    this.ctx.canvas.addEventListener('keyup', keyUpHandler);
+    this.ctx.canvas.addEventListener('click', clickHandler);
 
     this.ctx.canvas.addEventListener('click', function (e) {
       // Attack on left click
