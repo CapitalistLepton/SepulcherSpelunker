@@ -208,6 +208,18 @@ class DonJon {
   }
 
   update() {
+    /* Here we check to see if any buttons where pressed if so move DonJon */
+    if (cursor.rightPressed) {
+      // TODO gain an instance of the clockTick in order to change position
+      // this.x += this.clockTick * this.speed;
+    } else if (cursor.game.leftPressed) {
+      // this.x -= this.game.clockTick * this.speed;
+    }
+    if (cursor.upPressed) {
+      // this.y -= this.game.clockTick * this.speed;
+    } else if (cursor.downPressed && this.y >= 0) {
+      // this.y += this.game.clockTick * this.speed;
+    }
   }
 
   draw(ctx) {
@@ -227,7 +239,6 @@ AM.queueDownload('./img/map.png');
 AM.queueDownload('./img/goblin.png');
 AM.queueDownload('./img/beholder.png');
 AM.queueDownload('./img/main_dude.png');
-
 
 AM.downloadAll(function () {
   const canvas = document.getElementById('gameWorld');
