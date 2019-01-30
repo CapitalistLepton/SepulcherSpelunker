@@ -136,11 +136,59 @@ class StrengthBuff extends Powerup {
   }
 }
 
+class Enemy {
+  // TODO change spritesheet to state machine
+  constructor(spritesheet, sx, sy, sw, sh, x, y, w, h) {
+    this.spritesheet = spritesheet;
+    this.sx = sx;
+    this.sy = sy;
+    this.sw = sw;
+    this.sh = sh;
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+
+  update() {}
+
+  draw(ctx) {
+    ctx.drawImage(this.spritesheet,
+                  this.sx, this.sy,
+                  this.sw, this.sh,
+                  this.x, this.y,
+                  this.w, this.h);
+  }
+}
+
+class Goblin extends Enemy {
+  constructor(spritesheet, x, y, w, h) {
+    super(spritesheet, 0, 0, 32, 64, x, y, w, h);
+  }
+
+  update() {
+    // TODO
+  }
+}
+
+class Beholder extends Enemy {
+  constructor(spritesheet, x, y, w, h) {
+    super(spritesheet, 0, 0, 64, 64, x, y, w, h);
+  }
+
+  update() {
+    // TODO
+  }
+}
+
 AM.queueDownload('./img/tilesheet.png');
 AM.queueDownload('./img/potion.png');
 AM.queueDownload('./img/life.png');
 AM.queueDownload('./img/strength.png');
 AM.queueDownload('./img/map.png');
+AM.queueDownload('./img/goblin.png');
+AM.queueDownload('./img/beholder.png');
+
 
 AM.downloadAll(function () {
   const canvas = document.getElementById('gameWorld');
@@ -149,6 +197,8 @@ AM.downloadAll(function () {
   const gameEngine = new GameEngine();
   gameEngine.init(ctx);
   gameEngine.start();
+
+  const SIZE = 32;
 
   const powerups = [
     {
@@ -176,27 +226,60 @@ AM.downloadAll(function () {
     }
   ];
 
-  const level = new World(powerups);
+
+  const enemies = [
+    {
+      name: 'eGoblin',
+      constructor: function (x, y) {
+        return new Goblin(AM.getAsset('./img/goblin.png'), x, y,
+          SIZE, SIZE * 2);
+      },
+      width: 1,
+      height: 2,
+      number: 5
+    },
+    {
+      name: 'eBeholder',
+      constructor: function (x, y) {
+        return new Beholder(AM.getAsset('./img/beholder.png'), x, y,
+          SIZE * 2, SIZE * 2);
+      },
+      width: 2,
+      height: 2,
+      number: 2
+    }
+  ];
+
+  const level = new World(powerups, enemies);
   // Attach entities to the Level data
   let tiles = [];
-  const SIZE = 32;
+  let enemyEntities = [];
+  let powerupEntities = [];
+  let stationary = [];
   for (let i = 0; i < level.tiles[0].length; i++) {
     for (let j = 0; j < level.tiles.length; j++) {
       switch (level.tiles[j][i]) {
-        case 'W': tiles.push(new Wall(AM.getAsset('./img/map.png'),
-          i * SIZE, j * SIZE, SIZE, SIZE)); break;
+        case 'W': stationary.push(new Wall(AM.getAsset('./img/map.png'),
+          i * SIZE, j * SIZE, SIZE * 2, SIZE * 2)); break;
         case 'F': tiles.push(new Dirt(AM.getAsset('./img/map.png'),
-          i * SIZE, j * SIZE, SIZE, SIZE)); break;
+          i * SIZE, j * SIZE, SIZE * 2, SIZE * 2)); break;
         case 'End':
-        case 'Start': tiles.push(new Staircase(
-          AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE, SIZE));
+        case 'Start': stationary.push(new Staircase(
+          AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE * 2, SIZE * 2));
           break;
       }
       for (let k = 0; k < powerups.length; k++) {
         if (level.tiles[j][i] === powerups[k].name) {
           tiles.push(new Dirt(AM.getAsset('./img/map.png'), i * SIZE,
-            j * SIZE, SIZE, SIZE));
-          tiles.push(powerups[k].constructor(i * SIZE, j * SIZE));
+            j * SIZE, SIZE * 2, SIZE * 2));
+          powerupEntities.push(powerups[k].constructor(i * SIZE, j * SIZE));
+        }
+      }
+      for (let k = 0; k < enemies.length; k++) {
+        if (level.tiles[j][i] === enemies[k].name) {
+          tiles.push(new Dirt(AM.getAsset('./img/map.png'), i * SIZE,
+            j * SIZE, SIZE * 2, SIZE * 2));
+          enemyEntities.push(enemies[k].constructor(i * SIZE, j * SIZE));
         }
       }
     }
@@ -204,6 +287,15 @@ AM.downloadAll(function () {
 
   for (let i = 0; i < tiles.length; i++) {
     gameEngine.addEntity(tiles[i]);
+  }
+  for (let i = 0; i < stationary.length; i++) {
+    gameEngine.addEntity(stationary[i]);
+  }
+  for (let i = 0; i < powerupEntities.length; i++) {
+    gameEngine.addEntity(powerupEntities[i]);
+  }
+  for (let i = 0; i < enemyEntities.length; i++) {
+    gameEngine.addEntity(enemyEntities[i]);
   }
 
   console.log('Finished downloading assets');

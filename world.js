@@ -1,11 +1,11 @@
 const WORLD_WIDTH = 40;
 const WORLD_HEIGHT = 60;
 class World {
-  constructor(powerups) {
+  constructor(powerups, enemies) {
     this.initTiles();
     this.drunkardsWalk();
     this.cleanupTiles();
-    this.placeEnemies();
+    this.placeEnemies(enemies);
     this.placePowerups(powerups);
   }
 
@@ -55,8 +55,16 @@ class World {
     console.log('[World] Finished Drunkard\'s Walk');
   }
 
-  placeEnemies() {
-    // TODO
+  /*
+   * Randomly places the enemies in the given list.
+   */
+  placeEnemies(enemies) {
+    for (let i = 0; i < enemies.length; i++) {
+      for (let j = 0; j < enemies[i].number; j++) {
+        this.placeRandomTile(enemies[i].name);
+      }
+    }
+    console.log('[World] Placed enemies');
   }
 
   /*
@@ -88,7 +96,7 @@ class World {
       }
     }
     // Place start and end points
-    this.tiles[WORLD_HEIGHT- 2][WORLD_WIDTH - 2] = 'Start';
+    this.tiles[WORLD_HEIGHT - 2][WORLD_WIDTH - 2] = 'Start';
     this.placeRandomTile('End');
     console.log('[World] Cleaned up tiles');
   }
@@ -107,6 +115,15 @@ class World {
    * Places the given tile at a random floor location.
    */
   placeRandomTile(tile) {
+    let pos = this.floor[randInt(this.floor.length)];
+    this.tiles[pos.y][pos.x] = tile;
+    removeFrom(pos, this.floor);
+  }
+
+  /*
+   * Places the given enemy at a valid random floor location.
+   */
+  placeEnemy(enemy) {
     let pos = this.floor[randInt(this.floor.length)];
     this.tiles[pos.y][pos.x] = tile;
     removeFrom(pos, this.floor);
