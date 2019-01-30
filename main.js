@@ -43,6 +43,15 @@ class Animation {
   }
 }
 
+class Rectangle {
+  constructor(x, y, w, h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+}
+
 class Tile {
   constructor(spritesheet, sx, sy, sw, sh, x, y, w, h) {
     this.spritesheet = spritesheet;
@@ -181,6 +190,35 @@ class Beholder extends Enemy {
   }
 }
 
+class DonJon {
+  constructor(spritesheet, x, y, w, h) {
+    this.spritesheet = spritesheet;
+    this.sx = 0;
+    this.sy = 0;
+    this.sw = 32;
+    this.sh = 64;
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.bounding = new Rectangle(x, y, w, h);
+    this.prevX = x;
+    this.prevY = y;
+    this.health = 24;
+  }
+
+  update() {
+  }
+
+  draw(ctx) {
+    ctx.drawImage(this.spritesheet,
+                  this.sx, this.sy,
+                  this.sw, this.sh,
+                  this.x, this.y,
+                  this.w, this.h);
+  }
+}
+
 AM.queueDownload('./img/tilesheet.png');
 AM.queueDownload('./img/potion.png');
 AM.queueDownload('./img/life.png');
@@ -188,6 +226,7 @@ AM.queueDownload('./img/strength.png');
 AM.queueDownload('./img/map.png');
 AM.queueDownload('./img/goblin.png');
 AM.queueDownload('./img/beholder.png');
+AM.queueDownload('./img/main_dude.png');
 
 
 AM.downloadAll(function () {
@@ -256,6 +295,7 @@ AM.downloadAll(function () {
   let enemyEntities = [];
   let powerupEntities = [];
   let stationary = [];
+  let don = undefined;
   for (let i = 0; i < level.tiles[0].length; i++) {
     for (let j = 0; j < level.tiles.length; j++) {
       switch (level.tiles[j][i]) {
@@ -266,6 +306,7 @@ AM.downloadAll(function () {
         case 'End':
         case 'Start': stationary.push(new Staircase(
           AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE, SIZE));
+          don = new DonJon(AM.getAsset('./img/main_dude.png'), i * SIZE, (j - 1) * SIZE, SIZE, SIZE * 2);
           break;
       }
       for (let k = 0; k < powerups.length; k++) {
@@ -297,6 +338,8 @@ AM.downloadAll(function () {
   for (let i = 0; i < enemyEntities.length; i++) {
     gameEngine.addEntity(enemyEntities[i]);
   }
+
+  gameEngine.addEntity(don);
 
   console.log('Finished downloading assets');
 });
