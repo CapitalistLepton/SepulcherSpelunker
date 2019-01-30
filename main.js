@@ -260,25 +260,25 @@ AM.downloadAll(function () {
     for (let j = 0; j < level.tiles.length; j++) {
       switch (level.tiles[j][i]) {
         case 'W': stationary.push(new Wall(AM.getAsset('./img/map.png'),
-          i * SIZE, j * SIZE, SIZE * 2, SIZE * 2)); break;
+          i * SIZE, j * SIZE, SIZE, SIZE)); break;
         case 'F': tiles.push(new Dirt(AM.getAsset('./img/map.png'),
-          i * SIZE, j * SIZE, SIZE * 2, SIZE * 2)); break;
+          i * SIZE, j * SIZE, SIZE, SIZE)); break;
         case 'End':
         case 'Start': stationary.push(new Staircase(
-          AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE * 2, SIZE * 2));
+          AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE, SIZE));
           break;
       }
       for (let k = 0; k < powerups.length; k++) {
         if (level.tiles[j][i] === powerups[k].name) {
           tiles.push(new Dirt(AM.getAsset('./img/map.png'), i * SIZE,
-            j * SIZE, SIZE * 2, SIZE * 2));
+            j * SIZE, SIZE, SIZE));
           powerupEntities.push(powerups[k].constructor(i * SIZE, j * SIZE));
         }
       }
       for (let k = 0; k < enemies.length; k++) {
         if (level.tiles[j][i] === enemies[k].name) {
           tiles.push(new Dirt(AM.getAsset('./img/map.png'), i * SIZE,
-            j * SIZE, SIZE * 2, SIZE * 2));
+            j * SIZE, SIZE, SIZE));
           enemyEntities.push(enemies[k].constructor(i * SIZE, j * SIZE));
         }
       }
