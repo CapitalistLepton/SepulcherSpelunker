@@ -66,7 +66,8 @@ class Rectangle {
 }
 
 class Tile {
-  constructor(spritesheet, sx, sy, sw, sh, x, y, w, h) {
+  constructor(game, spritesheet, sx, sy, sw, sh, x, y, w, h) {
+    this.game = game;
     this.spritesheet = spritesheet;
     this.sx = sx;
     this.sy = sy;
@@ -79,7 +80,7 @@ class Tile {
   }
 
   update() {
-    // Intentionally blank
+    moveEntity(this);
   }
 
   draw(ctx) {
@@ -92,21 +93,21 @@ class Tile {
 }
 
 class Dirt extends Tile {
-  constructor(spritesheet, x, y, w, h) {
-    super(spritesheet, 0, 0, 64, 64, x, y, w, h);
+  constructor(game, spritesheet, x, y, w, h) {
+    super(game, spritesheet, 0, 0, 64, 64, x, y, w, h);
   }
 }
 
 class Wall extends Tile {
-  constructor(spritesheet, x, y, w, h) {
-    super(spritesheet, 64, 0, 64, 64, x, y, w, h);
+  constructor(game, spritesheet, x, y, w, h) {
+    super(game, spritesheet, 64, 0, 64, 64, x, y, w, h);
     this.collision = true;
   }
 }
 
 class Staircase extends Tile {
-  constructor(spritesheet, x, y, w, h) {
-    super(spritesheet, 32, 0, 16, 16, x, y, w, h);
+  constructor(game, spritesheet, x, y, w, h) {
+    super(game, spritesheet, 32, 0, 16, 16, x, y, w, h);
     this.collision = true;
   }
 }
@@ -120,7 +121,7 @@ class Powerup {
   }
 
   update() {
-    // Need to implement in superclasses
+    moveEntity(this);
   }
 
   draw(ctx) {
@@ -134,6 +135,7 @@ class HealthPotion extends Powerup {
   }
 
   update() {
+    super.update();
     // Check for collision with DonJon
   }
 }
@@ -144,6 +146,7 @@ class LifeBuff extends Powerup {
   }
 
   update() {
+    super.update();
     // Check for collision with DonJon
   }
 }
@@ -154,13 +157,15 @@ class StrengthBuff extends Powerup {
   }
 
   update() {
+     super.update();
     // Check for collision with DonJon
   }
 }
 
 class Enemy {
   // TODO change spritesheet to state machine
-  constructor(spritesheet, sx, sy, sw, sh, x, y, w, h) {
+  constructor(game, spritesheet, sx, sy, sw, sh, x, y, w, h) {
+    this.game = game;
     this.spritesheet = spritesheet;
     this.sx = sx;
     this.sy = sy;
@@ -172,7 +177,9 @@ class Enemy {
     this.h = h;
   }
 
-  update() {}
+  update() {
+    moveEntity(this);
+  }
 
   draw(ctx) {
     ctx.drawImage(this.spritesheet,
@@ -184,22 +191,22 @@ class Enemy {
 }
 
 class Goblin extends Enemy {
-  constructor(spritesheet, x, y, w, h) {
-    super(spritesheet, 0, 0, 32, 64, x, y, w, h);
+  constructor(game, spritesheet, x, y, w, h) {
+    super(game, spritesheet, 0, 0, 32, 64, x, y, w, h);
   }
 
   update() {
-    // TODO
+    super.update();
   }
 }
 
 class Beholder extends Enemy {
-  constructor(spritesheet, x, y, w, h) {
-    super(spritesheet, 0, 0, 64, 64, x, y, w, h);
+  constructor(game, spritesheet, x, y, w, h) {
+    super(game, spritesheet, 0, 0, 64, 64, x, y, w, h);
   }
 
   update() {
-    // TODO
+    super.update();
   }
 }
 
@@ -266,20 +273,16 @@ class DonJon {
       if (cursor.rightPressed) {
         this.stateMachine.setState('runRightDJ');
         this.direction = 'E';
-        this.x += this.game.clockTick * this.speed;
       } else if (cursor.leftPressed) {
         this.stateMachine.setState('runLeftDJ');
         this.direction = 'W';
-        this.x -= this.game.clockTick * this.speed;
       }
       if (cursor.upPressed) {
         this.stateMachine.setState('runUpDJ');
         this.direction = 'N';
-        this.y -= this.game.clockTick * this.speed;
       } else if (cursor.downPressed && this.y >= 0) {
         this.stateMachine.setState('runDownDJ');
         this.direction = 'S';
-        this.y += this.game.clockTick * this.speed;
       }
       if (!cursor.upPressed && !cursor.downPressed && !cursor.rightPressed &&
         !cursor.leftPressed) {
@@ -349,7 +352,7 @@ AM.downloadAll(function () {
     {
       name: 'eGoblin',
       constructor: function (x, y) {
-        return new Goblin(AM.getAsset('./img/goblin.png'), x, y,
+        return new Goblin(gameEngine, AM.getAsset('./img/goblin.png'), x, y,
           SIZE, SIZE * 2);
       },
       width: 1,
@@ -359,7 +362,7 @@ AM.downloadAll(function () {
     {
       name: 'eBeholder',
       constructor: function (x, y) {
-        return new Beholder(AM.getAsset('./img/beholder.png'), x, y,
+        return new Beholder(gameEngine, AM.getAsset('./img/beholder.png'), x, y,
           SIZE * 2, SIZE * 2);
       },
       width: 2,
@@ -378,27 +381,28 @@ AM.downloadAll(function () {
   for (let i = 0; i < level.tiles[0].length; i++) {
     for (let j = 0; j < level.tiles.length; j++) {
       switch (level.tiles[j][i]) {
-        case 'W': stationary.push(new Wall(AM.getAsset('./img/map.png'),
+        case 'W': stationary.push(new Wall(gameEngine, AM.getAsset('./img/map.png'),
           i * SIZE, j * SIZE, SIZE, SIZE)); break;
-        case 'F': tiles.push(new Dirt(AM.getAsset('./img/map.png'),
+        case 'F': tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'),
           i * SIZE, j * SIZE, SIZE, SIZE)); break;
         case 'End':
         case 'Start': stationary.push(new Staircase(
-          AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE, SIZE));
+          gameEngine, AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE,
+          SIZE, SIZE));
           don = new DonJon(gameEngine, AM.getAsset('./img/main_dude.png'), i * SIZE,
             (j - 1) * SIZE, SIZE, SIZE * 2);
           break;
       }
       for (let k = 0; k < powerups.length; k++) {
         if (level.tiles[j][i] === powerups[k].name) {
-          tiles.push(new Dirt(AM.getAsset('./img/map.png'), i * SIZE,
+          tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'), i * SIZE,
             j * SIZE, SIZE, SIZE));
           powerupEntities.push(powerups[k].constructor(i * SIZE, j * SIZE));
         }
       }
       for (let k = 0; k < enemies.length; k++) {
         if (level.tiles[j][i] === enemies[k].name) {
-          tiles.push(new Dirt(AM.getAsset('./img/map.png'), i * SIZE,
+          tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'), i * SIZE,
             j * SIZE, SIZE, SIZE));
           enemyEntities.push(enemies[k].constructor(i * SIZE, j * SIZE));
         }
