@@ -5,6 +5,9 @@ let cursor = {
   upPressed: false
 };
 
+let mouseCooldown = false;
+let mouseValue = false;
+
 function keyDownHandler(e) {
   e.preventDefault();
   switch(e.code) {
@@ -52,7 +55,11 @@ function keyUpHandler(e) {
 }
 
 function clickHandler(e) {
-    console.log('Implement me!')
+  if (mouseCooldown === false) {
+    mouseCooldown = true;
+    mouseValue = true;
+    setTimeout(function () {
+      mouseCooldown = false;
+    }, 1000); // Adjust to match attacks per second
+  }
 }
-
-
