@@ -260,8 +260,6 @@ class DonJon {
         this.stateMachine.draw(this.game.clockTick, ctx, this.x, this.y);
 
     }
-
-
 }
 
 AM.queueDownload('./img/tilesheet.png');
@@ -274,38 +272,91 @@ AM.queueDownload('./img/beholder.png');
 AM.queueDownload('./img/main_dude.png');
 
 AM.downloadAll(function () {
-    const canvas = document.getElementById('gameWorld');
-    const ctx = canvas.getContext('2d');
 
-    const gameEngine = new GameEngine();
-    gameEngine.init(ctx);
-    gameEngine.start();
+  const canvas = document.getElementById('gameWorld');
+  const ctx = canvas.getContext('2d');
 
-    const SIZE = 32;
+  const gameEngine = new GameEngine();
+  gameEngine.init(ctx);
+  gameEngine.start();
 
-    const powerups = [
-        {
-            name: 'pHealth',
-            constructor: function (x, y) {
-                return new HealthPotion(gameEngine, AM.getAsset('./img/potion.png'),
-                    x, y);
-            },
-            number: 2
-        },
-        {
-            name: 'pLife',
-            constructor: function (x, y) {
-                return new LifeBuff(gameEngine, AM.getAsset('./img/life.png'), x, y);
-            },
-            number: 1
-        },
-        {
-            name: 'pStrength',
-            constructor: function (x, y) {
-                return new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'), x,
-                    y);
-            },
-            number: 1
+  const SIZE = 32;
+
+  const powerups = [
+    {
+      name: 'pHealth',
+      constructor: function (x, y) {
+        return new HealthPotion(gameEngine, AM.getAsset('./img/potion.png'),
+          x, y);
+      },
+      number: 2
+    },
+    {
+      name: 'pLife',
+      constructor: function (x, y) {
+        return new LifeBuff(gameEngine, AM.getAsset('./img/life.png'), x, y);
+      },
+      number: 1
+    },
+    {
+      name: 'pStrength',
+      constructor: function (x, y) {
+        return new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'), x,
+          y);
+      },
+      number: 1
+    }
+  ];
+
+  const enemies = [
+    {
+      name: 'eGoblin',
+      constructor: function (x, y) {
+        return new Goblin(AM.getAsset('./img/goblin.png'), x, y,
+          SIZE, SIZE * 2);
+      },
+      width: 1,
+      height: 2,
+      number: 5
+    },
+    {
+      name: 'eBeholder',
+      constructor: function (x, y) {
+        return new Beholder(AM.getAsset('./img/beholder.png'), x, y,
+          SIZE * 2, SIZE * 2);
+      },
+      width: 2,
+      height: 2,
+      number: 2
+    }
+  ];
+
+  const level = new World(powerups, enemies);
+  // Attach entities to the Level data
+  let tiles = [];
+  let enemyEntities = [];
+  let powerupEntities = [];
+  let stationary = [];
+  let don = undefined;
+  for (let i = 0; i < level.tiles[0].length; i++) {
+    for (let j = 0; j < level.tiles.length; j++) {
+      switch (level.tiles[j][i]) {
+        case 'W': stationary.push(new Wall(AM.getAsset('./img/map.png'),
+          i * SIZE, j * SIZE, SIZE, SIZE)); break;
+        case 'F': tiles.push(new Dirt(AM.getAsset('./img/map.png'),
+          i * SIZE, j * SIZE, SIZE, SIZE)); break;
+        case 'End':
+        case 'Start': stationary.push(new Staircase(
+          AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE, SIZE, SIZE));
+          don = new DonJon(gameEngine, AM.getAsset('./img/main_dude.png'), i * SIZE, 
+            (j - 1) * SIZE, SIZE, SIZE * 2);
+          break;
+      }
+      for (let k = 0; k < powerups.length; k++) {
+        if (level.tiles[j][i] === powerups[k].name) {
+          tiles.push(new Dirt(AM.getAsset('./img/map.png'), i * SIZE,
+            j * SIZE, SIZE, SIZE));
+          powerupEntities.push(powerups[k].constructor(i * SIZE, j * SIZE));
         }
     ];
 

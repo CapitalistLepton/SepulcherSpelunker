@@ -4,9 +4,9 @@ class World {
   constructor(powerups, enemies) {
     this.initTiles();
     this.drunkardsWalk();
-    this.cleanupTiles();
     this.placeEnemies(enemies);
     this.placePowerups(powerups);
+    this.cleanupTiles();
   }
 
   /*
