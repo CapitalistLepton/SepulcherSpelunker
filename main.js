@@ -378,37 +378,43 @@ AM.downloadAll(function () {
   let powerupEntities = [];
   let stationary = [];
   let don = undefined;
+
+  let center = { x: gameEngine.surfaceWidth / 2, y: gameEngine.surfaceHeight / 2 };
   for (let i = 0; i < level.tiles[0].length; i++) {
     for (let j = 0; j < level.tiles.length; j++) {
+      let pos = { x: center.x - (i - WORLD_WIDTH + 2) * SIZE, y: center.y - (j - WORLD_HEIGHT + 2) * SIZE };
       switch (level.tiles[j][i]) {
         case 'W': stationary.push(new Wall(gameEngine, AM.getAsset('./img/map.png'),
-          i * SIZE, j * SIZE, SIZE, SIZE)); break;
+          pos.x, pos.y, SIZE, SIZE)); break;
         case 'F': tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'),
-          i * SIZE, j * SIZE, SIZE, SIZE)); break;
+          pos.x, pos.y, SIZE, SIZE)); break;
         case 'End':
         case 'Start': stationary.push(new Staircase(
-          gameEngine, AM.getAsset('./img/tilesheet.png'), i * SIZE, j * SIZE,
+          gameEngine, AM.getAsset('./img/tilesheet.png'), pos.x, pos.y,
           SIZE, SIZE));
-          don = new DonJon(gameEngine, AM.getAsset('./img/main_dude.png'), i * SIZE,
-            (j - 1) * SIZE, SIZE, SIZE * 2);
+          don = new DonJon(gameEngine, AM.getAsset('./img/main_dude.png'), pos.x,
+            pos.y - SIZE, SIZE, SIZE * 2);
           break;
       }
       for (let k = 0; k < powerups.length; k++) {
         if (level.tiles[j][i] === powerups[k].name) {
-          tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'), i * SIZE,
-            j * SIZE, SIZE, SIZE));
-          powerupEntities.push(powerups[k].constructor(i * SIZE, j * SIZE));
+          tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'), pos.x,
+            pos.y, SIZE, SIZE));
+          powerupEntities.push(powerups[k].constructor(pos.x, pos.y));
         }
       }
       for (let k = 0; k < enemies.length; k++) {
         if (level.tiles[j][i] === enemies[k].name) {
-          tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'), i * SIZE,
-            j * SIZE, SIZE, SIZE));
-          enemyEntities.push(enemies[k].constructor(i * SIZE, j * SIZE));
+          tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'), pos.x,
+            pos.y, SIZE, SIZE));
+          enemyEntities.push(enemies[k].constructor(pos.x, pos.y));
         }
       }
     }
   }
+
+  console.log(center);
+  console.log(don);
 
   for (let i = 0; i < tiles.length; i++) {
     gameEngine.addEntity(tiles[i]);
