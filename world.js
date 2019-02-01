@@ -27,10 +27,10 @@ class World {
     let position = { x: WORLD_WIDTH - 2, y: WORLD_HEIGHT - 2 };
     let direction = 'N';
     let possDirection = ['N', 'W'];
-    this.floor = [];
+    this.floor = new LinkedList();
     while (position.x > 5 && position.y > 15) {
       this.tiles[position.y][position.x] = 'F';
-      this.floor.push({ x: position.x, y: position.y });
+      this.floor.add({ x: position.x, y: position.y });
       switch (direction) {
         case 'N': position.y--; break;
         case 'E': position.x++; break;
@@ -115,9 +115,18 @@ class World {
    * Places the given tile at a random floor location.
    */
   placeRandomTile(tile) {
-    let pos = this.floor[randInt(this.floor.length)];
+    let pos = this.floor.get(randInt(this.floor.length));
+    console.log(pos);
     this.tiles[pos.y][pos.x] = tile;
-    removeFrom(pos, this.floor);
+    this.removeRadius(pos.x, pos.y, 3);
+  }
+
+  removeRadius(x, y, radius) {
+    for (let i = x - radius; i <= x + radius; i++) {
+      for (let j = y - radius; j <= y + radius; j++) {
+        this.floor.remove({ x: i, y: j });
+      }
+    }
   }
 
   /*
@@ -131,12 +140,12 @@ class World {
     for (let j = this.tiles.length - 2; j >= 0; j--) {
       for (let i = this.tiles[0].length - 2; i >= 0; i--) {
         if (this.tiles[j][i] === 'F') {
-        values[j][i] = Math.max(
-          values[j][i - 1],
-          values[j][i + 1],
-          values[j - 1][i],
-          values[j + 1][i]
-        ) + 1;
+          values[j][i] = Math.max(
+            values[j][i - 1],
+            values[j][i + 1],
+            values[j - 1][i],
+            values[j + 1][i]
+          ) + 1;
         }
       }
     }
@@ -160,6 +169,6 @@ class World {
   placeEnemy(enemy) {
     let pos = this.floor[randInt(this.floor.length)];
     this.tiles[pos.y][pos.x] = tile;
-    removeFrom(pos, this.floor);
+    this.removeRadius(pos.x, pos.y, 7);
   }
 }
