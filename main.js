@@ -62,6 +62,18 @@ class Rectangle {
     this.y = y;
     this.w = w;
     this.h = h;
+    this.prevX = x;
+    this.prevY = y;
+  }
+
+  setX(x) {
+    this.prevX = this.x;
+    this.x = x;
+  }
+
+  setY(y) {
+    this.prevY = this.y;
+    this.y = y;
   }
 }
 
@@ -80,7 +92,7 @@ class Tile {
   }
 
   update() {
-    moveEntity(this);
+    this.game.moveEntity(this);
   }
 
   draw(ctx) {
@@ -101,14 +113,19 @@ class Dirt extends Tile {
 class Wall extends Tile {
   constructor(game, spritesheet, x, y, w, h) {
     super(game, spritesheet, 64, 0, 64, 64, x, y, w, h);
-    this.collision = true;
+    this.bounding = new Rectangle(x + 1, y + 1, w - 2, h - 2);
+  }
+
+  draw(ctx) {
+    super.draw(ctx);
+//    ctx.strokeRect(this.bounding.x, this.bounding.y, this.bounding.w, this.bounding.h);
   }
 }
 
 class Staircase extends Tile {
   constructor(game, spritesheet, x, y, w, h) {
     super(game, spritesheet, 32, 0, 16, 16, x, y, w, h);
-    this.collision = true;
+// TODO    this.bounding = new Rectangle(x, y, w, h);
   }
 }
 
@@ -118,10 +135,11 @@ class Powerup {
     this.animation = animation;
     this.x = x;
     this.y = y;
+    this.bounding = new Rectangle(x, y, 32, 32);
   }
 
   update() {
-    moveEntity(this);
+    this.game.moveEntity(this);
   }
 
   draw(ctx) {
@@ -178,7 +196,7 @@ class Enemy {
   }
 
   update() {
-    moveEntity(this);
+    this.game.moveEntity(this);
   }
 
   draw(ctx) {
@@ -214,6 +232,7 @@ class DonJon {
   constructor(gameEngine, spritesheet, x, y, w, h) {
     this.game = gameEngine;
     this.spritesheet = spritesheet;
+    this.name = 'DonJon';
     this.sx = 0;
     this.sy = 66;
     this.sw = 32;
@@ -222,7 +241,7 @@ class DonJon {
     this.y = y;
     this.w = w;
     this.h = h;
-    this.bounding = new Rectangle(x, y, w, h);
+    this.bounding = new Rectangle(x + 1, y + h / 2 + 1, w - 2, h / 2 - 2);
     this.prevX = x;
     this.prevY = y;
     this.speed = 100; // in px/s
@@ -254,11 +273,31 @@ class DonJon {
       AM.getAsset('./img/main_dude.png'), 0, 640, 32, 64, 6, 0.167, 6, true));
     this.stateMachine.addState('attackRightDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 0, 704, 32, 64, 4, 0.25, 4, true));
-
   }
 
   update() {
-    /* Here we check to see if any buttons where pressed if so move DonJon */
+    if (this.game.hitWall) {
+      this.game.hitWall = false;
+    }
+    for (let i = 0; i < this.game.walls.length; i++) {
+      let box1 = this.bounding;
+      let box2 = this.game.walls[i].bounding;
+      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+        //this.game.hitWall = true;
+/*        if (box1.x < box2.x + box2.w) {
+          dx = -2;
+        } else if (box1.x + box1.w > box2.x) {
+          dx = 2;
+        }
+        if (box1.y < box2.y + box2.h) {
+          dy = -2;
+        } else if (box1.y + box1.h > box2.y) {
+          dy = 2;
+        } */
+        this.game.moveAll(box2.prevX - box2.x, box2.prevY - box2.y);
+      }
+    }
     if (mouseCooldown) {
       if (mouseValue) {
         switch(this.direction) {
@@ -280,7 +319,7 @@ class DonJon {
       if (cursor.upPressed) {
         this.stateMachine.setState('runUpDJ');
         this.direction = 'N';
-      } else if (cursor.downPressed && this.y >= 0) {
+      } else if (cursor.downPressed) {
         this.stateMachine.setState('runDownDJ');
         this.direction = 'S';
       }
@@ -298,7 +337,10 @@ class DonJon {
 
   draw(ctx) {
     this.stateMachine.draw(this.game.clockTick, ctx, this.x, this.y);
-
+/*    let prevStyle = ctx.strokeStyle;
+    ctx.strokeStyle = 'red';
+    ctx.strokeRect(this.bounding.x, this.bounding.y, this.bounding.w, this.bounding.h);
+    ctx.strokeStyle = prevStyle; */
   }
 }
 
@@ -384,8 +426,12 @@ AM.downloadAll(function () {
     for (let j = 0; j < level.tiles.length; j++) {
       let pos = { x: center.x - (i - WORLD_WIDTH + 2) * SIZE, y: center.y - (j - WORLD_HEIGHT + 2) * SIZE };
       switch (level.tiles[j][i]) {
-        case 'W': stationary.push(new Wall(gameEngine, AM.getAsset('./img/map.png'),
-          pos.x, pos.y, SIZE, SIZE)); break;
+        case 'W':
+          let wall = new Wall(gameEngine, AM.getAsset('./img/map.png'),
+          pos.x, pos.y, SIZE, SIZE);
+          stationary.push(wall);
+          gameEngine.walls.push(wall);
+          break;
         case 'F': tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'),
           pos.x, pos.y, SIZE, SIZE)); break;
         case 'End':
@@ -412,9 +458,6 @@ AM.downloadAll(function () {
       }
     }
   }
-
-  console.log(center);
-  console.log(don);
 
   for (let i = 0; i < tiles.length; i++) {
     gameEngine.addEntity(tiles[i]);

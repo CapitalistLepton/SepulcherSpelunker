@@ -17,19 +17,3 @@ function cartesianDistance(pointA, pointB) {
 function taxiDistance(pointA, pointB) {
   return Math.abs(pointA.x - pointB.x) + Math.abs(pointA.y - pointB.y);
 }
-
-const SPEED = 100;
-
-function moveEntity(entity) {
-  if (!mouseCooldown) {
-    if (cursor.rightPressed) {
-      entity.x -= entity.game.clockTick * SPEED;
-    } else if (cursor.leftPressed) {
-      entity.x += entity.game.clockTick * SPEED;
-    } else if (cursor.upPressed) {
-      entity.y += entity.game.clockTick * SPEED;
-    } else if (cursor.downPressed) {
-      entity.y -= entity.game.clockTick * SPEED;
-    }
-  }
-}
