@@ -27,22 +27,23 @@ class Timer {
   }
 }
 
-const SPEED = 100;
-
 class GameEngine {
   constructor() {
     this.entities = [];
     this.walls = [];
-    this.hitWall = false;
     this.ctx = null;
     this.surfaceWidth = null;
     this.surfaceHeight = null;
+    this.collisionDebug = false;
   }
 
-  init(ctx) {
+  init(ctx, camera) {
+    this.camera = camera;
     this.ctx = ctx;
     this.surfaceWidth = this.ctx.canvas.width;
     this.surfaceHeight = this.ctx.canvas.height;
+    this.camera.w = this.surfaceWidth;
+    this.camera.h = this.surfaceHeight;
     this.timer = new Timer();
     this.startInput();
     console.log('Game Initialized');
@@ -93,41 +94,5 @@ class GameEngine {
       this.entities[i].draw(this.ctx);
     }
     this.ctx.restore();
-  }
-
-  moveEntity(entity) {
-    let dx = 0;
-    let dy = 0;
-    if (!mouseCooldown && !this.hitWall) {
-      if (cursor.rightPressed) {
-        dx = -1 * entity.game.clockTick * SPEED;
-      } else if (cursor.leftPressed) {
-        dx = entity.game.clockTick * SPEED;
-      } else if (cursor.upPressed) {
-        dy = entity.game.clockTick * SPEED;
-      } else if (cursor.downPressed) {
-        dy = -1 * entity.game.clockTick * SPEED;
-      }
-    }
-    entity.x += dx;
-    entity.y += dy;
-    if (entity.bounding) {
-      entity.bounding.setX(entity.bounding.x + dx);
-      entity.bounding.setY(entity.bounding.y + dy);
-    }
-  }
-
-  moveAll(dx, dy) {
-   for (let i = 0; i < this.entities.length; i++) {
-     let entity = this.entities[i];
-     if (entity.name !== 'DonJon') {
-       entity.x += dx;
-       entity.y += dy;
-       if (entity.bounding) {
-         entity.bounding.setX(entity.bounding.x + dx);
-         entity.bounding.setY(entity.bounding.y + dy);
-       }
-     }
-   }
   }
 }

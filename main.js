@@ -62,18 +62,6 @@ class Rectangle {
     this.y = y;
     this.w = w;
     this.h = h;
-    this.prevX = x;
-    this.prevY = y;
-  }
-
-  setX(x) {
-    this.prevX = this.x;
-    this.x = x;
-  }
-
-  setY(y) {
-    this.prevY = this.y;
-    this.y = y;
   }
 }
 
@@ -91,15 +79,13 @@ class Tile {
     this.h = h;
   }
 
-  update() {
-    this.game.moveEntity(this);
-  }
+  update() {}
 
   draw(ctx) {
     ctx.drawImage(this.spritesheet,
       this.sx, this.sy,
       this.sw, this.sh,
-      this.x, this.y,
+      this.x - this.game.camera.x, this.y - this.game.camera.y,
       this.w, this.h);
   }
 }
@@ -118,7 +104,10 @@ class Wall extends Tile {
 
   draw(ctx) {
     super.draw(ctx);
-//    ctx.strokeRect(this.bounding.x, this.bounding.y, this.bounding.w, this.bounding.h);
+    if (this.game.collisionDebug) {
+      ctx.strokeRect(this.bounding.x - this.game.camera.x,
+        this.bounding.y - this.game.camera.y, this.bounding.w, this.bounding.h);
+    }
   }
 }
 
@@ -138,46 +127,60 @@ class Powerup {
     this.bounding = new Rectangle(x, y, 32, 32);
   }
 
-  update() {
-    this.game.moveEntity(this);
-  }
+  update() {}
 
   draw(ctx) {
-    this.animation.drawFrame(this.game.clockTick, ctx, this.x, this.y, 1);
+    this.animation.drawFrame(this.game.clockTick, ctx,
+      this.x - this.game.camera.x, this.y - this.game.camera.y, 1);
   }
 }
 
 class HealthPotion extends Powerup {
   constructor(game, spritesheet, x, y) {
-    super(game, new Animation(spritesheet, 0, 0, 32, 32, 192, 0.167, 6, true), x, y);
+    super(game, new Animation(spritesheet, 0, 0, 32, 32, 192, 0.167, 6, true),
+      x, y);
   }
 
   update() {
-    super.update();
     // Check for collision with DonJon
   }
 }
 
 class LifeBuff extends Powerup {
   constructor(game, spritesheet, x, y) {
-    super(game, new Animation(spritesheet, 0, 0, 32, 32, 128, 0.25, 4, true), x, y);
+    super(game, new Animation(spritesheet, 0, 0, 32, 32, 128, 0.25, 4, true),
+      x, y);
   }
 
   update() {
-    super.update();
     // Check for collision with DonJon
   }
 }
 
 class StrengthBuff extends Powerup {
   constructor(game, spritesheet, x, y) {
-    super(game, new Animation(spritesheet, 0, 0, 32, 32, 64, 0.5, 2, true), x, y);
+    super(game, new Animation(spritesheet, 0, 0, 32, 32, 64, 0.5, 2, true), x,
+      y);
   }
 
   update() {
-     super.update();
     // Check for collision with DonJon
   }
+}
+
+class Camera {
+  constructor(player) {
+    this.player = player;
+    this.x = player.x;
+    this.y = player.y;
+  }
+
+  update() {
+    this.x = this.player.x - this.w / 2;
+    this.y = this.player.y - this.h / 2;
+  }
+
+  draw() {}
 }
 
 class Enemy {
@@ -195,15 +198,13 @@ class Enemy {
     this.h = h;
   }
 
-  update() {
-    this.game.moveEntity(this);
-  }
+  update() {}
 
   draw(ctx) {
     ctx.drawImage(this.spritesheet,
       this.sx, this.sy,
       this.sw, this.sh,
-      this.x, this.y,
+      this.x - this.game.camera.x, this.y - this.game.camera.y,
       this.w, this.h);
   }
 }
@@ -214,7 +215,7 @@ class Goblin extends Enemy {
   }
 
   update() {
-    super.update();
+    // TODO Check for collision
   }
 }
 
@@ -224,9 +225,11 @@ class Beholder extends Enemy {
   }
 
   update() {
-    super.update();
+    // TODO Check for collision
   }
 }
+
+const SPEED = 100;
 
 class DonJon {
   constructor(gameEngine, spritesheet, x, y, w, h) {
@@ -241,7 +244,7 @@ class DonJon {
     this.y = y;
     this.w = w;
     this.h = h;
-    this.bounding = new Rectangle(x + 1, y + h / 2 + 1, w - 2, h / 2 - 2);
+    this.bounding = new Rectangle(x + w/8, y + h/2 + 1, w - w/4, h/2 - 2);
     this.prevX = x;
     this.prevY = y;
     this.speed = 100; // in px/s
@@ -276,26 +279,13 @@ class DonJon {
   }
 
   update() {
-    if (this.game.hitWall) {
-      this.game.hitWall = false;
-    }
     for (let i = 0; i < this.game.walls.length; i++) {
       let box1 = this.bounding;
       let box2 = this.game.walls[i].bounding;
       if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
         && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-        //this.game.hitWall = true;
-/*        if (box1.x < box2.x + box2.w) {
-          dx = -2;
-        } else if (box1.x + box1.w > box2.x) {
-          dx = 2;
-        }
-        if (box1.y < box2.y + box2.h) {
-          dy = -2;
-        } else if (box1.y + box1.h > box2.y) {
-          dy = 2;
-        } */
-        this.game.moveAll(box2.prevX - box2.x, box2.prevY - box2.y);
+        this.x = this.prevX;
+        this.y = this.prevY;
       }
     }
     if (mouseCooldown) {
@@ -312,16 +302,24 @@ class DonJon {
       if (cursor.rightPressed) {
         this.stateMachine.setState('runRightDJ');
         this.direction = 'E';
+        this.prevX = this.x;
+        this.x += this.game.clockTick * SPEED;
       } else if (cursor.leftPressed) {
         this.stateMachine.setState('runLeftDJ');
         this.direction = 'W';
+        this.prevX = this.x;
+        this.x -= this.game.clockTick * SPEED;
       }
       if (cursor.upPressed) {
         this.stateMachine.setState('runUpDJ');
         this.direction = 'N';
+        this.prevY = this.y;
+        this.y -= this.game.clockTick * SPEED;
       } else if (cursor.downPressed) {
         this.stateMachine.setState('runDownDJ');
         this.direction = 'S';
+        this.prevY = this.y;
+        this.y += this.game.clockTick * SPEED;
       }
       if (!cursor.upPressed && !cursor.downPressed && !cursor.rightPressed &&
         !cursor.leftPressed) {
@@ -332,15 +330,21 @@ class DonJon {
           case 'W': this.stateMachine.setState('idleLeftDJ'); break;
         }
       }
+      this.bounding.x = this.x + 1;
+      this.bounding.y = this.y + this.h / 2 + 1;
     }
   }
 
   draw(ctx) {
-    this.stateMachine.draw(this.game.clockTick, ctx, this.x, this.y);
-/*    let prevStyle = ctx.strokeStyle;
-    ctx.strokeStyle = 'red';
-    ctx.strokeRect(this.bounding.x, this.bounding.y, this.bounding.w, this.bounding.h);
-    ctx.strokeStyle = prevStyle; */
+    this.stateMachine.draw(this.game.clockTick, ctx,
+      this.x - this.game.camera.x, this.y - this.game.camera.y);
+    if (this.game.collisionDebug) {
+      let prevStyle = ctx.strokeStyle;
+      ctx.strokeStyle = 'red';
+      ctx.strokeRect(this.bounding.x - this.game.camera.x,
+        this.bounding.y - this.game.camera.y, this.bounding.w, this.bounding.h);
+      ctx.strokeStyle = prevStyle;
+    }
   }
 }
 
@@ -359,8 +363,7 @@ AM.downloadAll(function () {
   const ctx = canvas.getContext('2d');
 
   const gameEngine = new GameEngine();
-  gameEngine.init(ctx);
-  gameEngine.start();
+
 
   const SIZE = 32;
 
@@ -424,7 +427,7 @@ AM.downloadAll(function () {
   let center = { x: gameEngine.surfaceWidth / 2, y: gameEngine.surfaceHeight / 2 };
   for (let i = 0; i < level.tiles[0].length; i++) {
     for (let j = 0; j < level.tiles.length; j++) {
-      let pos = { x: center.x - (i - WORLD_WIDTH + 2) * SIZE, y: center.y - (j - WORLD_HEIGHT + 2) * SIZE };
+      let pos = { x: i * SIZE, y: j * SIZE };
       switch (level.tiles[j][i]) {
         case 'W':
           let wall = new Wall(gameEngine, AM.getAsset('./img/map.png'),
@@ -458,6 +461,13 @@ AM.downloadAll(function () {
       }
     }
   }
+
+  let camera = new Camera(don);
+  console.log(camera, don);
+  gameEngine.init(ctx, camera);
+  gameEngine.start();
+
+  gameEngine.addEntity(camera);
 
   for (let i = 0; i < tiles.length; i++) {
     gameEngine.addEntity(tiles[i]);
