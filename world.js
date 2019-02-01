@@ -97,7 +97,7 @@ class World {
     }
     // Place start and end points
     this.tiles[WORLD_HEIGHT - 2][WORLD_WIDTH - 2] = 'Start';
-    this.placeRandomTile('End');
+    this.placeEnd();
     console.log('[World] Cleaned up tiles');
   }
 
@@ -118,6 +118,40 @@ class World {
     let pos = this.floor[randInt(this.floor.length)];
     this.tiles[pos.y][pos.x] = tile;
     removeFrom(pos, this.floor);
+  }
+
+  /*
+   * Places the exit at the tile furthest from the start.
+   */
+  placeEnd() {
+    let values = [];
+    for (let i = 0; i < WORLD_HEIGHT; i++) {
+      values.push(new Array(WORLD_WIDTH).fill(0));
+    }
+    for (let j = this.tiles.length - 2; j >= 0; j--) {
+      for (let i = this.tiles[0].length - 2; i >= 0; i--) {
+        if (this.tiles[j][i] === 'F') {
+        values[j][i] = Math.max(
+          values[j][i - 1],
+          values[j][i + 1],
+          values[j - 1][i],
+          values[j + 1][i]
+        ) + 1;
+        }
+      }
+    }
+    let pos = { x: WORLD_WIDTH - 2, y: WORLD_HEIGHT -2 };
+    let distance = 0;
+    for (let j = this.tiles.length - 2; j >= 0; j--) {
+      for (let i = this.tiles[0].length - 2; i >= 0; i--) {
+        if (values[j][i] > distance) {
+          distance = values[j][i];
+          pos.x = i;
+          pos.y = j;
+        }
+      }
+    }
+    this.tiles[pos.y][pos.x] = 'End';
   }
 
   /*

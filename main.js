@@ -463,7 +463,6 @@ AM.downloadAll(function () {
   }
 
   let camera = new Camera(don);
-  console.log(camera, don);
   gameEngine.init(ctx, camera);
   gameEngine.start();
 
