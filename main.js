@@ -111,9 +111,16 @@ class Wall extends Tile {
   }
 }
 
-class Staircase extends Tile {
+class Ladder extends Tile {
   constructor(game, spritesheet, x, y, w, h) {
-    super(game, spritesheet, 32, 0, 16, 16, x, y, w, h);
+    super(game, spritesheet, 128, 0, 64, 64, x, y, w, h);
+// TODO    this.bounding = new Rectangle(x, y, w, h);
+  }
+}
+
+class Hole extends Tile {
+  constructor(game, spritesheet, x, y, w, h) {
+    super(game, spritesheet, 192, 0, 64, 64, x, y, w, h);
 // TODO    this.bounding = new Rectangle(x, y, w, h);
   }
 }
@@ -301,7 +308,7 @@ class Beholder extends Enemy {
     }
 
   }
-  
+
   draw(ctx){
     this.stateMachine.draw(this.game.clockTick, ctx,
       this.x - this.game.camera.x, this.y - this.game.camera.y);
@@ -427,7 +434,6 @@ class DonJon {
   }
 }
 
-AM.queueDownload('./img/tilesheet.png');
 AM.queueDownload('./img/potion.png');
 AM.queueDownload('./img/life.png');
 AM.queueDownload('./img/strength.png');
@@ -519,10 +525,10 @@ AM.downloadAll(function () {
           break;
         case 'F': tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'),
           pos.x, pos.y, SIZE, SIZE)); break;
-        case 'End':
-        case 'Start': stationary.push(new Staircase(
-          gameEngine, AM.getAsset('./img/tilesheet.png'), pos.x, pos.y,
-          SIZE, SIZE));
+        case 'End': stationary.push(new Hole(gameEngine,
+          AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE)); break;
+        case 'Start': stationary.push(new Ladder(gameEngine,
+          AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
           don = new DonJon(gameEngine, AM.getAsset('./img/main_dude.png'), pos.x,
             pos.y - SIZE, SIZE, SIZE * 2);
           break;
