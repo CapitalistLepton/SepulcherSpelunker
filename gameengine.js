@@ -35,6 +35,7 @@ class GameEngine {
     this.surfaceWidth = null;
     this.surfaceHeight = null;
     this.collisionDebug = false;
+    this.player = undefined;
   }
 
   init(ctx, camera) {
@@ -76,6 +77,11 @@ class GameEngine {
 
   addEntity(entity) {
     this.entities.push(entity);
+  }
+
+  addPlayer(entity) {
+    this.player = entity;
+    this.addEntity(this.player);
   }
 
   update() {

@@ -184,10 +184,9 @@ class Camera {
 }
 
 class Enemy {
-  // TODO change spritesheet to state machine
-  constructor(game, spritesheet, sx, sy, sw, sh, x, y, w, h) {
+  constructor(game, statemachine, sx, sy, sw, sh, x, y, w, h) {
     this.game = game;
-    this.spritesheet = spritesheet;
+    this.stateMachine = new StateMachine();
     this.sx = sx;
     this.sy = sy;
     this.sw = sw;
@@ -199,33 +198,114 @@ class Enemy {
   }
 
   update() {}
-
   draw(ctx) {
-    ctx.drawImage(this.spritesheet,
-      this.sx, this.sy,
-      this.sw, this.sh,
-      this.x - this.game.camera.x, this.y - this.game.camera.y,
-      this.w, this.h);
+    this.stateMachine.draw(this.game.clockTick, ctx,
+      this.x - this.game.camera.x, this.y - this.game.camera.y);
+
   }
 }
 
 class Goblin extends Enemy {
-  constructor(game, spritesheet, x, y, w, h) {
-    super(game, spritesheet, 0, 0, 32, 64, x, y, w, h);
+  constructor(game, statemachine, x, y, w, h) {
+    super(game, statemachine, 0, 0, 32, 64, x, y, w, h);
+    this.stateMachine = new StateMachine();
+    /**
+     * Goblin States
+     */
+    this.stateMachine.addState('idleDownGob',
+      new Animation(AM.getAsset('./img/goblin.png'), 0, 0, 32, 50, 4, 0.25, 4, true));
+    this.stateMachine.addState('idleLeftGob',
+      new Animation(AM.getAsset('./img/goblin.png'), 0, 65, 32, 50, 2, 0.5, 2, true));
+    this.stateMachine.addState('idleUpGob',
+      new Animation(AM.getAsset('./img/goblin.png'), 0, 130, 32, 50, 2, 0.5, 2, true));
+    this.stateMachine.addState('idleRightGob',
+      new Animation(AM.getAsset('./img/goblin.png'), 0, 195, 32, 50, 3, 0.333, 3, true));
+    this.stateMachine.addState('runDownGob',
+      new Animation(AM.getAsset('./img/goblin.png'), 0, 260, 32, 50, 2, 0.5, 2, true));
+    this.stateMachine.addState('runLeftGob',
+      new Animation(AM.getAsset('./img/goblin.png'), 0, 325, 32, 50, 4, 0.25, 4, true));
+    this.stateMachine.addState('runUpGob',
+      new Animation(AM.getAsset('./img/goblin.png'), 0, 390, 32, 50, 2, 0.5, 2, true));
+    this.stateMachine.addState('runRightGob',
+      new Animation(AM.getAsset('./img/goblin.png'), 0, 455, 32, 50, 4, 0.25, 4, true));
+
   }
 
-  update() {
-    // TODO Check for collision
+    update() {
+      let yRange = Math.abs(this.game.player.y) + 50 >= Math.abs(this.y)
+        && Math.abs(this.game.player.y) - 50 <= Math.abs(this.y);
+
+      if(this.game.player.x < this.x && yRange) {
+        this.stateMachine.setState('idleLeftGob');
+
+      }else if(this.game.player.x > this.x && yRange) {
+
+        this.stateMachine.setState('idleRightGob');
+      } else if(this.game.player.y > this.y ){
+        this.stateMachine.setState('idleDownGob');
+
+      } else if(this.game.player.y  < this.y) {
+        this.stateMachine.setState('idleUpGob');
+
+      }
+  }
+
+  draw(ctx) {
+    this.stateMachine.draw(this.game.clockTick, ctx,
+      this.x - this.game.camera.x, this.y - this.game.camera.y);
+
   }
 }
 
 class Beholder extends Enemy {
-  constructor(game, spritesheet, x, y, w, h) {
-    super(game, spritesheet, 0, 0, 64, 64, x, y, w, h);
+  constructor(game, statemachine, x, y, w, h) {
+    super(game, statemachine, 0, 0, 64, 64, x, y, w, h);
+    this.stateMachine = new StateMachine();
+    /**
+     * BEHOLDER states
+     */
+    this.stateMachine.addState('idleDownBH', new Animation(
+      AM.getAsset('./img/beholder.png'), 0, 0, 65, 65, 2, 0.5, 2, true));
+    this.stateMachine.addState('idleLeftBH', new Animation(
+      AM.getAsset('./img/beholder.png'), 0, 65, 65, 65, 2, 0.5, 2, true));
+    this.stateMachine.addState('idleUpBH', new Animation(
+      AM.getAsset('./img/beholder.png'), 0, 130, 65, 65, 2, 0.5, 2, true));
+    this.stateMachine.addState('idleRightBH', new Animation(
+      AM.getAsset('./img/beholder.png'), 0, 190, 60, 65, 2, 0.5, 2, true));
+    this.stateMachine.addState('attackDownBH', new Animation(
+      AM.getAsset('./img/beholder.png'), 0, 255, 63, 65, 3, 0.333, 3, true));
+    this.stateMachine.addState('attackLeftBH', new Animation(
+      AM.getAsset('./img/beholder.png'), 0, 315, 63, 65, 3, 0.333, 3, true));
+    this.stateMachine.addState('attackUpBH', new Animation(
+      AM.getAsset('./img/beholder.png'), 0, 385, 63, 65, 2, 0.5, 2, true));
+    this.stateMachine.addState('attackRightBH', new Animation(
+      AM.getAsset('./img/beholder.png'), 0, 450, 60, 65, 3, 0.333, 3, true));
   }
 
   update() {
     // TODO Check for collision
+    let yRange = Math.abs(this.game.player.y) + 50 >= Math.abs(this.y)
+      && Math.abs(this.game.player.y) - 50 <= Math.abs(this.y);
+
+    if(this.game.player.x < this.x && yRange){
+      this.stateMachine.setState('idleLeftBH');
+
+    } else if(this.game.player.x > this.x && yRange){
+      this.stateMachine.setState('idleRightBH');
+
+    } else if(this.game.player.y > this.y){
+      this.stateMachine.setState('idleDownBH');
+
+    } else if( this.game.player.y  < this.y) {
+      this.stateMachine.setState('idleUpBH');
+    }
+
+  }
+  
+  draw(ctx){
+    this.stateMachine.draw(this.game.clockTick, ctx,
+      this.x - this.game.camera.x, this.y - this.game.camera.y);
+
   }
 }
 
@@ -247,11 +327,10 @@ class DonJon {
     this.bounding = new Rectangle(x + w/8, y + h/2 + 1, w - w/4, h/2 - 2);
     this.prevX = x;
     this.prevY = y;
-    this.speed = 100; // in px/s
+    this.speed = 200; // in px/s
     this.health = 24;
     this.direction = 'S';
-    this.stateMachine = new StateMachine('idleDownDJ', new Animation(
-      AM.getAsset('./img/main_dude.png'), 0, 0, 32, 64, 2, 0.5, 2, true));
+    this.stateMachine = new StateMachine();
     this.stateMachine.addState('idleDownDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 0, 0, 32, 64, 2, 0.5, 2, true));
     this.stateMachine.addState('idleLeftDJ', new Animation(
@@ -484,7 +563,7 @@ AM.downloadAll(function () {
     gameEngine.addEntity(enemyEntities[i]);
   }
 
-  gameEngine.addEntity(don);
+  gameEngine.addPlayer(don);
 
   console.log('Finished downloading assets');
 });
