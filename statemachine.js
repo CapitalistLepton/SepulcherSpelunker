@@ -1,8 +1,8 @@
 class StateMachine {
-  constructor(idleStateName, idleStateAnimation) {
+  constructor() {
     this.stateMap = new Map();
-    this.stateMap.set(idleStateName, idleStateAnimation);
-    this.state = this.stateMap.get(idleStateName);
+    // this.stateMap.set(idleStateName, idleStateAnimation);
+    // this.state = this.stateMap.get(idleStateName);
   }
 
   getState() {
@@ -18,6 +18,8 @@ class StateMachine {
   }
 
   draw(clockTick, ctx, x, y) {
-    this.state.drawFrame(clockTick, ctx, x, y);
+    if(this.state) {
+      this.state.drawFrame(clockTick, ctx, x, y);
+    }
   }
 }
