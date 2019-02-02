@@ -2,11 +2,12 @@ const WORLD_WIDTH = 40;
 const WORLD_HEIGHT = 60;
 class World {
   constructor(powerups, enemies) {
+    this.valid = true;
     this.initTiles();
     this.drunkardsWalk();
-    this.placeEnemies(enemies);
-    this.placePowerups(powerups);
     this.cleanupTiles();
+    this.placePowerups(powerups);
+    this.placeEnemies(enemies);
   }
 
   /*
@@ -61,7 +62,9 @@ class World {
   placeEnemies(enemies) {
     for (let i = 0; i < enemies.length; i++) {
       for (let j = 0; j < enemies[i].number; j++) {
-        this.placeRandomTile(enemies[i].name);
+        if (!this.placeEnemy(enemies[i])) {
+          this.valid = false;
+        }
       }
     }
     console.log('[World] Placed enemies');
@@ -97,6 +100,11 @@ class World {
     }
     // Place start and end points
     this.tiles[WORLD_HEIGHT - 2][WORLD_WIDTH - 2] = 'Start';
+    for (let j = WORLD_HEIGHT - 2; j >= WORLD_HEIGHT - 2 - 5; j--) {
+      for (let i = WORLD_WIDTH - 2; i >= WORLD_WIDTH - 2 - 5; i--) {
+        this.floor.remove({ x: i, y: j });
+      }
+    }
     this.placeEnd();
     console.log('[World] Cleaned up tiles');
   }
@@ -116,7 +124,6 @@ class World {
    */
   placeRandomTile(tile) {
     let pos = this.floor.get(randInt(this.floor.length));
-    console.log(pos);
     this.tiles[pos.y][pos.x] = tile;
     this.removeRadius(pos.x, pos.y, 3);
   }
@@ -167,8 +174,28 @@ class World {
    * Places the given enemy at a valid random floor location.
    */
   placeEnemy(enemy) {
-    let pos = this.floor[randInt(this.floor.length)];
-    this.tiles[pos.y][pos.x] = tile;
-    this.removeRadius(pos.x, pos.y, 7);
+    let pos = null;
+    let validSpot = false;
+    do {
+      pos = this.floor.get(randInt(this.floor.length));
+      if (!pos) {
+        return false;
+      }
+      validSpot = true;
+      for (let i = pos.x; i < pos.x + enemy.width; i++) {
+        for (let j = pos.y; j < pos.y + enemy.height; j++) {
+          if (!this.floor.contains({ x: i, y: j })) {
+            validSpot = false;
+            break;
+          }
+        }
+      }
+      if (!validSpot) {
+        this.floor.remove(pos);
+      }
+    }  while (!validSpot);
+    this.tiles[pos.y][pos.x] = enemy.name;
+    this.removeRadius(pos.x, pos.y, 2 + enemy.width);
+    return true;
   }
 }

@@ -402,7 +402,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: 5
+      number: 3
     },
     {
       name: 'eBeholder',
@@ -416,7 +416,11 @@ AM.downloadAll(function () {
     }
   ];
 
-  const level = new World(powerups, enemies);
+  let level = new World(powerups, enemies);
+  while (!level.valid) {
+    console.log('Falied to make valid world. Trying again');
+    level = new World(powerups, enemies);
+  }
   // Attach entities to the Level data
   let tiles = [];
   let enemyEntities = [];
@@ -424,7 +428,6 @@ AM.downloadAll(function () {
   let stationary = [];
   let don = undefined;
 
-  let center = { x: gameEngine.surfaceWidth / 2, y: gameEngine.surfaceHeight / 2 };
   for (let i = 0; i < level.tiles[0].length; i++) {
     for (let j = 0; j < level.tiles.length; j++) {
       let pos = { x: i * SIZE, y: j * SIZE };

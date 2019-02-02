@@ -19,6 +19,9 @@ function taxiDistance(pointA, pointB) {
 }
 
 function equivalent(a, b) {
+  if (a !== Object(a) || b !== Object(b)) {
+    return a === b; // a or b is a primitive
+  }
   let aProperties = Object.getOwnPropertyNames(a);
   let bProperties = Object.getOwnPropertyNames(b);
 
@@ -90,5 +93,22 @@ class LinkedList {
     } else {
       return current.data;
     }
+  }
+
+  contains(data) {
+    if (this.head) {
+      let current = this.head;
+      if (equivalent(current.data, data)) {
+        return true;
+      }
+      while (current.next) {
+        current = current.next;
+        if (equivalent(current.data, data)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    return false;
   }
 }
