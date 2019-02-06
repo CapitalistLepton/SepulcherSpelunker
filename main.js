@@ -114,14 +114,51 @@ class Wall extends Tile {
 class Ladder extends Tile {
   constructor(game, spritesheet, x, y, w, h) {
     super(game, spritesheet, 128, 0, 64, 64, x, y, w, h);
-// TODO    this.bounding = new Rectangle(x, y, w, h);
+    this.bounding = new Rectangle(x + 1, y + h/4, w - 2, h - h/4);
+    this.left = false;
+  }
+
+  update() {
+    let box1 = this.game.player.bounding;
+    let box2 = this.bounding;
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+      if (this.left) {
+        console.log('hit ladder');
+        if (this.game.world.level > 0) {
+          this.game.setLevel(this.game.world.level - 1);
+        }
+      }
+    } else {
+      if (!this.left) {
+        // Mark when the player leaves the bounding box of the ladder
+        this.left = true;
+        console.log('left ladder');
+      }
+    }
   }
 }
 
 class Hole extends Tile {
   constructor(game, spritesheet, x, y, w, h) {
     super(game, spritesheet, 192, 0, 64, 64, x, y, w, h);
-// TODO    this.bounding = new Rectangle(x, y, w, h);
+    this.bounding = new Rectangle(x + 1, y + 1, w - 2, h - 1);
+  }
+
+  update() {
+    let box1 = this.game.player.bounding;
+    let box2 = this.bounding;
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+      console.log('hit hole');
+      if (this.game.world.level < 13) {
+        // TODO fix the bug that requires the line below
+        this.game.ladder.left = false; // Don't register a hit on the ladder entity of this level
+
+
+        this.game.setLevel(this.game.world.level + 1);
+      }
+    }
   }
 }
 
@@ -365,15 +402,16 @@ class DonJon {
   }
 
   update() {
-    for (let i = 0; i < this.game.walls.length; i++) {
-      let box1 = this.bounding;
-      let box2 = this.game.walls[i].bounding;
+    let that = this;
+    this.game.walls.iterate(function (wall) {
+      let box1 = that.bounding;
+      let box2 = wall.bounding;
       if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
         && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-        this.x = this.prevX;
-        this.y = this.prevY;
+        that.x = that.prevX;
+        that.y = that.prevY;
       }
-    }
+    });
     if (mouseCooldown) {
       if (mouseValue) {
         switch(this.direction) {
@@ -448,9 +486,7 @@ AM.downloadAll(function () {
   const ctx = canvas.getContext('2d');
 
   const gameEngine = new GameEngine();
-
-
-  const SIZE = 32;
+  gameEngine.init(ctx);
 
   const powerups = [
     {
@@ -459,24 +495,24 @@ AM.downloadAll(function () {
         return new HealthPotion(gameEngine, AM.getAsset('./img/potion.png'),
           x, y);
       },
-      number: 2
+      number: 1
     },
-  {
-    name: 'pLife',
-    constructor: function (x, y) {
-      return new LifeBuff(gameEngine, AM.getAsset('./img/life.png'), x, y);
+    {
+      name: 'pLife',
+      constructor: function (x, y) {
+        return new LifeBuff(gameEngine, AM.getAsset('./img/life.png'), x, y);
+      },
+      number: 1
     },
-    number: 1
-  },
-  {
-    name: 'pStrength',
-    constructor: function (x, y) {
-      return new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'), x,
-      y);
-    },
-    number: 1
-  }
- ];
+    {
+      name: 'pStrength',
+      constructor: function (x, y) {
+        return new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'),
+          x, y);
+      },
+      number: 1
+    }
+  ];
 
   const enemies = [
     {
@@ -487,7 +523,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: 3
+      number: [3, 5, 7, 7, 7, 7, 5, 3, 0, 0, 0, 0]
     },
     {
       name: 'eBeholder',
@@ -497,79 +533,14 @@ AM.downloadAll(function () {
       },
       width: 2,
       height: 2,
-      number: 2
+      number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 0, 0, 0, 0]
     }
   ];
 
-  let level = new World(powerups, enemies);
-  while (!level.valid) {
-    console.log('Falied to make valid world. Trying again');
-    level = new World(powerups, enemies);
-  }
-  // Attach entities to the Level data
-  let tiles = [];
-  let enemyEntities = [];
-  let powerupEntities = [];
-  let stationary = [];
-  let don = undefined;
-
-  for (let i = 0; i < level.tiles[0].length; i++) {
-    for (let j = 0; j < level.tiles.length; j++) {
-      let pos = { x: i * SIZE, y: j * SIZE };
-      switch (level.tiles[j][i]) {
-        case 'W':
-          let wall = new Wall(gameEngine, AM.getAsset('./img/map.png'),
-          pos.x, pos.y, SIZE, SIZE);
-          stationary.push(wall);
-          gameEngine.walls.push(wall);
-          break;
-        case 'F': tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'),
-          pos.x, pos.y, SIZE, SIZE)); break;
-        case 'End': stationary.push(new Hole(gameEngine,
-          AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE)); break;
-        case 'Start': stationary.push(new Ladder(gameEngine,
-          AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
-          don = new DonJon(gameEngine, AM.getAsset('./img/main_dude.png'), pos.x,
-            pos.y - SIZE, SIZE, SIZE * 2);
-          break;
-      }
-      for (let k = 0; k < powerups.length; k++) {
-        if (level.tiles[j][i] === powerups[k].name) {
-          tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'), pos.x,
-            pos.y, SIZE, SIZE));
-          powerupEntities.push(powerups[k].constructor(pos.x, pos.y));
-        }
-      }
-      for (let k = 0; k < enemies.length; k++) {
-        if (level.tiles[j][i] === enemies[k].name) {
-          tiles.push(new Dirt(gameEngine, AM.getAsset('./img/map.png'), pos.x,
-            pos.y, SIZE, SIZE));
-          enemyEntities.push(enemies[k].constructor(pos.x, pos.y));
-        }
-      }
-    }
-  }
-
-  let camera = new Camera(don);
-  gameEngine.init(ctx, camera);
+  let world = new World(13, powerups, enemies, AM);
+  gameEngine.setWorld(world);
+  gameEngine.setLevel(0);
   gameEngine.start();
-
-  gameEngine.addEntity(camera);
-
-  for (let i = 0; i < tiles.length; i++) {
-    gameEngine.addEntity(tiles[i]);
-  }
-  for (let i = 0; i < stationary.length; i++) {
-    gameEngine.addEntity(stationary[i]);
-  }
-  for (let i = 0; i < powerupEntities.length; i++) {
-    gameEngine.addEntity(powerupEntities[i]);
-  }
-  for (let i = 0; i < enemyEntities.length; i++) {
-    gameEngine.addEntity(enemyEntities[i]);
-  }
-
-  gameEngine.addPlayer(don);
 
   console.log('Finished downloading assets');
 });

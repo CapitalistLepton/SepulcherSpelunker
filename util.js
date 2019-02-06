@@ -81,6 +81,10 @@ class LinkedList {
     }
   }
 
+  removeAll() {
+    this.head = null;
+  }
+
   get(index) {
     let current = this.head;
     let i = index;
@@ -110,5 +114,14 @@ class LinkedList {
       return false;
     }
     return false;
+  }
+
+  iterate(func) {
+    let current = this.head;
+    while (current.next) {
+      func(current.data);
+      current = current.next;
+    }
+    func(current.data); // One last one that does'nt have a next
   }
 }

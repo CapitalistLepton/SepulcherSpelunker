@@ -1,13 +1,105 @@
 const WORLD_WIDTH = 40;
 const WORLD_HEIGHT = 60;
+
+const SIZE = 32;
+
 class World {
-  constructor(powerups, enemies) {
+  constructor(numLevels, powerups, enemies, AM) {
+    this.powerups = powerups;
+    this.enemies = enemies;
+    this.AM = AM;
+    this.levels = [];
+    for (let i = 0; i < numLevels; i++) {
+      let level = new Level(powerups, enemies, i);
+      while (!level.valid) {
+        console.log('[World] Failed to make a valid world. Trying again.');
+        level = new Level(powerups, enemies, i);
+      }
+      this.levels.push(level);
+    }
+    this.level = 0;
+  }
+
+  setLevel(game, levelIndex) {
+    this.level = levelIndex;
+    console.log('[World] Switching to level', levelIndex);
+    let level = this.levels[levelIndex];
+    let tiles = [];
+    let enemyEntities = [];
+    let powerupEntities = [];
+    let stationary = [];
+    let don = undefined;
+
+    for (let i = 0; i < level.tiles[0].length; i++) {
+    for (let j = 0; j < level.tiles.length; j++) {
+      let pos = { x: i * SIZE, y: j * SIZE };
+      switch (level.tiles[j][i]) {
+        case 'W':
+          let wall = new Wall(game, this.AM.getAsset('./img/map.png'),
+            pos.x, pos.y, SIZE, SIZE);
+          stationary.push(wall);
+          game.walls.add(wall);
+          break;
+        case 'F': tiles.push(new Dirt(game,
+          this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE)); break;
+        case 'End': stationary.push(new Hole(game,
+          this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE)); break;
+        case 'Start':
+          let ladder = new Ladder(game, this.AM.getAsset('./img/map.png'),
+            pos.x, pos.y, SIZE, SIZE);
+          game.setLadder(ladder);
+          stationary.push(ladder);
+          don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'),
+            pos.x, pos.y - SIZE, SIZE, SIZE * 2);
+          break;
+      }
+      for (let k = 0; k < this.powerups.length; k++) {
+        if (level.tiles[j][i] === this.powerups[k].name) {
+          tiles.push(new Dirt(game, this.AM.getAsset('./img/map.png'),
+            pos.x, pos.y, SIZE, SIZE));
+          powerupEntities.push(this.powerups[k].constructor(pos.x, pos.y));
+        }
+      }
+      for (let k = 0; k < this.enemies.length; k++) {
+        if (level.tiles[j][i] === this.enemies[k].name) {
+          tiles.push(new Dirt(game, this.AM.getAsset('./img/map.png'),
+            pos.x, pos.y, SIZE, SIZE));
+          enemyEntities.push(this.enemies[k].constructor(pos.x, pos.y));
+        }
+      }
+    }
+  }
+
+  let camera = new Camera(don);
+  game.setCamera(camera);
+  game.addEntity(camera);
+
+  for (let i = 0; i < tiles.length; i++) {
+    game.addEntity(tiles[i]);
+  }
+  for (let i = 0; i < stationary.length; i++) {
+    game.addEntity(stationary[i]);
+  }
+  for (let i = 0; i < powerupEntities.length; i++) {
+    game.addEntity(powerupEntities[i]);
+  }
+  for (let i = 0; i < enemyEntities.length; i++) {
+    game.addEntity(enemyEntities[i]);
+  }
+
+    game.addPlayer(don);
+    console.log('[World] Switched to level', levelIndex);
+  }
+}
+
+class Level {
+  constructor(powerups, enemies, levelIndex) {
     this.valid = true;
     this.initTiles();
     this.drunkardsWalk();
     this.cleanupTiles();
     this.placePowerups(powerups);
-    this.placeEnemies(enemies);
+    this.placeEnemies(enemies, levelIndex);
   }
 
   /*
@@ -59,9 +151,9 @@ class World {
   /*
    * Randomly places the enemies in the given list.
    */
-  placeEnemies(enemies) {
+  placeEnemies(enemies, level) {
     for (let i = 0; i < enemies.length; i++) {
-      for (let j = 0; j < enemies[i].number; j++) {
+      for (let j = 0; j < enemies[i].number[level]; j++) {
         if (!this.placeEnemy(enemies[i])) {
           this.valid = false;
         }

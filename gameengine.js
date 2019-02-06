@@ -29,22 +29,20 @@ class Timer {
 
 class GameEngine {
   constructor() {
-    this.entities = [];
-    this.walls = [];
+    this.entities = new LinkedList();
+    this.walls = new LinkedList();
     this.ctx = null;
     this.surfaceWidth = null;
     this.surfaceHeight = null;
     this.collisionDebug = false;
     this.player = undefined;
+    this.stopped = true;
   }
 
-  init(ctx, camera) {
-    this.camera = camera;
+  init(ctx) {
     this.ctx = ctx;
     this.surfaceWidth = this.ctx.canvas.width;
     this.surfaceHeight = this.ctx.canvas.height;
-    this.camera.w = this.surfaceWidth;
-    this.camera.h = this.surfaceHeight;
     this.timer = new Timer();
     this.startInput();
     console.log('Game Initialized');
@@ -76,7 +74,7 @@ class GameEngine {
   }
 
   addEntity(entity) {
-    this.entities.push(entity);
+    this.entities.add(entity);
   }
 
   addPlayer(entity) {
@@ -84,21 +82,40 @@ class GameEngine {
     this.addEntity(this.player);
   }
 
-  update() {
-    let entitiesCount = this.entities.length;
+  setCamera(camera) {
+    this.camera = camera;
+    this.camera.w = this.surfaceWidth;
+    this.camera.h = this.surfaceHeight;
+  }
 
-    for (let i = 0; i < entitiesCount; i++) {
-      let entity = this.entities[i];
+  setWorld(world) {
+    this.world = world;
+  }
+
+  setLadder(ladder) {
+    this.ladder = ladder;
+  }
+
+  setLevel(level) {
+    this.entities.removeAll();
+    this.walls.removeAll();
+    this.player = undefined;
+    this.world.setLevel(this, level);
+  }
+
+  update() {
+    this.entities.iterate(function(entity) {
       entity.update();
-    }
+    });
   }
 
   draw() {
     this.ctx.clearRect(0, 0, this.surfaceWidth, this.surfaceHeight);
     this.ctx.save();
-    for (let i = 0; i < this.entities.length; i++) {
-      this.entities[i].draw(this.ctx);
-    }
+    let ctx = this.ctx;
+    this.entities.iterate(function (entity) {
+      entity.draw(ctx);
+    });
     this.ctx.restore();
   }
 }
