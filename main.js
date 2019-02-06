@@ -152,10 +152,6 @@ class Hole extends Tile {
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
       console.log('hit hole');
       if (this.game.world.level < 13) {
-        // TODO fix the bug that requires the line below
-        this.game.ladder.left = false; // Don't register a hit on the ladder entity of this level
-
-
         this.game.setLevel(this.game.world.level + 1);
       }
     }

@@ -47,7 +47,6 @@ class World {
         case 'Start':
           let ladder = new Ladder(game, this.AM.getAsset('./img/map.png'),
             pos.x, pos.y, SIZE, SIZE);
-          game.setLadder(ladder);
           stationary.push(ladder);
           don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'),
             pos.x, pos.y - SIZE, SIZE, SIZE * 2);
@@ -97,7 +96,7 @@ class Level {
     this.valid = true;
     this.initTiles();
     this.drunkardsWalk();
-    this.cleanupTiles();
+    this.cleanupTiles(levelIndex);
     this.placePowerups(powerups);
     this.placeEnemies(enemies, levelIndex);
   }
@@ -177,7 +176,7 @@ class Level {
   /*
    * Cleans up the level by placing walls and the start/end points.
    */
-  cleanupTiles() {
+  cleanupTiles(levelIndex) {
     // Place walls around floor
     for (let j = 0; j < this.tiles.length; j++) {
       for (let i = 0; i < this.tiles[0].length; i++) {
@@ -191,13 +190,17 @@ class Level {
       }
     }
     // Place start and end points
-    this.tiles[WORLD_HEIGHT - 2][WORLD_WIDTH - 2] = 'Start';
+    if (levelIndex % 2 === 0) {
+      this.tiles[WORLD_HEIGHT - 2][WORLD_WIDTH - 2] = 'Start';
+    } else {
+      this.tiles[WORLD_HEIGHT - 2][WORLD_WIDTH - 2] = 'End';
+    }
     for (let j = WORLD_HEIGHT - 2; j >= WORLD_HEIGHT - 2 - 5; j--) {
       for (let i = WORLD_WIDTH - 2; i >= WORLD_WIDTH - 2 - 5; i--) {
         this.floor.remove({ x: i, y: j });
       }
     }
-    this.placeEnd();
+    this.placeEnd(levelIndex);
     console.log('[World] Cleaned up tiles');
   }
 
@@ -231,7 +234,7 @@ class Level {
   /*
    * Places the exit at the tile furthest from the start.
    */
-  placeEnd() {
+  placeEnd(levelIndex) {
     let values = [];
     for (let i = 0; i < WORLD_HEIGHT; i++) {
       values.push(new Array(WORLD_WIDTH).fill(0));
@@ -259,7 +262,16 @@ class Level {
         }
       }
     }
-    this.tiles[pos.y][pos.x] = 'End';
+    for (let j = pos.y + 5; j >= pos.y - 5; j--) {
+      for (let i = pos.x + 5; i >= pos.x - 5; i--) {
+        this.floor.remove({ x: i, y: j });
+      }
+    }
+    if (levelIndex % 2 === 0) {
+      this.tiles[pos.y][pos.x] = 'End';
+    } else {
+      this.tiles[pos.y][pos.x] = 'Start';
+    }
   }
 
   /*

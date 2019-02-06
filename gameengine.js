@@ -92,10 +92,6 @@ class GameEngine {
     this.world = world;
   }
 
-  setLadder(ladder) {
-    this.ladder = ladder;
-  }
-
   setLevel(level) {
     this.entities.removeAll();
     this.walls.removeAll();
