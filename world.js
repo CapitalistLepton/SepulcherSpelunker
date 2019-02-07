@@ -9,6 +9,8 @@ class World {
     this.enemies = enemies;
     this.AM = AM;
     this.levels = [];
+    this.levelEntities = [];
+    this.levelWalls = [];
     for (let i = 0; i < numLevels; i++) {
       let level = new Level(powerups, enemies, i);
       while (!level.valid) {
@@ -29,73 +31,106 @@ class World {
     let enemyEntities = [];
     let powerupEntities = [];
     let stationary = [];
-    let don = undefined;
 
-    for (let i = 0; i < level.tiles[0].length; i++) {
-    for (let j = 0; j < level.tiles.length; j++) {
-      let pos = { x: i * SIZE, y: j * SIZE };
-      switch (level.tiles[j][i]) {
-        case 'W':
-          let wall = new Wall(game, this.AM.getAsset('./img/map.png'),
-            pos.x, pos.y, SIZE, SIZE);
-          stationary.push(wall);
-          game.walls.add(wall);
-          break;
-        case 'F': tiles.push(new Dirt(game,
-          this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE)); break;
-        case 'End': stationary.push(new Hole(game,
-          this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
-          if (levelChange > 0) { // Place at hole if going up to previous level
-            don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'),
-              pos.x, pos.y - SIZE, SIZE, SIZE * 2);
+    let don = game.player;
+    if (!don) {
+      don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'),
+        0, 0, SIZE, SIZE * 2);
+      game.setPlayer(don);
+    }
+    if (!game.camera) {
+      let camera = new Camera(don);
+      game.setCamera(camera);
+    }
+
+    if (!this.levelEntities[levelIndex]) {
+      let levelEntities = new LinkedList();
+      let levelWalls = new LinkedList();
+      for (let i = 0; i < level.tiles[0].length; i++) {
+        for (let j = 0; j < level.tiles.length; j++) {
+          let pos = { x: i * SIZE, y: j * SIZE };
+          switch (level.tiles[j][i]) {
+            case 'W':
+              let wall = new Wall(game, this.AM.getAsset('./img/map.png'),
+                pos.x, pos.y, SIZE, SIZE);
+              stationary.push(wall);
+              levelWalls.add(wall);
+              break;
+            case 'F': tiles.push(new Dirt(game,
+              this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
+              break;
+            case 'End': stationary.push(new Hole(game,
+              this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
+              // Place at hole if going up to previous level
+              if (levelChange > 0) {
+                don.moveTo(pos.x, pos.y - SIZE);
+              }
+              break;
+            case 'Start':
+              let ladder = new Ladder(game, this.AM.getAsset('./img/map.png'),
+                pos.x, pos.y, SIZE, SIZE);
+              stationary.push(ladder);
+              // If setting level to 0 then place DonJon at start,
+              // or place at ladder if going down to next level
+              if (levelChange <= 0) {
+                don.moveTo(pos.x, pos.y - SIZE);
+              }
+              break;
           }
-          break;
-        case 'Start':
-          let ladder = new Ladder(game, this.AM.getAsset('./img/map.png'),
-            pos.x, pos.y, SIZE, SIZE);
-          stationary.push(ladder);
-          // If setting level to 0 (levelChange == 0) then place DonJon at start
-          if (levelChange <= 0) { // Place at ladder if going down to next level
-            don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'),
-              pos.x, pos.y - SIZE, SIZE, SIZE * 2);
+          for (let k = 0; k < this.powerups.length; k++) {
+            if (level.tiles[j][i] === this.powerups[k].name) {
+              tiles.push(new Dirt(game, this.AM.getAsset('./img/map.png'),
+                pos.x, pos.y, SIZE, SIZE));
+              powerupEntities.push(this.powerups[k].constructor(pos.x, pos.y));
+            }
           }
-          break;
-      }
-      for (let k = 0; k < this.powerups.length; k++) {
-        if (level.tiles[j][i] === this.powerups[k].name) {
-          tiles.push(new Dirt(game, this.AM.getAsset('./img/map.png'),
-            pos.x, pos.y, SIZE, SIZE));
-          powerupEntities.push(this.powerups[k].constructor(pos.x, pos.y));
+          for (let k = 0; k < this.enemies.length; k++) {
+            if (level.tiles[j][i] === this.enemies[k].name) {
+              tiles.push(new Dirt(game, this.AM.getAsset('./img/map.png'),
+                pos.x, pos.y, SIZE, SIZE));
+              enemyEntities.push(this.enemies[k].constructor(pos.x, pos.y));
+            }
+          }
         }
       }
-      for (let k = 0; k < this.enemies.length; k++) {
-        if (level.tiles[j][i] === this.enemies[k].name) {
-          tiles.push(new Dirt(game, this.AM.getAsset('./img/map.png'),
-            pos.x, pos.y, SIZE, SIZE));
-          enemyEntities.push(this.enemies[k].constructor(pos.x, pos.y));
+
+      for (let i = 0; i < tiles.length; i++) {
+        levelEntities.add(tiles[i]);
+      }
+      for (let i = 0; i < stationary.length; i++) {
+        levelEntities.add(stationary[i]);
+      }
+      for (let i = 0; i < powerupEntities.length; i++) {
+        levelEntities.add(powerupEntities[i]);
+      }
+      for (let i = 0; i < enemyEntities.length; i++) {
+        levelEntities.add(enemyEntities[i]);
+      }
+      this.levelEntities[levelIndex] = levelEntities;
+      this.levelWalls[levelIndex] = levelWalls;
+    } else {
+      for (let i = 0; i < level.tiles[0].length; i++) {
+        for (let j = 0; j < level.tiles.length; j++) {
+          let pos = { x: i * SIZE, y: j * SIZE };
+          switch (level.tiles[j][i]) {
+            case 'End':
+              if (levelChange > 0) {
+                don.moveTo(pos.x, pos.y - SIZE);
+              }
+              break;
+            case 'Start':
+              // If setting level to 0 then place DonJon at start,
+              // or place at ladder if going down to next level
+              if (levelChange <= 0) {
+                don.moveTo(pos.x, pos.y - SIZE);
+              }
+              break;
+          }
         }
       }
     }
-  }
-
-  let camera = new Camera(don);
-  game.setCamera(camera);
-  game.addEntity(camera);
-
-  for (let i = 0; i < tiles.length; i++) {
-    game.addEntity(tiles[i]);
-  }
-  for (let i = 0; i < stationary.length; i++) {
-    game.addEntity(stationary[i]);
-  }
-  for (let i = 0; i < powerupEntities.length; i++) {
-    game.addEntity(powerupEntities[i]);
-  }
-  for (let i = 0; i < enemyEntities.length; i++) {
-    game.addEntity(enemyEntities[i]);
-  }
-
-    game.addPlayer(don);
+    game.setEntities(this.levelEntities[levelIndex]);
+    game.walls = this.levelWalls[levelIndex];
     console.log('[World] Switched to level', levelIndex);
   }
 }

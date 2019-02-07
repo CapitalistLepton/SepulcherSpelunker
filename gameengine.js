@@ -29,13 +29,14 @@ class Timer {
 
 class GameEngine {
   constructor() {
-    this.entities = new LinkedList();
-    this.walls = new LinkedList();
+    this.entities = null;
+    this.walls = null;
     this.ctx = null;
     this.surfaceWidth = null;
     this.surfaceHeight = null;
     this.collisionDebug = false;
-    this.player = undefined;
+    this.player = null;
+    this.camera = null;
     this.stopped = true;
   }
 
@@ -73,13 +74,12 @@ class GameEngine {
     this.draw();
   }
 
-  addEntity(entity) {
-    this.entities.add(entity);
+  setEntities(entityList) {
+    this.entities = entityList;
   }
 
-  addPlayer(entity) {
+  setPlayer(entity) {
     this.player = entity;
-    this.addEntity(this.player);
   }
 
   setCamera(camera) {
@@ -93,8 +93,8 @@ class GameEngine {
   }
 
   setLevel(level) {
-    this.entities.removeAll();
-    this.walls.removeAll();
+    this.entities = null;
+    this.walls = null;
     // TODO add in a transition animation here
     this.world.setLevel(this, level);
   }
@@ -103,6 +103,12 @@ class GameEngine {
     this.entities.iterate(function(entity) {
       entity.update();
     });
+    if (this.player) {
+      this.player.update();
+    }
+    if (this.camera) {
+      this.camera.update();
+    }
   }
 
   draw() {
@@ -112,6 +118,12 @@ class GameEngine {
     this.entities.iterate(function (entity) {
       entity.draw(ctx);
     });
+    if (this.player) {
+      this.player.draw(ctx);
+    }
+    if (this.camera) {
+      this.camera.draw(ctx);
+    }
     this.ctx.restore();
   }
 }

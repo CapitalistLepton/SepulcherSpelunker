@@ -40,7 +40,8 @@ class Animation {
     let locY = y;
     let offset = vindex === 0 ? this.startX : 0;
     ctx.drawImage(this.spriteSheet,
-      index * this.frameWidth + offset, vindex * this.frameHeight + this.startY,  // source from sheet
+      // source from sheet
+      index * this.frameWidth + offset, vindex * this.frameHeight + this.startY,
       this.frameWidth, this.frameHeight,
       locX, locY,
       this.frameWidth * scale,
@@ -436,6 +437,15 @@ class DonJon {
       AM.getAsset('./img/main_dude.png'), 0, 640, 32, 64, 6, 0.167, 6, true));
     this.stateMachine.addState('attackRightDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 0, 704, 32, 64, 4, 0.25, 4, true));
+  }
+
+  moveTo(x, y) {
+    this.x = x;
+    this.y = y;
+    this.prevX = x;
+    this.prevY = y;
+    this.bounding.x = x + this.w/8;
+    this.bounding.y = y + this.h/2 + 1;
   }
 
   update() {
