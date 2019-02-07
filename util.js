@@ -117,11 +117,13 @@ class LinkedList {
   }
 
   iterate(func) {
-    let current = this.head;
-    while (current.next) {
-      func(current.data);
-      current = current.next;
+    if (this.head) {
+      let current = this.head;
+      while (current.next) {
+        func(current.data);
+        current = current.next;
+      }
+      func(current.data); // One last one that does'nt have a next
     }
-    func(current.data); // One last one that does'nt have a next
   }
 }

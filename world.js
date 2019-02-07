@@ -21,6 +21,7 @@ class World {
   }
 
   setLevel(game, levelIndex) {
+    let levelChange = this.level - levelIndex;
     this.level = levelIndex;
     console.log('[World] Switching to level', levelIndex);
     let level = this.levels[levelIndex];
@@ -43,13 +44,21 @@ class World {
         case 'F': tiles.push(new Dirt(game,
           this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE)); break;
         case 'End': stationary.push(new Hole(game,
-          this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE)); break;
+          this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
+          if (levelChange > 0) { // Place at hole if going up to previous level
+            don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'),
+              pos.x, pos.y - SIZE, SIZE, SIZE * 2);
+          }
+          break;
         case 'Start':
           let ladder = new Ladder(game, this.AM.getAsset('./img/map.png'),
             pos.x, pos.y, SIZE, SIZE);
           stationary.push(ladder);
-          don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'),
-            pos.x, pos.y - SIZE, SIZE, SIZE * 2);
+          // If setting level to 0 (levelChange == 0) then place DonJon at start
+          if (levelChange <= 0) { // Place at ladder if going down to next level
+            don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'),
+              pos.x, pos.y - SIZE, SIZE, SIZE * 2);
+          }
           break;
       }
       for (let k = 0; k < this.powerups.length; k++) {

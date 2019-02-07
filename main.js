@@ -119,6 +119,7 @@ class Ladder extends Tile {
   }
 
   update() {
+    if (this.game.player) {
     let box1 = this.game.player.bounding;
     let box2 = this.bounding;
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
@@ -128,6 +129,7 @@ class Ladder extends Tile {
         if (this.game.world.level > 0) {
           this.game.setLevel(this.game.world.level - 1);
         }
+        this.left = false;
       }
     } else {
       if (!this.left) {
@@ -136,6 +138,7 @@ class Ladder extends Tile {
         console.log('left ladder');
       }
     }
+    }
   }
 }
 
@@ -143,6 +146,7 @@ class Hole extends Tile {
   constructor(game, spritesheet, x, y, w, h) {
     super(game, spritesheet, 192, 0, 64, 64, x, y, w, h);
     this.bounding = new Rectangle(x + 1, y + 1, w - 2, h - 1);
+    this.left = false;
   }
 
   update() {
@@ -150,9 +154,17 @@ class Hole extends Tile {
     let box2 = this.bounding;
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-      console.log('hit hole');
-      if (this.game.world.level < 13) {
-        this.game.setLevel(this.game.world.level + 1);
+      if (this.left) {
+        console.log('hit hole');
+        if (this.game.world.level < 13) {
+          this.game.setLevel(this.game.world.level + 1);
+        }
+        this.left = false;
+      }
+    } else {
+      if (!this.left) {
+        console.log('left hole');
+        this.left = true;
       }
     }
   }

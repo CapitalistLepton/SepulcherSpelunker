@@ -95,7 +95,7 @@ class GameEngine {
   setLevel(level) {
     this.entities.removeAll();
     this.walls.removeAll();
-    this.player = undefined;
+    // TODO add in a transition animation here
     this.world.setLevel(this, level);
   }
 
