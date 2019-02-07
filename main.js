@@ -177,9 +177,19 @@ class Powerup {
     this.x = x;
     this.y = y;
     this.bounding = new Rectangle(x, y, 32, 32);
+    this.collided = false;
   }
 
-  update() {}
+  update() {
+    if (this.game.player) {
+      let box1 = this.game.player.bounding;
+      let box2 = this.bounding;
+      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+        this.collided = true;
+      }
+    }
+  }
 
   draw(ctx) {
     this.animation.drawFrame(this.game.clockTick, ctx,
@@ -194,7 +204,13 @@ class HealthPotion extends Powerup {
   }
 
   update() {
-    // Check for collision with DonJon
+    super.update();
+    if (this.collided) {
+      this.game.player.currentHP = Math.min(this.game.player.currentHP + 8,
+        this.game.player.maxHP);
+      console.log('hit health potion. Current HP:', this.game.player.currentHP);
+      this.game.entities.remove(this);
+    }
   }
 }
 
@@ -205,7 +221,12 @@ class LifeBuff extends Powerup {
   }
 
   update() {
-    // Check for collision with DonJon
+    super.update();
+    if (this.collided) {
+      this.game.player.maxHP += 1;
+      console.log('hit life buff. Max HP:', this.game.player.maxHP);
+      this.game.entities.remove(this);
+    }
   }
 }
 
@@ -216,7 +237,13 @@ class StrengthBuff extends Powerup {
   }
 
   update() {
-    // Check for collision with DonJon
+    super.update();
+    if (this.collided) {
+      this.game.player.attackDamage += 1;
+      console.log('hit strength buff. Attack damage:',
+        this.game.player.attackDamage);
+      this.game.entities.remove(this);
+    }
   }
 }
 
@@ -380,7 +407,9 @@ class DonJon {
     this.prevX = x;
     this.prevY = y;
     this.speed = 200; // in px/s
-    this.health = 24;
+    this.maxHP= 24;
+    this.currentHP = 24;
+    this.attackDamage = 1;
     this.direction = 'S';
     this.stateMachine = new StateMachine();
     this.stateMachine.addState('idleDownDJ', new Animation(
