@@ -105,6 +105,11 @@ class GameEngine {
     });
     if (this.player) {
       this.player.update();
+      document.getElementById('health').innerHTML = 'HP ' +
+        this.player.currentHP + '/' + this.player.maxHP;
+      document.getElementById('level').innerHTML = 'Level ' + this.world.level;
+      document.getElementById('damage').innerHTML = 'ATK ' +
+        this.player.attackDamage;
     }
     if (this.camera) {
       this.camera.update();

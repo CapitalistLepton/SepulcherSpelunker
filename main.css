@@ -1,3 +1,8 @@
+@font-face {
+  font-family: "Press Start";
+  src: url("https://s3.amazonaws.com/sepulcher-spelunker/PressStart2P.ttf")
+    format("truetype");
+}
 html {
   background: #111;
 }
@@ -5,4 +10,11 @@ canvas {
   display: block;
   margin-left: auto;
   margin-right: auto;
+}
+#stats {
+  text-align: center;
+}
+p {
+  font-family: "Press Start", monospace;
+  color: white;
 }

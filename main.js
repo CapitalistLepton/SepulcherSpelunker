@@ -157,7 +157,7 @@ class Hole extends Tile {
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
       if (this.left) {
         console.log('hit hole');
-        if (this.game.world.level < 13) {
+        if (this.game.world.level < 12) {
           this.game.setLevel(this.game.world.level + 1);
         }
         this.left = false;
