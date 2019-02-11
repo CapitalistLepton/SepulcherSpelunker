@@ -34,7 +34,10 @@ class World {
 
     let don = game.player;
     if (!don) {
-      don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'),
+      let sounds = {
+        walk: this.AM.getAsset('./snd/walking_on_gravel.mp3')
+      };
+      don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'), sounds,
         0, 0, SIZE, SIZE * 2);
       game.setPlayer(don);
     }
@@ -59,8 +62,10 @@ class World {
             case 'F': tiles.push(new Dirt(game,
               this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
               break;
-            case 'End': stationary.push(new Hole(game,
-              this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
+            case 'End':
+              stationary.push(new Hole(game, this.AM.getAsset('./img/map.png'),
+                this.AM.getAsset('./snd/walking_down_stairs.mp3'), pos.x, pos.y,
+                SIZE, SIZE));
               // Place at hole if going up to previous level
               if (levelChange > 0) {
                 don.moveTo(pos.x, pos.y - SIZE);
@@ -68,7 +73,8 @@ class World {
               break;
             case 'Start':
               let ladder = new Ladder(game, this.AM.getAsset('./img/map.png'),
-                pos.x, pos.y, SIZE, SIZE);
+                this.AM.getAsset('./snd/walking_up_stairs.mp3'), pos.x, pos.y,
+                SIZE, SIZE);
               stationary.push(ladder);
               // If setting level to 0 then place DonJon at start,
               // or place at ladder if going down to next level

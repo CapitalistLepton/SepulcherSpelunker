@@ -113,11 +113,11 @@ class Wall extends Tile {
 }
 
 class Ladder extends Tile {
-  constructor(game, spritesheet, x, y, w, h) {
+  constructor(game, spritesheet, sound, x, y, w, h) {
     super(game, spritesheet, 128, 0, 64, 64, x, y, w, h);
     this.bounding = new Rectangle(x + 1, y + h/4, w - 2, h - h/4);
     this.left = false;
-    this.soundWalkingDownStairs = AM.getAsset('./snd/walking_down_stairs.mp3');
+    this.sound = sound;
   }
 
   update() {
@@ -129,7 +129,7 @@ class Ladder extends Tile {
       if (this.left) {
         console.log('hit ladder');
         if (this.game.world.level > 0) {
-          this.soundWalkingDownStairs.play();
+          this.sound.play();
           this.game.setLevel(this.game.world.level - 1);
         }
         this.left = false;
@@ -146,9 +146,10 @@ class Ladder extends Tile {
 }
 
 class Hole extends Tile {
-  constructor(game, spritesheet, x, y, w, h) {
+  constructor(game, spritesheet, sound, x, y, w, h) {
     super(game, spritesheet, 192, 0, 64, 64, x, y, w, h);
     this.bounding = new Rectangle(x + 1, y + 1, w - 2, h - 1);
+    this.sound = sound;
     this.left = false;
   }
 
@@ -160,6 +161,7 @@ class Hole extends Tile {
       if (this.left) {
         console.log('hit hole');
         if (this.game.world.level < 12) {
+          this.sound.play();
           this.game.setLevel(this.game.world.level + 1);
         }
         this.left = false;
@@ -394,7 +396,7 @@ class Beholder extends Enemy {
 const SPEED = 100;
 
 class DonJon {
-  constructor(gameEngine, spritesheet, x, y, w, h) {
+  constructor(gameEngine, spritesheet, sounds, x, y, w, h) {
     this.game = gameEngine;
     this.spritesheet = spritesheet;
     this.name = 'DonJon';
@@ -414,7 +416,7 @@ class DonJon {
     this.currentHP = 24;
     this.attackDamage = 1;
     this.direction = 'S';
-    this.soundWalk = AM.getAsset('./snd/walking_on_gravel.mp3');
+    this.soundWalk = sounds.walk;
     this.soundWalk.loop = true;
     this.stateMachine = new StateMachine();
     this.stateMachine.addState('idleDownDJ', new Animation(
@@ -471,38 +473,29 @@ class DonJon {
           case 'S': this.stateMachine.setState('attackDownDJ'); break;
           case 'W': this.stateMachine.setState('attackLeftDJ'); break;
         }
+        if (!this.soundWalk.paused) {
+          this.soundWalk.pause();
+        }
         mouseValue = false;
       }
     } else {
       if (cursor.rightPressed) {
-        if(this.soundWalk.paused) {
-          this.soundWalk.play();
-        }
         this.stateMachine.setState('runRightDJ');
         this.direction = 'E';
         this.prevX = this.x;
         this.x += this.game.clockTick * SPEED;
       } else if (cursor.leftPressed) {
-        if(this.soundWalk.paused) {
-          this.soundWalk.play();
-        }
         this.stateMachine.setState('runLeftDJ');
         this.direction = 'W';
         this.prevX = this.x;
         this.x -= this.game.clockTick * SPEED;
       }
       if (cursor.upPressed) {
-        if(this.soundWalk.paused) {
-          this.soundWalk.play();
-        }
         this.stateMachine.setState('runUpDJ');
         this.direction = 'N';
         this.prevY = this.y;
         this.y -= this.game.clockTick * SPEED;
       } else if (cursor.downPressed) {
-        if(this.soundWalk.paused) {
-          this.soundWalk.play();
-        }
         this.stateMachine.setState('runDownDJ');
         this.direction = 'S';
         this.prevY = this.y;
@@ -517,6 +510,8 @@ class DonJon {
           case 'S': this.stateMachine.setState('idleDownDJ'); break;
           case 'W': this.stateMachine.setState('idleLeftDJ'); break;
         }
+      } else if(this.soundWalk.paused) {
+        this.soundWalk.play();
       }
       this.bounding.x = this.x + 1;
       this.bounding.y = this.y + this.h / 2 + 1;
