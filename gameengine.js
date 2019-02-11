@@ -40,8 +40,9 @@ class GameEngine {
     this.stopped = true;
   }
 
-  init(ctx) {
+  init(ctx, backgroundMusic) {
     this.ctx = ctx;
+    this.backgroundMusic = backgroundMusic;
     this.surfaceWidth = this.ctx.canvas.width;
     this.surfaceHeight = this.ctx.canvas.height;
     this.timer = new Timer();
@@ -51,6 +52,9 @@ class GameEngine {
 
   start() {
     console.log('Starting the game');
+    this.backgroundMusic.loop = true;
+    this.backgroundMusic.volume = 0.1;
+    this.backgroundMusic.play();
     var that = this;
     (function gameLoop() {
       that.loop();

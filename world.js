@@ -35,7 +35,8 @@ class World {
     let don = game.player;
     if (!don) {
       let sounds = {
-        walk: this.AM.getAsset('./snd/walking_on_gravel.mp3')
+        walk: this.AM.getAsset('./snd/footsteps.wav'),
+        swing: this.AM.getAsset('./snd/swing.wav')
       };
       don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'), sounds,
         0, 0, SIZE, SIZE * 2);
