@@ -117,6 +117,7 @@ class Ladder extends Tile {
     super(game, spritesheet, 128, 0, 64, 64, x, y, w, h);
     this.bounding = new Rectangle(x + 1, y + h/4, w - 2, h - h/4);
     this.left = false;
+    this.soundWalkingDownStairs = AM.getAsset('./snd/walking_down_stairs.mp3');
   }
 
   update() {
@@ -128,6 +129,7 @@ class Ladder extends Tile {
       if (this.left) {
         console.log('hit ladder');
         if (this.game.world.level > 0) {
+          this.soundWalkingDownStairs.play();
           this.game.setLevel(this.game.world.level - 1);
         }
         this.left = false;
@@ -412,6 +414,8 @@ class DonJon {
     this.currentHP = 24;
     this.attackDamage = 1;
     this.direction = 'S';
+    this.soundWalk = AM.getAsset('./snd/walking_on_gravel.mp3');
+    this.soundWalk.loop = true;
     this.stateMachine = new StateMachine();
     this.stateMachine.addState('idleDownDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 0, 0, 32, 64, 2, 0.5, 2, true));
@@ -471,22 +475,34 @@ class DonJon {
       }
     } else {
       if (cursor.rightPressed) {
+        if(this.soundWalk.paused) {
+          this.soundWalk.play();
+        }
         this.stateMachine.setState('runRightDJ');
         this.direction = 'E';
         this.prevX = this.x;
         this.x += this.game.clockTick * SPEED;
       } else if (cursor.leftPressed) {
+        if(this.soundWalk.paused) {
+          this.soundWalk.play();
+        }
         this.stateMachine.setState('runLeftDJ');
         this.direction = 'W';
         this.prevX = this.x;
         this.x -= this.game.clockTick * SPEED;
       }
       if (cursor.upPressed) {
+        if(this.soundWalk.paused) {
+          this.soundWalk.play();
+        }
         this.stateMachine.setState('runUpDJ');
         this.direction = 'N';
         this.prevY = this.y;
         this.y -= this.game.clockTick * SPEED;
       } else if (cursor.downPressed) {
+        if(this.soundWalk.paused) {
+          this.soundWalk.play();
+        }
         this.stateMachine.setState('runDownDJ');
         this.direction = 'S';
         this.prevY = this.y;
@@ -494,6 +510,7 @@ class DonJon {
       }
       if (!cursor.upPressed && !cursor.downPressed && !cursor.rightPressed &&
         !cursor.leftPressed) {
+        this.soundWalk.pause();
         switch(this.direction) {
           case 'N': this.stateMachine.setState('idleUpDJ'); break;
           case 'E': this.stateMachine.setState('idleRightDJ'); break;
@@ -526,6 +543,11 @@ AM.queueDownload('./img/map.png');
 AM.queueDownload('./img/goblin.png');
 AM.queueDownload('./img/beholder.png');
 AM.queueDownload('./img/main_dude.png');
+AM.queueDownload('./snd/walking_on_gravel.mp3');
+AM.queueDownload('./snd/walking_down_stairs.mp3');
+AM.queueDownload('./snd/walking_up_stairs.mp3');
+
+
 
 AM.downloadAll(function () {
 
