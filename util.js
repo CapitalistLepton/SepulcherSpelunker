@@ -127,3 +127,33 @@ class LinkedList {
     }
   }
 }
+
+class LinkedQueue {
+  constructor() {
+    this.head = null;
+    this.tail = null;
+    this.length = 0;
+  }
+
+  enqueue(data) {
+    if (!this.head) {
+      this.head = new Node(data, null);
+      this.tail = this.head;
+    } else {
+      this.tail.next = new Node(data, null);
+      this.tail = this.tail.next;
+    }
+    this.length++;
+  }
+
+  dequeue() {
+    if (!this.head) {
+      return null;
+    } else {
+      let data = this.head.data;
+      this.head = this.head.next;
+      this.length--;
+      return data;
+    }
+  }
+}
