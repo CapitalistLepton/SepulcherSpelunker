@@ -34,7 +34,11 @@ class World {
 
     let don = game.player;
     if (!don) {
-      don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'),
+      let sounds = {
+        walk: this.AM.getAsset('./snd/footsteps.wav'),
+        swing: this.AM.getAsset('./snd/swing.wav')
+      };
+      don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'), sounds,
         0, 0, SIZE, SIZE * 2);
       game.setPlayer(don);
     }
@@ -59,8 +63,10 @@ class World {
             case 'F': tiles.push(new Dirt(game,
               this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
               break;
-            case 'End': stationary.push(new Hole(game,
-              this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
+            case 'End':
+              stationary.push(new Hole(game, this.AM.getAsset('./img/map.png'),
+                this.AM.getAsset('./snd/walking_down_stairs.mp3'), pos.x, pos.y,
+                SIZE, SIZE));
               // Place at hole if going up to previous level
               if (levelChange > 0) {
                 don.moveTo(pos.x, pos.y - SIZE);
@@ -68,7 +74,8 @@ class World {
               break;
             case 'Start':
               let ladder = new Ladder(game, this.AM.getAsset('./img/map.png'),
-                pos.x, pos.y, SIZE, SIZE);
+                this.AM.getAsset('./snd/walking_up_stairs.mp3'), pos.x, pos.y,
+                SIZE, SIZE);
               stationary.push(ladder);
               // If setting level to 0 then place DonJon at start,
               // or place at ladder if going down to next level
@@ -279,33 +286,7 @@ class Level {
    * Places the exit at the tile furthest from the start.
    */
   placeEnd(levelIndex) {
-    let values = [];
-    for (let i = 0; i < WORLD_HEIGHT; i++) {
-      values.push(new Array(WORLD_WIDTH).fill(0));
-    }
-    for (let j = this.tiles.length - 2; j >= 0; j--) {
-      for (let i = this.tiles[0].length - 2; i >= 0; i--) {
-        if (this.tiles[j][i] === 'F') {
-          values[j][i] = Math.max(
-            values[j][i - 1],
-            values[j][i + 1],
-            values[j - 1][i],
-            values[j + 1][i]
-          ) + 1;
-        }
-      }
-    }
-    let pos = { x: WORLD_WIDTH - 2, y: WORLD_HEIGHT -2 };
-    let distance = 0;
-    for (let j = this.tiles.length - 2; j >= 0; j--) {
-      for (let i = this.tiles[0].length - 2; i >= 0; i--) {
-        if (values[j][i] > distance) {
-          distance = values[j][i];
-          pos.x = i;
-          pos.y = j;
-        }
-      }
-    }
+    let pos = this.breadthFirst();
     for (let j = pos.y + 5; j >= pos.y - 5; j--) {
       for (let i = pos.x + 5; i >= pos.x - 5; i--) {
         this.floor.remove({ x: i, y: j });
@@ -316,6 +297,42 @@ class Level {
     } else {
       this.tiles[pos.y][pos.x] = 'Start';
     }
+  }
+
+  /*
+   * Returns the farthest point from the start.
+   */
+  breadthFirst() {
+    let queue = new LinkedQueue();
+    let visited = new LinkedList();
+    queue.enqueue(new Point(WORLD_WIDTH - 2, WORLD_HEIGHT - 2, 0));
+    let current = null;
+    while (queue.length > 0) {
+      current = queue.dequeue();
+      let j = current.y;
+      let i = current.x;
+      if (this.tiles[j - 1][i] === 'F' &&
+        !visited.contains(new Point(i, j - 1))) {
+        queue.enqueue(new Point(i, j - 1, current.depth + 1));
+        visited.add(new Point(i, j - 1));
+      }
+      if (this.tiles[j + 1][i] === 'F' &&
+        !visited.contains(new Point(i, j + 1))) {
+        queue.enqueue(new Point(i, j + 1, current.depth + 1));
+        visited.add(new Point(i, j + 1));
+      }
+      if (this.tiles[j][i - 1] === 'F' &&
+        !visited.contains(new Point(i - 1, j))) {
+        queue.enqueue(new Point(i - 1, j, current.depth + 1));
+        visited.add(new Point(i - 1, j));
+      }
+      if (this.tiles[j][i + 1] === 'F' &&
+        !visited.contains(new Point(i + 1, j))) {
+        queue.enqueue(new Point(i + 1, j, current.depth + 1));
+        visited.add(new Point(i + 1, j));
+      }
+    }
+    return current;
   }
 
   /*
@@ -345,5 +362,13 @@ class Level {
     this.tiles[pos.y][pos.x] = enemy.name;
     this.removeRadius(pos.x, pos.y, 2 + enemy.width);
     return true;
+  }
+}
+
+class Point {
+  constructor(x, y, depth) {
+    this.x = x;
+    this.y = y;
+    this.depth = depth;
   }
 }

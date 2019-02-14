@@ -113,10 +113,11 @@ class Wall extends Tile {
 }
 
 class Ladder extends Tile {
-  constructor(game, spritesheet, x, y, w, h) {
+  constructor(game, spritesheet, sound, x, y, w, h) {
     super(game, spritesheet, 128, 0, 64, 64, x, y, w, h);
     this.bounding = new Rectangle(x + 1, y + h/4, w - 2, h - h/4);
     this.left = false;
+    this.sound = sound;
   }
 
   update() {
@@ -128,6 +129,7 @@ class Ladder extends Tile {
       if (this.left) {
         console.log('hit ladder');
         if (this.game.world.level > 0) {
+          this.sound.play();
           this.game.setLevel(this.game.world.level - 1);
         }
         this.left = false;
@@ -144,9 +146,10 @@ class Ladder extends Tile {
 }
 
 class Hole extends Tile {
-  constructor(game, spritesheet, x, y, w, h) {
+  constructor(game, spritesheet, sound, x, y, w, h) {
     super(game, spritesheet, 192, 0, 64, 64, x, y, w, h);
     this.bounding = new Rectangle(x + 1, y + 1, w - 2, h - 1);
+    this.sound = sound;
     this.left = false;
   }
 
@@ -158,6 +161,7 @@ class Hole extends Tile {
       if (this.left) {
         console.log('hit hole');
         if (this.game.world.level < 12) {
+          this.sound.play();
           this.game.setLevel(this.game.world.level + 1);
         }
         this.left = false;
@@ -172,9 +176,10 @@ class Hole extends Tile {
 }
 
 class Powerup {
-  constructor(game, animation, x, y) {
+  constructor(game, animation, sound, x, y) {
     this.game = game;
     this.animation = animation;
+    this.sound = sound;
     this.x = x;
     this.y = y;
     this.bounding = new Rectangle(x, y, 32, 32);
@@ -188,6 +193,7 @@ class Powerup {
       if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
         && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
         this.collided = true;
+        this.sound.play();
       }
     }
   }
@@ -199,9 +205,9 @@ class Powerup {
 }
 
 class HealthPotion extends Powerup {
-  constructor(game, spritesheet, x, y) {
+  constructor(game, spritesheet, sound, x, y) {
     super(game, new Animation(spritesheet, 0, 0, 32, 32, 192, 0.167, 6, true),
-      x, y);
+      sound, x, y);
   }
 
   update() {
@@ -216,9 +222,9 @@ class HealthPotion extends Powerup {
 }
 
 class LifeBuff extends Powerup {
-  constructor(game, spritesheet, x, y) {
+  constructor(game, spritesheet, sound, x, y) {
     super(game, new Animation(spritesheet, 0, 0, 32, 32, 128, 0.25, 4, true),
-      x, y);
+      sound, x, y);
   }
 
   update() {
@@ -232,9 +238,9 @@ class LifeBuff extends Powerup {
 }
 
 class StrengthBuff extends Powerup {
-  constructor(game, spritesheet, x, y) {
-    super(game, new Animation(spritesheet, 0, 0, 32, 32, 64, 0.5, 2, true), x,
-      y);
+  constructor(game, spritesheet, sound, x, y) {
+    super(game, new Animation(spritesheet, 0, 0, 32, 32, 64, 0.5, 2, true),
+      sound, x, y);
   }
 
   update() {
@@ -392,7 +398,7 @@ class Beholder extends Enemy {
 const SPEED = 100;
 
 class DonJon {
-  constructor(gameEngine, spritesheet, x, y, w, h) {
+  constructor(gameEngine, spritesheet, sounds, x, y, w, h) {
     this.game = gameEngine;
     this.spritesheet = spritesheet;
     this.name = 'DonJon';
@@ -412,6 +418,9 @@ class DonJon {
     this.currentHP = 24;
     this.attackDamage = 1;
     this.direction = 'S';
+    this.soundWalk = sounds.walk;
+    this.soundWalk.loop = true;
+    this.soundSwing = sounds.swing;
     this.stateMachine = new StateMachine();
     this.stateMachine.addState('idleDownDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 0, 0, 32, 64, 2, 0.5, 2, true));
@@ -467,6 +476,10 @@ class DonJon {
           case 'S': this.stateMachine.setState('attackDownDJ'); break;
           case 'W': this.stateMachine.setState('attackLeftDJ'); break;
         }
+        this.soundSwing.play();
+        if (!this.soundWalk.paused) {
+          this.soundWalk.pause();
+        }
         mouseValue = false;
       }
     } else {
@@ -494,12 +507,15 @@ class DonJon {
       }
       if (!cursor.upPressed && !cursor.downPressed && !cursor.rightPressed &&
         !cursor.leftPressed) {
+        this.soundWalk.pause();
         switch(this.direction) {
           case 'N': this.stateMachine.setState('idleUpDJ'); break;
           case 'E': this.stateMachine.setState('idleRightDJ'); break;
           case 'S': this.stateMachine.setState('idleDownDJ'); break;
           case 'W': this.stateMachine.setState('idleLeftDJ'); break;
         }
+      } else if(this.soundWalk.paused) {
+        this.soundWalk.play();
       }
       this.bounding.x = this.x + 1;
       this.bounding.y = this.y + this.h / 2 + 1;
@@ -526,6 +542,16 @@ AM.queueDownload('./img/map.png');
 AM.queueDownload('./img/goblin.png');
 AM.queueDownload('./img/beholder.png');
 AM.queueDownload('./img/main_dude.png');
+AM.queueDownload('./snd/background.mp3');
+AM.queueDownload('./snd/walking_down_stairs.mp3');
+AM.queueDownload('./snd/walking_up_stairs.mp3');
+AM.queueDownload('./snd/footsteps.wav');
+AM.queueDownload('./snd/swing.wav');
+AM.queueDownload('./snd/life.wav');
+AM.queueDownload('./snd/health.wav');
+AM.queueDownload('./snd/strength.wav');
+
+
 
 AM.downloadAll(function () {
 
@@ -533,21 +559,23 @@ AM.downloadAll(function () {
   const ctx = canvas.getContext('2d');
 
   const gameEngine = new GameEngine();
-  gameEngine.init(ctx);
+  const background = AM.getAsset('./snd/background.mp3');
+  gameEngine.init(ctx, background);
 
   const powerups = [
     {
       name: 'pHealth',
       constructor: function (x, y) {
         return new HealthPotion(gameEngine, AM.getAsset('./img/potion.png'),
-          x, y);
+          AM.getAsset('./snd/health.wav'), x, y);
       },
       number: 1
     },
     {
       name: 'pLife',
       constructor: function (x, y) {
-        return new LifeBuff(gameEngine, AM.getAsset('./img/life.png'), x, y);
+        return new LifeBuff(gameEngine, AM.getAsset('./img/life.png'),
+          AM.getAsset('./snd/life.wav'), x, y);
       },
       number: 1
     },
@@ -555,7 +583,7 @@ AM.downloadAll(function () {
       name: 'pStrength',
       constructor: function (x, y) {
         return new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'),
-          x, y);
+          AM.getAsset('./snd/strength.wav'), x, y);
       },
       number: 1
     }
