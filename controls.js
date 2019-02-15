@@ -27,6 +27,8 @@ function keyDownHandler(e) {
     case "ArrowDown":
     case "Down":
     case "KeyS": cursor.downPressed = true; break;
+    // Space Pressed
+    case "Space": clickHandler(e); break;
     default: return;
   }
 }
