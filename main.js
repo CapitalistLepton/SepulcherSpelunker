@@ -275,7 +275,9 @@ class Enemy {
     this.y = y;
     this.w = w;
     this.h = h;
-
+    this.prevX = x;
+    this.prevY = y;
+    this.bounding = new Rectangle(x + w/8, y + h/2 + 1, w - w/4, h/2 - 2);
   }
 
   distance() {
@@ -285,6 +287,17 @@ class Enemy {
   }
 
   update() {
+    let that = this;
+    this.game.walls.iterate(function (wall) {
+      let box1 = that.bounding;
+      let box2 = wall.bounding;
+      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+        that.x = that.prevX;
+        that.y = that.prevY;
+
+      }
+    });
   }
   /**NEED TESTED ON OTHER CHARACTERS BESIDES GOB**
    * Pass in character used in state machine to be concat with state
@@ -300,7 +313,6 @@ class Enemy {
         this.stateMachine.setState('idleLeft' + name);
 
       } else if (this.game.player.x > this.x && yRange) {
-
         this.stateMachine.setState('idleRight' + name);
       } else if (this.game.player.y > this.y) {
         this.stateMachine.setState('idleDown' + name);
@@ -313,23 +325,28 @@ class Enemy {
 
       if(this.distance() < 50 && this.y < this.game.player.y){
         this.stateMachine.setState('runDown' + name);
+        this.prevY = this.y;
         this.y += this.game.clockTick * speed;
       } else if (this.game.player.x <= this.x  && yRange) {
 
         this.stateMachine.setState('runLeft' + name);
+        this.prevX = this.x;
         this.x -= this.game.clockTick * speed;
 
       } else if (this.game.player.x > this.x && yRange) {
 
         this.stateMachine.setState('runRight' + name);
+        this.prevX = this.x;
         this.x += this.game.clockTick * speed;
 
       } else if (this.game.player.y > this.y) {
         this.stateMachine.setState('runDown' + name);
+        this.prevY = this.y;
         this.y += this.game.clockTick * speed;
 
       } else if (this.game.player.y < this.y) {
         this.stateMachine.setState('runUp' + name);
+        this.prevY = this.y;
         this.y -= this.game.clockTick * speed;
       }
     }
@@ -366,20 +383,20 @@ class Goblin extends Enemy {
       new Animation(AM.getAsset('./img/goblin.png'), 0, 390, 32, 50, 2, 0.5, 2, true));
     this.stateMachine.addState('runRightGob',
       new Animation(AM.getAsset('./img/goblin.png'), 0, 455, 32, 50, 4, 0.25, 4, true));
-    
-    this.bounding = new Rectangle(x + w/8, y + h/2 + 1, w - w/4, h/2 - 2);
-
   }
 
-      update() {
-      this.movingEnemies('Gob', this.speed, this.attackDistance);
-    }
 
+  update() {
+      super.update();
+      this.movingEnemies('Gob', this.speed, this.attackDistance);
+
+    this.bounding.x = this.x + 1;
+    this.bounding.y = this.y + this.h / 2 + 1;
+    }
 
   draw(ctx) {
     this.stateMachine.draw(this.game.clockTick, ctx,
       this.x - this.game.camera.x, this.y - this.game.camera.y);
-
   }
 }
 
@@ -408,6 +425,7 @@ class Beholder extends Enemy {
     this.stateMachine.addState('attackRightBH', new Animation(
       AM.getAsset('./img/beholder.png'), 0, 450, 60, 65, 3, 0.333, 3, true));
   }
+
 
   update() {
     // TODO Check for collision
