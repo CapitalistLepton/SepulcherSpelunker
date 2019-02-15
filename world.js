@@ -55,16 +55,16 @@ class World {
           let pos = { x: i * SIZE, y: j * SIZE };
           switch (level.tiles[j][i]) {
             case 'W':
-              let wall = new Wall(game, this.AM.getAsset('./img/map.png'),
-                pos.x, pos.y, SIZE, SIZE);
+              let wall = new Wall(game, this.AM.getAsset('./img/map2.png'),
+                this.wallVersion(level, i, j), pos.x, pos.y, SIZE, SIZE);
               stationary.push(wall);
               levelWalls.add(wall);
               break;
             case 'F': tiles.push(new Dirt(game,
-              this.AM.getAsset('./img/map.png'), pos.x, pos.y, SIZE, SIZE));
+              this.AM.getAsset('./img/map2.png'), pos.x, pos.y, SIZE, SIZE));
               break;
             case 'End':
-              stationary.push(new Hole(game, this.AM.getAsset('./img/map.png'),
+              stationary.push(new Hole(game, this.AM.getAsset('./img/map2.png'),
                 this.AM.getAsset('./snd/walking_down_stairs.mp3'), pos.x, pos.y,
                 SIZE, SIZE));
               // Place at hole if going up to previous level
@@ -73,7 +73,7 @@ class World {
               }
               break;
             case 'Start':
-              let ladder = new Ladder(game, this.AM.getAsset('./img/map.png'),
+              let ladder = new Ladder(game, this.AM.getAsset('./img/map2.png'),
                 this.AM.getAsset('./snd/walking_up_stairs.mp3'), pos.x, pos.y,
                 SIZE, SIZE);
               stationary.push(ladder);
@@ -86,14 +86,14 @@ class World {
           }
           for (let k = 0; k < this.powerups.length; k++) {
             if (level.tiles[j][i] === this.powerups[k].name) {
-              tiles.push(new Dirt(game, this.AM.getAsset('./img/map.png'),
+              tiles.push(new Dirt(game, this.AM.getAsset('./img/map2.png'),
                 pos.x, pos.y, SIZE, SIZE));
               powerupEntities.push(this.powerups[k].constructor(pos.x, pos.y));
             }
           }
           for (let k = 0; k < this.enemies.length; k++) {
             if (level.tiles[j][i] === this.enemies[k].name) {
-              tiles.push(new Dirt(game, this.AM.getAsset('./img/map.png'),
+              tiles.push(new Dirt(game, this.AM.getAsset('./img/map2.png'),
                 pos.x, pos.y, SIZE, SIZE));
               enemyEntities.push(this.enemies[k].constructor(pos.x, pos.y));
             }
@@ -139,6 +139,49 @@ class World {
     game.setEntities(this.levelEntities[levelIndex]);
     game.walls = this.levelWalls[levelIndex];
     console.log('[World] Switched to level', levelIndex);
+  }
+
+  wallVersion(level, x, y) {
+    let left = level.tiles[y][x - 1] === 'W';
+    let right = level.tiles[y][x + 1] === 'W';
+    let top = level.tiles[y - 1][x] === 'W';
+    let bottom = y + 1 < WORLD_HEIGHT && level.tiles[y + 1][x] === 'W';
+    let version = 0;
+    if (!left && !right && !top && !bottom) {
+      version = 0;
+    } else if (top && !left && !right && !bottom) {
+      version = 1;
+    } else if (right && !left && !top && !bottom) {
+      version = 2;
+    } else if (bottom && !left && !right && !top) {
+      version = 3;
+    } else if (left && !bottom && !right && !top) {
+      version = 4;
+    } else if (top && right && !left && !bottom) {
+      version = 5;
+    } else if (bottom && right && !left && !top) {
+      version = 6;
+    } else if (bottom && left && !right && !top) {
+      version = 7;
+    } else if (top && left && !right && !bottom) {
+      version = 8;
+    } else if (bottom && top && !right && !left) {
+      version = 9;
+    } else if (right && left && !bottom && !top) {
+      version = 10;
+    } else if (right && left && top && !bottom) {
+      version = 11;
+    } else if (right && top && bottom && !left) {
+      version = 12;
+    } else if (right && left && bottom && !top) {
+      version = 13;
+    } else if (top && left && bottom && !right) {
+      version = 14;
+    } else if (right && left && bottom && top) {
+      version = 15;
+    }
+    console.log(left, right, top, bottom, version);
+    return version;
   }
 }
 

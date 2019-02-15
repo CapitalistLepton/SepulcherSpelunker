@@ -98,8 +98,9 @@ class Dirt extends Tile {
 }
 
 class Wall extends Tile {
-  constructor(game, spritesheet, x, y, w, h) {
-    super(game, spritesheet, 64, 0, 64, 64, x, y, w, h);
+  constructor(game, spritesheet, version, x, y, w, h) {
+    super(game, spritesheet, 64 * (version % 4),
+      64 * (1 + Math.floor(version / 4)), 64, 64, x, y, w, h);
     this.bounding = new Rectangle(x + 1, y + 1, w - 2, h - 2);
   }
 
@@ -147,7 +148,7 @@ class Ladder extends Tile {
 
 class Hole extends Tile {
   constructor(game, spritesheet, sound, x, y, w, h) {
-    super(game, spritesheet, 192, 0, 64, 64, x, y, w, h);
+    super(game, spritesheet, 64, 0, 64, 64, x, y, w, h);
     this.bounding = new Rectangle(x + 1, y + 1, w - 2, h - 1);
     this.sound = sound;
     this.left = false;
@@ -539,6 +540,7 @@ AM.queueDownload('./img/potion.png');
 AM.queueDownload('./img/life.png');
 AM.queueDownload('./img/strength.png');
 AM.queueDownload('./img/map.png');
+AM.queueDownload('./img/map2.png');
 AM.queueDownload('./img/goblin.png');
 AM.queueDownload('./img/beholder.png');
 AM.queueDownload('./img/main_dude.png');
@@ -557,6 +559,7 @@ AM.downloadAll(function () {
 
   const canvas = document.getElementById('gameWorld');
   const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false; // Turn off anti-aliasing
 
   const gameEngine = new GameEngine();
   const background = AM.getAsset('./snd/background.mp3');
