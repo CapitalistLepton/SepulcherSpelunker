@@ -501,17 +501,17 @@ class Beholder extends Enemy {
 
       if(this.game.player.x < this.x && yRange){
         this.stateMachine.setState('attackLeftBH');
-        this.shot.update('leftBHShot');
+        // this.shot.update('leftBHShot');
 
       } else if(this.game.player.x > this.x && yRange){
         this.stateMachine.setState('attackRightBH');
-        this.shot.update('rightBHShot');
+        // this.shot.update('rightBHShot');
       } else if(this.game.player.y > this.y){
         this.stateMachine.setState('attackDownBH');
-        this.shot.update('downBHShot');
+        // this.shot.update('downBHShot');
       } else if( this.game.player.y  < this.y) {
         this.stateMachine.setState('attackUpBH');
-        this.shot.update('upBHShot');
+        // this.shot.update('upBHShot');
       }
     }
   }
