@@ -1,7 +1,7 @@
 const WORLD_WIDTH = 40;
 const WORLD_HEIGHT = 60;
 
-const SIZE = 32;
+const SIZE = 64;
 
 class World {
   constructor(numLevels, powerups, enemies, AM) {
@@ -39,7 +39,7 @@ class World {
         swing: this.AM.getAsset('./snd/swing.wav')
       };
       don = new DonJon(game, this.AM.getAsset('./img/main_dude.png'), sounds,
-        0, 0, SIZE, SIZE * 2);
+        0, 0, SIZE / 2, SIZE);
       game.setPlayer(don);
     }
     if (!game.camera) {
@@ -69,7 +69,7 @@ class World {
                 SIZE, SIZE));
               // Place at hole if going up to previous level
               if (levelChange > 0) {
-                don.moveTo(pos.x, pos.y - SIZE);
+                don.moveTo(pos.x, pos.y - SIZE / 2);
               }
               break;
             case 'Start':
@@ -80,7 +80,7 @@ class World {
               // If setting level to 0 then place DonJon at start,
               // or place at ladder if going down to next level
               if (levelChange <= 0) {
-                don.moveTo(pos.x, pos.y - SIZE);
+                don.moveTo(pos.x, pos.y - SIZE / 2);
               }
               break;
           }
@@ -122,14 +122,14 @@ class World {
           switch (level.tiles[j][i]) {
             case 'End':
               if (levelChange > 0) {
-                don.moveTo(pos.x, pos.y - SIZE);
+                don.moveTo(pos.x, pos.y - SIZE / 2);
               }
               break;
             case 'Start':
               // If setting level to 0 then place DonJon at start,
               // or place at ladder if going down to next level
               if (levelChange <= 0) {
-                don.moveTo(pos.x, pos.y - SIZE);
+                don.moveTo(pos.x, pos.y - SIZE / 2);
               }
               break;
           }

@@ -183,7 +183,7 @@ class Powerup {
     this.sound = sound;
     this.x = x;
     this.y = y;
-    this.bounding = new Rectangle(x, y, 32, 32);
+    this.bounding = new Rectangle(x, y, SIZE / 2, SIZE / 2);
     this.collided = false;
   }
 
@@ -678,7 +678,7 @@ AM.downloadAll(function () {
       name: 'eGoblin',
       constructor: function (x, y) {
         return new Goblin(gameEngine, AM.getAsset('./img/goblin.png'), x, y,
-          SIZE, SIZE * 2);
+          SIZE / 2, SIZE);
       },
       width: 1,
       height: 2,
@@ -688,7 +688,7 @@ AM.downloadAll(function () {
       name: 'eBeholder',
       constructor: function (x, y) {
         return new Beholder(gameEngine, AM.getAsset('./img/beholder.png'), x, y,
-          SIZE * 2, SIZE * 2);
+          SIZE, SIZE);
       },
       width: 2,
       height: 2,
