@@ -1109,7 +1109,7 @@ AM.downloadAll(function () {
       },
       width: 2,
       height: 2,
-      number: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      number: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
 
   ];

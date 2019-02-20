@@ -314,7 +314,7 @@ class Level {
   placeRandomTile(tile) {
     let pos = this.floor.get(randInt(this.floor.length));
     this.tiles[pos.y][pos.x] = tile;
-    this.removeRadius(pos.x, pos.y, 3);
+    this.removeRadius(pos.x, pos.y, 1);
   }
 
   removeRadius(x, y, radius) {
@@ -403,7 +403,7 @@ class Level {
       }
     }  while (!validSpot);
     this.tiles[pos.y][pos.x] = enemy.name;
-    this.removeRadius(pos.x, pos.y, 2 + enemy.width);
+    this.removeRadius(pos.x, pos.y, 1 + enemy.width);
     return true;
   }
 }
