@@ -40,6 +40,8 @@ class GameEngine {
     this.stopped = true;
   }
 
+
+
   init(ctx, backgroundMusic) {
     this.ctx = ctx;
     this.backgroundMusic = backgroundMusic;
@@ -80,6 +82,9 @@ class GameEngine {
 
   setEntities(entityList) {
     this.entities = entityList;
+  }
+  addEntity(entity){
+    this.entities.add(entity);
   }
 
   setPlayer(entity) {
