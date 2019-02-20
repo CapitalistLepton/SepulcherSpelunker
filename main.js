@@ -284,6 +284,8 @@ class Enemy {
     this.h = h;
     this.prevX = x;
     this.prevY = y;
+	this.damage = 3;
+	this.isEnemy = true;
     this.bounding = new Rectangle(x + w/8, y + h/2 + 1, w - w/4, h/2 - 2);
   }
 
@@ -492,6 +494,8 @@ class DonJon {
     this.y = y;
     this.w = w;
     this.h = h;
+	this.god = false;
+	this.godTimer = 0;
     this.bounding = new Rectangle(x + w/8, y + h/2 + 1, w - w/4, h/2 - 2);
     this.prevX = x;
     this.prevY = y;
@@ -528,6 +532,31 @@ class DonJon {
       AM.getAsset('./img/main_dude.png'), 0, 640, 32, 64, 6, 0.167, 6, true));
     this.stateMachine.addState('attackRightDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 0, 704, 32, 64, 4, 0.25, 4, true));
+	  
+	this.stateMachine.addState('idleDownDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0, 0, 32, 64, 2, 0.5, 2, true));
+    this.stateMachine.addState('idleLeftDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0 ,64, 32, 64, 2, 0.5, 2, true));
+    this.stateMachine.addState('idleUpDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0, 128, 32, 64, 2, 0.5, 2, true));
+    this.stateMachine.addState('idleRightDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0, 192, 32, 64, 2, 0.5, 2, true));
+    this.stateMachine.addState('runDownDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0, 256, 32, 64, 2, 0.167, 2, true));
+    this.stateMachine.addState('runLeftDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0 ,320, 32, 64, 6, 0.167, 6, true));
+    this.stateMachine.addState('runUpDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0 ,384, 32, 64, 2, 0.167, 2, true));
+    this.stateMachine.addState('runRightDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0, 448, 32, 64, 6, 0.167, 6, true));
+    this.stateMachine.addState('attackDownDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0, 512, 32, 64, 5, 0.2, 5, true));
+    this.stateMachine.addState('attackLeftDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0, 576, 32, 64, 4, 0.25, 4, true));
+    this.stateMachine.addState('attackUpDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0, 640, 32, 64, 6, 0.167, 6, true));
+    this.stateMachine.addState('attackRightDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 0, 704, 32, 64, 4, 0.25, 4, true));
   }
 
   moveTo(x, y) {
@@ -541,6 +570,34 @@ class DonJon {
 
   update() {
     let that = this;
+	console.log(that.currentHP);
+	this.game.entities.iterate(function (enemy) {
+		if(enemy.isEnemy) {
+		  let box1 = that.bounding;
+		  let box2 = enemy.bounding;
+		  if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+			&& box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
+			&& !that.god) {
+			that.currentHP -= enemy.damage;
+			if (enemy.x - enemy.prevX == 0 && enemy.y - enemy.prevY == 0) {
+				that.x -= 20*(that.x - that.prevX);
+				that.y -= 20*(that.y - that.prevY);
+			}
+			else {
+				that.x += 20*(enemy.x - enemy.prevX);
+				that.y += 20*(enemy.y - enemy.prevY);
+			}
+			that.god = true;
+			that.godTimer = 5;
+		  }
+		}
+    });
+	if (that.god) {
+		that.godTimer -= that.game.clockTick;
+		if (that.godTimer <= 0) {
+			that.god = false;
+		}
+	}
     this.game.walls.iterate(function (wall) {
       let box1 = that.bounding;
       let box2 = wall.bounding;
@@ -552,12 +609,21 @@ class DonJon {
     });
     if (mouseCooldown) {
       if (mouseValue) {
-        switch(this.direction) {
-          case 'N': this.stateMachine.setState('attackUpDJ'); break;
-          case 'E': this.stateMachine.setState('attackRightDJ'); break;
-          case 'S': this.stateMachine.setState('attackDownDJ'); break;
-          case 'W': this.stateMachine.setState('attackLeftDJ'); break;
-        }
+		if(this.god) {
+			switch(this.direction) {
+			  case 'N': this.stateMachine.setState('attackUpDJG'); break;
+			  case 'E': this.stateMachine.setState('attackRightDJG'); break;
+			  case 'S': this.stateMachine.setState('attackDownDJG'); break;
+			  case 'W': this.stateMachine.setState('attackLeftDJG'); break;
+			}
+		} else {
+			switch(this.direction) {
+			  case 'N': this.stateMachine.setState('attackUpDJ'); break;
+			  case 'E': this.stateMachine.setState('attackRightDJ'); break;
+			  case 'S': this.stateMachine.setState('attackDownDJ'); break;
+			  case 'W': this.stateMachine.setState('attackLeftDJ'); break;
+			}
+		}
         this.soundSwing.play();
         if (!this.soundWalk.paused) {
           this.soundWalk.pause();
@@ -566,23 +632,39 @@ class DonJon {
       }
     } else {
       if (cursor.rightPressed) {
-        this.stateMachine.setState('runRightDJ');
+		if(this.god) {
+			this.stateMachine.setState('runRightDJG');
+		} else {
+			this.stateMachine.setState('runRightDJ');
+		}
         this.direction = 'E';
         this.prevX = this.x;
         this.x += this.game.clockTick * SPEED;
       } else if (cursor.leftPressed) {
-        this.stateMachine.setState('runLeftDJ');
+		if(this.god) {
+			this.stateMachine.setState('runLeftDJG');
+		} else {
+			this.stateMachine.setState('runLeftDJ');
+		}
         this.direction = 'W';
         this.prevX = this.x;
         this.x -= this.game.clockTick * SPEED;
       }
       if (cursor.upPressed) {
-        this.stateMachine.setState('runUpDJ');
+		if(this.god) {
+			this.stateMachine.setState('runUpDJG');
+		} else {
+			this.stateMachine.setState('runUpDJ');
+		}
         this.direction = 'N';
         this.prevY = this.y;
         this.y -= this.game.clockTick * SPEED;
       } else if (cursor.downPressed) {
-        this.stateMachine.setState('runDownDJ');
+		if(this.god) {
+			this.stateMachine.setState('runDownDJG');
+		} else {
+			this.stateMachine.setState('runDownDJ');
+		}
         this.direction = 'S';
         this.prevY = this.y;
         this.y += this.game.clockTick * SPEED;
@@ -590,12 +672,21 @@ class DonJon {
       if (!cursor.upPressed && !cursor.downPressed && !cursor.rightPressed &&
         !cursor.leftPressed) {
         this.soundWalk.pause();
-        switch(this.direction) {
-          case 'N': this.stateMachine.setState('idleUpDJ'); break;
-          case 'E': this.stateMachine.setState('idleRightDJ'); break;
-          case 'S': this.stateMachine.setState('idleDownDJ'); break;
-          case 'W': this.stateMachine.setState('idleLeftDJ'); break;
-        }
+		if(this.god) {
+			switch(this.direction) {
+			  case 'N': this.stateMachine.setState('idleUpDJG'); break;
+			  case 'E': this.stateMachine.setState('idleRightDJG'); break;
+			  case 'S': this.stateMachine.setState('idleDownDJG'); break;
+			  case 'W': this.stateMachine.setState('idleLeftDJG'); break;
+			}
+		} else {
+			switch(this.direction) {
+			  case 'N': this.stateMachine.setState('idleUpDJ'); break;
+			  case 'E': this.stateMachine.setState('idleRightDJ'); break;
+			  case 'S': this.stateMachine.setState('idleDownDJ'); break;
+			  case 'W': this.stateMachine.setState('idleLeftDJ'); break;
+			}
+		}
       } else if(this.soundWalk.paused) {
         this.soundWalk.play();
       }
@@ -625,6 +716,7 @@ AM.queueDownload('./img/map2.png');
 AM.queueDownload('./img/goblin.png');
 AM.queueDownload('./img/beholder.png');
 AM.queueDownload('./img/main_dude.png');
+AM.queueDownload('./img/main_dude_god.png');
 AM.queueDownload('./snd/background.mp3');
 AM.queueDownload('./snd/walking_down_stairs.mp3');
 AM.queueDownload('./snd/walking_up_stairs.mp3');
