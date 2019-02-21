@@ -271,23 +271,21 @@ class Camera {
 }
 
 class Enemy {
-  constructor(game, statemachine, sx, sy, sw, sh, x, y, w, h) {
+  constructor(game, statemachine, x, y, w, h) {
     this.game = game;
-    this.stateMachine = new StateMachine();
-    this.sx = sx;
-    this.sy = sy;
-    this.sw = sw;
-    this.sh = sh;
+    this.stateMachine = statemachine;
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
     this.prevX = x;
     this.prevY = y;
-	this.damage = 3;
-	this.isEnemy = true;
-    this.bounding = new Rectangle(x + w/8, y + h/2 + 1, w - w/4, h/2 - 2);
-    this.collision = false;
+    this.damage = 3;
+    this.isEnemy = true;
+    this.canMove = true;
+    this.bounding = new Rectangle(x, y, w, h);
+    this.boundingXOffset = 0;
+    this.boundingYOffset = 0;
     this.speed = SPEED * 0.75;
     this.attackDistance = 200;
   }
@@ -298,235 +296,142 @@ class Enemy {
     return Math.sqrt(difX * difX + difY * difY);
   }
 
-  random(max){
-    return Math.floor(Math.random() * Math.floor(max));
-  }
-
-  getCollision(){
-    return this.collision;
-  }
-
-  setCollision(value){
-    return this.collision = value;
-  }
-
   update() {
+    // Check for collision with walls
     let that = this;
     this.game.walls.iterate(function (wall) {
       let box1 = that.bounding;
       let box2 = wall.bounding;
       if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
         && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-        that.collision = true;
         that.x = that.prevX;
         that.y = that.prevY;
       }
     });
-  }
+    // Check for collision with DonJon
+//    let box1 = this.bounding;
+//    let box2 = this.game.player.bounding;
+//    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+//      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+//      this.x = this.prevX;
+//      this.y = this.prevY;
+//    }
+    // Move towards player if in range
 
-  /**NEED TESTED ON OTHER CHARACTERS BESIDES GOB**
-   * Pass in character used in state machine to be concat with state
-   * and the desired speed of the character.
-   */
-  movingEnemies(name, speed, attackDistance){
+    // Is the player within the yRange of this enemy
     let yRange = Math.abs(this.game.player.y) + 30 >= Math.abs(this.y)
       && Math.abs(this.game.player.y) - 30 < Math.abs(this.y);
+    let distance = cartesianDistance(this.game.player, this);
 
-    if( this.distance() > attackDistance ) {
+    if (distance > this.attackDistance) {
       if (this.game.player.x < this.x && yRange) {
-        this.stateMachine.setState('idleLeft' + name);
-
+        this.stateMachine.setState('idleLeft');
       } else if (this.game.player.x > this.x && yRange) {
-        this.stateMachine.setState('idleRight' + name);
+        this.stateMachine.setState('idleRight');
       } else if (this.game.player.y > this.y) {
-        this.stateMachine.setState('idleDown' + name);
-
+        this.stateMachine.setState('idleDown');
       } else if (this.game.player.y < this.y) {
-        this.stateMachine.setState('idleUp' + name);
-
+        this.stateMachine.setState('idleUp');
       }
-    } else if( this.distance() <= attackDistance) {
-
-      if(this.distance() < 50 && this.y < this.game.player.y){
-        this.stateMachine.setState('runDown' + name);
+    } else if (this.canMove && distance <= this.attackDistance) {
+      if (distance < 50 && this.y < this.game.player.y){
+        this.stateMachine.setState('runDown');
         this.prevY = this.y;
-        this.y += this.game.clockTick * speed;
-      } else if (this.game.player.x <= this.x  && yRange) {
-
-        this.stateMachine.setState('runLeft' + name);
+        this.y += this.game.clockTick * this.speed;
+      } else if (this.game.player.x <= this.x && yRange) {
+        this.stateMachine.setState('runLeft');
         this.prevX = this.x;
-        this.x -= this.game.clockTick * speed;
-
+        this.x -= this.game.clockTick * this.speed;
       } else if (this.game.player.x > this.x && yRange) {
-
-        this.stateMachine.setState('runRight' + name);
+        this.stateMachine.setState('runRight');
         this.prevX = this.x;
-        this.x += this.game.clockTick * speed;
-
+        this.x += this.game.clockTick * this.speed;
       } else if (this.game.player.y > this.y) {
-        this.stateMachine.setState('runDown' + name);
+        this.stateMachine.setState('runDown');
         this.prevY = this.y;
-        this.y += this.game.clockTick * speed;
-
+        this.y += this.game.clockTick * this.speed;
       } else if (this.game.player.y < this.y) {
-        this.stateMachine.setState('runUp' + name);
+        this.stateMachine.setState('runUp');
         this.prevY = this.y;
-        this.y -= this.game.clockTick * speed;
+        this.y -= this.game.clockTick * this.speed;
       }
     }
+    this.bounding.x = this.x + this.boundingXOffset;
+    this.bounding.y = this.y + this.boundingYOffset;
   }
 
   draw(ctx) {
     this.stateMachine.draw(this.game.clockTick, ctx,
       this.x - this.game.camera.x, this.y - this.game.camera.y);
+    if (this.game.collisionDebug) {
+      let prevStyle = ctx.strokeStyle;
+      ctx.strokeStyle = 'blue';
+      ctx.strokeRect(this.bounding.x - this.game.camera.x,
+        this.bounding.y - this.game.camera.y, this.bounding.w, this.bounding.h);
+      ctx.strokeStyle = prevStyle;
+    }
   }
 }
 
 class Goblin extends Enemy {
-  constructor(game, statemachine, x, y, w, h) {
-    super(game, statemachine, 0, 0, 32, 64, x, y, w, h);
-    this.stateMachine = new StateMachine();
+  constructor(game, spritesheet, x, y, w, h) {
+    let statemachine = new StateMachine();
+    super(game, statemachine, x, y, w, h);
     // this.speed = SPEED * 0.75;
     // this.attackDistance = 200;
-    /**
-     * Goblin States
-     */
-    this.stateMachine.addState('idleDownGob',
-      new Animation(AM.getAsset('./img/goblin.png'), 0, 0, 32, 50, 4, 0.25, 4, true));
-    this.stateMachine.addState('idleLeftGob',
-      new Animation(AM.getAsset('./img/goblin.png'), 0, 65, 32, 50, 2, 0.5, 2, true));
-    this.stateMachine.addState('idleUpGob',
-      new Animation(AM.getAsset('./img/goblin.png'), 0, 130, 32, 50, 2, 0.5, 2, true));
-    this.stateMachine.addState('idleRightGob',
-      new Animation(AM.getAsset('./img/goblin.png'), 0, 195, 32, 50, 3, 0.333, 3, true));
-    this.stateMachine.addState('runDownGob',
-      new Animation(AM.getAsset('./img/goblin.png'), 0, 260, 32, 50, 2, 0.5, 2, true));
-    this.stateMachine.addState('runLeftGob',
-      new Animation(AM.getAsset('./img/goblin.png'), 0, 325, 32, 50, 4, 0.25, 4, true));
-    this.stateMachine.addState('runUpGob',
-      new Animation(AM.getAsset('./img/goblin.png'), 0, 390, 32, 50, 2, 0.5, 2, true));
-    this.stateMachine.addState('runRightGob',
-      new Animation(AM.getAsset('./img/goblin.png'), 0, 455, 32, 50, 4, 0.25, 4, true));
-  }
-
-  update() {
-    super.update();
-    this.movingEnemies('Gob', this.speed, this.attackDistance);
-
-    // if(this.getCollision()) {
-    //     console.log('inside collision check');
-    //   setTimeout( () => {
-    //     this.setCollision(false);
-    //   }, 4000);
-    //
-    //
-    // let random  = this.random(3);
-    // switch(random) {
-    //   case 0:
-    //     this.stateMachine.setState('runUpGob');
-    //     break;
-    //   case 1:
-    //     this.stateMachine.setState('runDownGob');
-    //     break;
-    //   case 2:
-    //     this.stateMachine.setState('runRightGob');
-    //     break;
-    //   case 3:
-    //     this.stateMachine.setState('runLeftGob');
-    //     break;
-    // }
-
-      // }
-
-
-    this.bounding.x = this.x + 1;
-    this.bounding.y = this.y + this.h / 2 + 1;
-    }
-
-
-  draw(ctx) {
-    this.stateMachine.draw(this.game.clockTick, ctx,
-      this.x - this.game.camera.x, this.y - this.game.camera.y);
+    this.bounding = new Rectangle(x + 1, y + 16, 30, 40);
+    this.boundingXOffset = 1;
+    this.boundingYOffest = 16;
+    statemachine.addState('idleDown',
+      new Animation(spritesheet, 0, 0, 32, 64, 4, 0.25, 4, true));
+    statemachine.addState('idleLeft',
+      new Animation(spritesheet, 0, 64, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleUp',
+      new Animation(spritesheet, 0, 128, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleRight',
+      new Animation(spritesheet, 0, 192, 32, 64, 3, 0.333, 3, true));
+    statemachine.addState('runDown',
+      new Animation(spritesheet, 0, 256, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('runLeft',
+      new Animation(spritesheet, 0, 320, 32, 64, 4, 0.25, 4, true));
+    statemachine.addState('runUp',
+      new Animation(spritesheet, 0, 384, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('runRight',
+      new Animation(spritesheet, 0, 448, 32, 64, 4, 0.25, 4, true));
   }
 }
 
 class Beholder extends Enemy {
-  constructor(game, statemachine, x, y, w, h) {
-    super(game, statemachine, 0, 0, 64, 64, x, y, w, h);
-    this.stateMachine = new StateMachine();
+  constructor(game, spritesheet, x, y, w, h) {
+    let statemachine = new StateMachine();
+    super(game, statemachine, x, y, w, h);
     this.attackDistance = 100;
-    /**
-     * BEHOLDER states
-     */
-    this.stateMachine.addState('idleDownBH', new Animation(
-      AM.getAsset('./img/beholder.png'), 0, 0, 65, 65, 2, 0.5, 2, true));
-    this.stateMachine.addState('idleLeftBH', new Animation(
-      AM.getAsset('./img/beholder.png'), 0, 65, 65, 65, 2, 0.5, 2, true));
-    this.stateMachine.addState('idleUpBH', new Animation(
-      AM.getAsset('./img/beholder.png'), 0, 130, 65, 65, 2, 0.5, 2, true));
-    this.stateMachine.addState('idleRightBH', new Animation(
-      AM.getAsset('./img/beholder.png'), 0, 190, 60, 65, 2, 0.5, 2, true));
-    this.stateMachine.addState('attackDownBH', new Animation(
-      AM.getAsset('./img/beholder.png'), 0, 255, 63, 65, 3, 0.333, 3, true));
-    this.stateMachine.addState('attackLeftBH', new Animation(
-      AM.getAsset('./img/beholder.png'), 0, 315, 63, 65, 3, 0.333, 3, true));
-    this.stateMachine.addState('attackUpBH', new Animation(
-      AM.getAsset('./img/beholder.png'), 0, 385, 63, 65, 2, 0.5, 2, true));
-    this.stateMachine.addState('attackRightBH', new Animation(
-      AM.getAsset('./img/beholder.png'), 0, 450, 60, 65, 3, 0.333, 3, true));
-
-    // this.shot = new Bhshot(this.game, AM.getAsset('./img/shot.png'), this.x, this.y, this.w, this.h);
-    // this.game.addEntity(this.shot);
-  }
-
-  update() {
-    // TODO Check for collision
-    let yRange = Math.abs(this.game.player.y) + 50 >= Math.abs(this.y)
-      && Math.abs(this.game.player.y) - 50 <= Math.abs(this.y);
-
-    if(this.distance() > this.attackDistance){
-
-      if(this.game.player.x < this.x && yRange){
-        this.stateMachine.setState('idleLeftBH');
-
-      } else if(this.game.player.x > this.x && yRange){
-        this.stateMachine.setState('idleRightBH');
-
-      } else if(this.game.player.y > this.y){
-        this.stateMachine.setState('idleDownBH');
-
-      } else if( this.game.player.y  < this.y) {
-        this.stateMachine.setState('idleUpBH');
-      }
-
-    } else if ( this.distance() < this.attackDistance) {
-
-      if(this.game.player.x < this.x && yRange){
-        this.stateMachine.setState('attackLeftBH');
-        // this.shot.update('leftBHShot');
-
-      } else if(this.game.player.x > this.x && yRange){
-        this.stateMachine.setState('attackRightBH');
-        // this.shot.update('rightBHShot');
-      } else if(this.game.player.y > this.y){
-        this.stateMachine.setState('attackDownBH');
-        // this.shot.update('downBHShot');
-      } else if( this.game.player.y  < this.y) {
-        this.stateMachine.setState('attackUpBH');
-        // this.shot.update('upBHShot');
-      }
-    }
-  }
-
-  draw(ctx){
-    this.stateMachine.draw(this.game.clockTick, ctx,
-      this.x - this.game.camera.x, this.y - this.game.camera.y);
+    this.canMove = false;
+    this.bounding = new Rectangle(x + 1, y + 1, 61, 57);
+    this.boundingXOffset = 1;
+    this.boundingYOffset = 1;
+    statemachine.addState('idleDown', new Animation(
+      spritesheet, 0, 0, 64, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleLeft', new Animation(
+      spritesheet, 0, 64, 64, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleUp', new Animation(
+      spritesheet, 0, 128, 64, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleRight', new Animation(
+      spritesheet, 0, 192, 64, 64, 2, 0.5, 2, true));
+    statemachine.addState('attackDown', new Animation(
+      spritesheet, 0, 256, 64, 64, 3, 0.333, 3, true));
+    statemachine.addState('attackLeft', new Animation(
+      spritesheet, 0, 320, 64, 64, 3, 0.333, 3, true));
+    statemachine.addState('attackUp', new Animation(
+      spritesheet, 0, 384, 64, 64, 2, 0.5, 2, true));
+    statemachine.addState('attackRight', new Animation(
+      spritesheet, 0, 448, 64, 64, 3, 0.333, 3, true));
   }
 }
 
 class Bhshot extends Enemy {
   constructor(game, statemachine, x, y, w, h) {
-    super(game, statemachine, 0, 0, 64, 64, x, y, w, h);
+    super(game, statemachine, x, y, w, h);
     this.stateMachine = new StateMachine();
     // console.log('Shot created and ready');
     this.speed = 150;
@@ -575,161 +480,99 @@ class Bhshot extends Enemy {
 }
 
 class Wraith extends Enemy {
-  constructor(game, statemachine, x, y, w, h) {
-    super(game, statemachine, 0, 0, 32, 64, x, y, w, h);
+  constructor(game, spritesheet, x, y, w, h) {
+    let statemachine = new StateMachine();
+    super(game, statemachine, x, y, w, h);
     this.attackDistance = 150;
-    this.stateMachine = new StateMachine();
-    this.stateMachine.addState('southWraith',
-      new Animation(AM.getAsset('./img/wraith.png'), 0, 0, 32, 60, 2, .5, 2, true));
-    this.stateMachine.addState('westWraith',
-      new Animation(AM.getAsset('./img/wraith.png'), 0, 60, 32, 60, 2, .5, 2, true));
-    this.stateMachine.addState('northWraith',
-      new Animation(AM.getAsset('./img/wraith.png'), 0, 120, 32, 60, 2, .5, 2, true));
-    this.stateMachine.addState('eastWraith',
-      new Animation(AM.getAsset('./img/wraith.png'), 0, 180, 32, 60, 2, .5, 2, true));
-  }
-   update() {
-     let yRange = Math.abs(this.game.player.y) + 30 >= Math.abs(this.y)
-       && Math.abs(this.game.player.y) - 30 < Math.abs(this.y);
-
-     if (this.distance() > this.attackDistance) {
-       if (this.game.player.x < this.x && yRange) {
-         this.stateMachine.setState('westWraith');
-
-       } else if (this.game.player.x > this.x && yRange) {
-         this.stateMachine.setState('eastWraith');
-       } else if (this.game.player.y > this.y) {
-         this.stateMachine.setState('southWraith');
-
-       } else if (this.game.player.y < this.y) {
-         this.stateMachine.setState('northWraith');
-
-       }
-     } else if (this.distance() <= this.attackDistance) {
-
-       if (this.distance() < 50 && this.y < this.game.player.y) {
-         this.stateMachine.setState('southWraith');
-         this.prevY = this.y;
-         this.y += this.game.clockTick * this.speed;
-       } else if (this.game.player.x <= this.x && yRange) {
-
-         this.stateMachine.setState('westWraith');
-         this.prevX = this.x;
-         this.x -= this.game.clockTick * this.speed;
-
-       } else if (this.game.player.x > this.x && yRange) {
-
-         this.stateMachine.setState('eastWraith');
-         this.prevX = this.x;
-         this.x += this.game.clockTick * this.speed;
-
-       } else if (this.game.player.y > this.y) {
-         this.stateMachine.setState('southWraith');
-         this.prevY = this.y;
-         this.y += this.game.clockTick * this.speed;
-
-       } else if (this.game.player.y < this.y) {
-         this.stateMachine.setState('northWraith');
-         this.prevY = this.y;
-         this.y -= this.game.clockTick * this.speed;
-       }
-     }
-   }
-
-   draw(ctx){
-    this.stateMachine.draw(this.game.clockTick,
-      ctx, this.x - this.game.camera.x, this.y - this.game.camera.y);
+    this.bounding = new Rectangle(x + 1, y + 1, 30, 44);
+    this.boundingXOffset = 1;
+    this.boundingYOffset = 1;
+    statemachine.addState('idleDown', new Animation(spritesheet, 0, 0, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('runDown', new Animation(spritesheet, 0, 0, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('idleLeft', new Animation(spritesheet, 0, 64, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('runLeft', new Animation(spritesheet, 0, 64, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('idleUp', new Animation(spritesheet, 0, 128, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('runUp', new Animation(spritesheet, 0, 128, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('idleRight', new Animation(spritesheet, 0, 192, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('runRight', new Animation(spritesheet, 0, 192, 32, 64,
+      2, 0.5, 2, true));
   }
 }
 
 class Gargoyle extends Enemy {
-  constructor(game, statemachine, x, y, w, h) {
-    super(game, statemachine, 0, 0, 32, 48, x, y, w, h);
-    this.stateMachine = new StateMachine();
+  constructor(game, spritesheet, x, y, w, h) {
+    let statemachine = new StateMachine();
+    super(game, statemachine, x, y, w, h);
     this.attackDistance = 100;
-    this.stateMachine.addState('idleSouthGarg',
-      new Animation(AM.getAsset('./img/gargoyle.png'), 0, 0, 32, 48, 1, 1, 1, true));
-    this.stateMachine.addState('idleWestGarg',
-      new Animation(AM.getAsset('./img/gargoyle.png'), 0, 65, 32, 48, 1, 1, 1, true));
-    this.stateMachine.addState('idleNorthGarg',
-      new Animation(AM.getAsset('./img/gargoyle.png'), 0, 125, 32, 48, 1, 1, 1, true));
-    this.stateMachine.addState('idleEastGarg',
-      new Animation(AM.getAsset('./img/gargoyle.png'), 0, 192, 32, 48, 1, 1, 1, true));
-    this.stateMachine.addState('attackSouthGarg',
-      new Animation(AM.getAsset('./img/gargoyle.png'), 0, 240, 32, 48, 2, 0.5, 2, true));
-    this.stateMachine.addState('attackWestGarg',
-      new Animation(AM.getAsset('./img/gargoyle.png'), 0, 320, 32, 48, 3, 0.333, 3, true));
-    this.stateMachine.addState('attackNorthGarg',
-      new Animation(AM.getAsset('./img/gargoyle.png'), 0, 380, 32, 48, 2, 0.5, 2, true));
-    this.stateMachine.addState('attackEastGarg',
-      new Animation(AM.getAsset('./img/gargoyle.png'), 0, 440, 32, 48, 3, 0.333, 3, true));
+    this.bounding = new Rectangle(x + 4, y + 2, 25, 45);
+    this.boundingXOffset = 4;
+    this.boundingYOffest = 2;
+    this.canMove = false;
+    statemachine.addState('idleDown',
+      new Animation(spritesheet, 0, 0, 32, 64, 1, 1, 1, true));
+    statemachine.addState('idleLeft',
+      new Animation(spritesheet, 0, 64, 32, 64, 1, 1, 1, true));
+    statemachine.addState('idleUp',
+      new Animation(spritesheet, 0, 128, 32, 64, 1, 1, 1, true));
+    statemachine.addState('idleRight',
+      new Animation(spritesheet, 0, 192, 32, 64, 1, 1, 1, true));
+    statemachine.addState('attackDown',
+      new Animation(spritesheet, 0, 256, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('attackLeft',
+      new Animation(spritesheet, 0, 320, 32, 64, 3, 0.333, 3, true));
+    statemachine.addState('attackUp',
+      new Animation(spritesheet, 0, 384, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('attackRight',
+      new Animation(spritesheet, 0, 448, 32, 64, 3, 0.333, 3, true));
   }
 
   update() {
-    // TODO Check for collision
     super.update();
-    let yRange = Math.abs(this.game.player.y) + 50 >= Math.abs(this.y)
-      && Math.abs(this.game.player.y) - 50 <= Math.abs(this.y);
-
-    if(this.distance() > this.attackDistance){
-
-      if(this.game.player.x < this.x && yRange){
-        this.stateMachine.setState('idleWestGarg');
-
-      } else if(this.game.player.x > this.x && yRange){
-        this.stateMachine.setState('idleEastGarg');
-
-      } else if(this.game.player.y > this.y){
-        this.stateMachine.setState('idleSouthGarg');
-
-      } else if( this.game.player.y  < this.y) {
-        this.stateMachine.setState('idleNorthGarg');
-      }
-
-    } else if ( this.distance() <= this.attackDistance) {
-      if (this.distance() < 50 && this.y < this.game.player.y) {
-        this.stateMachine.setState('attackSouthGarg');
-      } else
-      if(this.game.player.x < this.x && yRange){
-        this.stateMachine.setState('attackWestGarg');
-
-      } else if(this.game.player.x > this.x && yRange){
-        this.stateMachine.setState('attackEastGarg');
-
-      } else if(this.game.player.y > this.y){
-        this.stateMachine.setState('attackSouthGarg');
-
-      } else if( this.game.player.y  < this.y) {
-        this.stateMachine.setState('attackNorthGarg');
-
+    let distance = cartesianDistance(this, this.game.player);
+    if (distance <= this.attackDistance) {
+      if (this.game.player.y < this.y) {
+        this.stateMachine.setState('attackUp');
+      } else if (this.game.player.x < this.x){
+        this.stateMachine.setState('attackLeft');
+      } else if (this.game.player.x > this.x){
+        this.stateMachine.setState('attackRight');
+      } else if (this.game.player.y > this.y){
+        this.stateMachine.setState('attackDown');
       }
     }
-  }
-
-  draw(ctx){
-    this.stateMachine.draw(this.game.clockTick,
-      ctx, this.x - this.game.camera.x, this.y - this.game.camera.y);
   }
 }
 
 class Dragon extends Enemy {
-  constructor(game, statemachine, x, y, w, h) {
-    super(game, statemachine, 0, 0, 250, 200, x, y, w, h);
-    this.stateMachine = new StateMachine();
-    this.stateMachine.addState('idleDragon',
-      new Animation(AM.getAsset('./img/dragon.png'), 0, 0, 255, 200, 2, 0.5, 2, true));
-    this.stateMachine.addState('jumpDragon',
-      new Animation(AM.getAsset('./img/dragon.png'), 0, 260, 255, 200, 6, 0.166, 6, true));
-    this.stateMachine.addState('stompLeftDragon',
-      new Animation(AM.getAsset('./img/dragon.png'), 0, 520, 255, 200, 4, 0.25, 4, true));
-    this.stateMachine.addState('stompRightDragon',
-      new Animation(AM.getAsset('./img/dragon.png'), 0, 780, 255, 200, 4, 0.25, 4, true));
-    this.stateMachine.addState('readyFireDragon',
-      new Animation(AM.getAsset('./img/dragon.png'), 0, 1040, 255, 200, 3, 0.333, 3, true));
-    this.stateMachine.addState('headWestDragon',
-      new Animation(AM.getAsset('./img/dragon.png'), 0, 1300, 255, 200, 3, 0.333, 3, true));
-    this.stateMachine.addState('headEastDragon',
-      new Animation(AM.getAsset('./img/dragon.png'), 0, 1540, 255, 200, 3, 0.333, 3, true));
+  constructor(game, spritesheet, x, y, w, h) {
+    let statemachine = new StateMachine();
+    // adjust x and y to center dragon in final level
+    super(game, statemachine, x - 75, y - 22, w, h);
+    this.canMove = false;
+    this.bounding = new Rectangle(x - 11, y - 22, 233, 184);
+    this.boundingXOffset = 11;
+    this.boundingYOffset = 22;
+    statemachine.addState('idleDragon',
+      new Animation(spritesheet, 0, 0, 256, 256, 2, 0.5, 2, true));
+    statemachine.addState('jumpDragon',
+      new Animation(spritesheet, 0, 256, 256, 256, 6, 0.166, 6, true));
+    statemachine.addState('stompLeftDragon',
+      new Animation(spritesheet, 0, 512, 256, 256, 4, 0.25, 4, true));
+    statemachine.addState('stompRightDragon',
+      new Animation(spritesheet, 0, 768, 256, 256, 4, 0.25, 4, true));
+    statemachine.addState('readyFireDragon',
+      new Animation(spritesheet, 0, 1024, 256, 256, 3, 0.333, 3, true));
+    statemachine.addState('headWestDragon',
+      new Animation(spritesheet, 0, 1280, 256, 256, 3, 0.333, 3, true));
+    statemachine.addState('headEastDragon',
+      new Animation(spritesheet, 0, 1536, 256, 256, 3, 0.333, 3, true));
     this.stateMap = new Map();
     this.stateMap.set(1, 'jumpDragon');
     this.stateMap.set(2, 'stompLeftDragon');
@@ -739,11 +582,9 @@ class Dragon extends Enemy {
     this.stateMap.set(6, 'headEastDragon');
   }
 
-
   getStateDragon(){
-    return this.stateMachine.setState(this.stateMap.get(this.random(6)));
+    return this.stateMachine.setState(this.stateMap.get(randInt(6)));
   }
-
 
   update(){
     super.update();
@@ -764,11 +605,6 @@ class Dragon extends Enemy {
       // this.stateMachine.setState('idleDragon');
       this.stateMachine.setState('headEastDragon');
     }
-  }
-
-  draw(ctx){
-    this.stateMachine.draw(this.game.clockTick,
-      ctx, this.x - this.game.camera.x, this.y - this.game.camera.y);
   }
 }
 
@@ -815,8 +651,8 @@ class DonJon {
     this.y = y;
     this.w = w;
     this.h = h;
-	this.god = false;
-	this.godTimer = 0;
+    this.god = false;
+    this.godTimer = 0;
     this.bounding = new Rectangle(x + w/8, y + h/2 + 1, w - w/4, h/2 - 2);
     this.prevX = x;
     this.prevY = y;
@@ -854,7 +690,7 @@ class DonJon {
       AM.getAsset('./img/main_dude.png'), 0, 640, 32, 64, 6, 0.167, 6, true));
     this.stateMachine.addState('attackRightDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 0, 704, 32, 64, 4, 0.25, 4, true));
-	this.stateMachine.addState('idleDownDJG', new Animation(
+    this.stateMachine.addState('idleDownDJG', new Animation(
       AM.getAsset('./img/main_dude_god.png'), 0, 0, 32, 64, 2, 0.5, 2, true));
     this.stateMachine.addState('idleLeftDJG', new Animation(
       AM.getAsset('./img/main_dude_god.png'), 0 ,64, 32, 64, 2, 0.5, 2, true));
@@ -891,34 +727,27 @@ class DonJon {
 
   update() {
     let that = this;
-	console.log(that.currentHP);
-	this.game.entities.iterate(function (enemy) {
-		if(enemy.isEnemy) {
-		  let box1 = that.bounding;
-		  let box2 = enemy.bounding;
-		  if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
-			&& box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
-			&& !that.god) {
-			that.currentHP -= enemy.damage;
-			if (enemy.x - enemy.prevX == 0 && enemy.y - enemy.prevY == 0) {
-				that.x -= 20*(that.x - that.prevX);
-				that.y -= 20*(that.y - that.prevY);
-			}
-			else {
-				that.x += 20*(enemy.x - enemy.prevX);
-				that.y += 20*(enemy.y - enemy.prevY);
-			}
-			that.god = true;
-			that.godTimer = 5;
-		  }
-		}
+    this.game.entities.iterate(function (enemy) {
+      if(enemy.isEnemy) {
+        let box1 = that.bounding;
+        let box2 = enemy.bounding;
+        if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+          && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
+          && !that.god) {
+          //that.currentHP -= enemy.damage;
+          that.x = that.prevX;
+          that.y = that.prevY;
+          that.god = true;
+          that.godTimer = 5;
+        }
+      }
     });
-	if (that.god) {
-		that.godTimer -= that.game.clockTick;
-		if (that.godTimer <= 0) {
-			that.god = false;
-		}
-	}
+    if (that.god) {
+      that.godTimer -= that.game.clockTick;
+      if (that.godTimer <= 0) {
+        that.god = false;
+      }
+    }
     this.game.walls.iterate(function (wall) {
       let box1 = that.bounding;
       let box2 = wall.bounding;
@@ -930,21 +759,21 @@ class DonJon {
     });
     if (mouseCooldown) {
       if (mouseValue) {
-		if(this.god) {
-			switch(this.direction) {
-			  case 'N': this.stateMachine.setState('attackUpDJG'); break;
-			  case 'E': this.stateMachine.setState('attackRightDJG'); break;
-			  case 'S': this.stateMachine.setState('attackDownDJG'); break;
-			  case 'W': this.stateMachine.setState('attackLeftDJG'); break;
-			}
-		} else {
-			switch(this.direction) {
-			  case 'N': this.stateMachine.setState('attackUpDJ'); break;
-			  case 'E': this.stateMachine.setState('attackRightDJ'); break;
-			  case 'S': this.stateMachine.setState('attackDownDJ'); break;
-			  case 'W': this.stateMachine.setState('attackLeftDJ'); break;
-			}
-		}
+        if(this.god) {
+          switch(this.direction) {
+            case 'N': this.stateMachine.setState('attackUpDJG'); break;
+            case 'E': this.stateMachine.setState('attackRightDJG'); break;
+            case 'S': this.stateMachine.setState('attackDownDJG'); break;
+            case 'W': this.stateMachine.setState('attackLeftDJG'); break;
+          }
+        } else {
+          switch(this.direction) {
+            case 'N': this.stateMachine.setState('attackUpDJ'); break;
+            case 'E': this.stateMachine.setState('attackRightDJ'); break;
+            case 'S': this.stateMachine.setState('attackDownDJ'); break;
+            case 'W': this.stateMachine.setState('attackLeftDJ'); break;
+          }
+        }
         this.soundSwing.play();
         if (!this.soundWalk.paused) {
           this.soundWalk.pause();
@@ -953,39 +782,39 @@ class DonJon {
       }
     } else {
       if (cursor.rightPressed) {
-		if(this.god) {
-			this.stateMachine.setState('runRightDJG');
-		} else {
-			this.stateMachine.setState('runRightDJ');
-		}
+        if(this.god) {
+          this.stateMachine.setState('runRightDJG');
+        } else {
+          this.stateMachine.setState('runRightDJ');
+        }
         this.direction = 'E';
         this.prevX = this.x;
         this.x += this.game.clockTick * SPEED;
       } else if (cursor.leftPressed) {
-		if(this.god) {
-			this.stateMachine.setState('runLeftDJG');
-		} else {
-			this.stateMachine.setState('runLeftDJ');
-		}
+        if(this.god) {
+          this.stateMachine.setState('runLeftDJG');
+        } else {
+          this.stateMachine.setState('runLeftDJ');
+        }
         this.direction = 'W';
         this.prevX = this.x;
         this.x -= this.game.clockTick * SPEED;
       }
       if (cursor.upPressed) {
-		if(this.god) {
-			this.stateMachine.setState('runUpDJG');
-		} else {
-			this.stateMachine.setState('runUpDJ');
-		}
+        if(this.god) {
+          this.stateMachine.setState('runUpDJG');
+        } else {
+          this.stateMachine.setState('runUpDJ');
+        }
         this.direction = 'N';
         this.prevY = this.y;
         this.y -= this.game.clockTick * SPEED;
       } else if (cursor.downPressed) {
-		if(this.god) {
-			this.stateMachine.setState('runDownDJG');
-		} else {
-			this.stateMachine.setState('runDownDJ');
-		}
+        if(this.god) {
+          this.stateMachine.setState('runDownDJG');
+        } else {
+          this.stateMachine.setState('runDownDJ');
+        }
         this.direction = 'S';
         this.prevY = this.y;
         this.y += this.game.clockTick * SPEED;
@@ -993,21 +822,21 @@ class DonJon {
       if (!cursor.upPressed && !cursor.downPressed && !cursor.rightPressed &&
         !cursor.leftPressed) {
         this.soundWalk.pause();
-		if(this.god) {
-			switch(this.direction) {
-			  case 'N': this.stateMachine.setState('idleUpDJG'); break;
-			  case 'E': this.stateMachine.setState('idleRightDJG'); break;
-			  case 'S': this.stateMachine.setState('idleDownDJG'); break;
-			  case 'W': this.stateMachine.setState('idleLeftDJG'); break;
-			}
-		} else {
-			switch(this.direction) {
-			  case 'N': this.stateMachine.setState('idleUpDJ'); break;
-			  case 'E': this.stateMachine.setState('idleRightDJ'); break;
-			  case 'S': this.stateMachine.setState('idleDownDJ'); break;
-			  case 'W': this.stateMachine.setState('idleLeftDJ'); break;
-			}
-		}
+        if(this.god) {
+          switch(this.direction) {
+            case 'N': this.stateMachine.setState('idleUpDJG'); break;
+            case 'E': this.stateMachine.setState('idleRightDJG'); break;
+            case 'S': this.stateMachine.setState('idleDownDJG'); break;
+            case 'W': this.stateMachine.setState('idleLeftDJG'); break;
+          }
+        } else {
+          switch(this.direction) {
+            case 'N': this.stateMachine.setState('idleUpDJ'); break;
+            case 'E': this.stateMachine.setState('idleRightDJ'); break;
+            case 'S': this.stateMachine.setState('idleDownDJ'); break;
+            case 'W': this.stateMachine.setState('idleLeftDJ'); break;
+          }
+        }
       } else if(this.soundWalk.paused) {
         this.soundWalk.play();
       }
@@ -1054,7 +883,6 @@ class Strike {
     case 'attackUpDJ':
       this.stateMachine.setState('attackUpDJ');
       // console.log("Strike right");
-      ;
       break;
     case 'attackDownDJ':
       this.stateMachine.setState('strikeDownDJ');
@@ -1174,9 +1002,9 @@ AM.downloadAll(function () {
       name: 'eWraith',
       constructor: (x, y) => {
         return new Wraith(gameEngine, AM.getAsset('./img/wraith.png'), x, y,
-          SIZE * 2, SIZE * 2);
+          SIZE / 2, SIZE);
       },
-      width: 2,
+      width: 1,
       height: 2,
       number: [7, 7, 7, 7, 3, 4, 3, 2, 2, 0, 0, 0, 0]
     },
@@ -1184,9 +1012,9 @@ AM.downloadAll(function () {
       name: 'eGargoyle',
       constructor: (x, y) => {
         return new Gargoyle(gameEngine, AM.getAsset('./img/gargoyle.png'), x, y,
-          SIZE * 2, SIZE * 2);
+          SIZE / 2, SIZE);
       },
-      width: 2,
+      width: 1,
       height: 2,
       number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 0, 0, 0, 0]
     }
@@ -1197,8 +1025,8 @@ AM.downloadAll(function () {
         return new Dragon(gameEngine, AM.getAsset('./img/dragon.png'), x, y,
           SIZE * 2, SIZE * 2);
       },
-      width: 2,
-      height: 2,
+      width: 4,
+      height: 4,
       number: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
 

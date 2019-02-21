@@ -10,8 +10,9 @@ function removeFrom(obj, array) {
 }
 
 function cartesianDistance(pointA, pointB) {
-  return Math.sqrt((pointB.x - pointA.x) * (pointB.x - pointA.x) +
-                   (pointB.y - pointA.y) * (pointB.y - pointA.y));
+  let difX = pointB.x - pointA.x;
+  let difY = pointB.y - pointA.y;
+  return Math.sqrt(difX * difX + difY * difY);
 }
 
 function taxiDistance(pointA, pointB) {
