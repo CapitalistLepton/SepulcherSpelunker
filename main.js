@@ -270,7 +270,7 @@ class Camera {
   draw() {}
 }
 
-const MELEE = 30; // Distance to make a melee attack from
+const MELEE = 50; // Distance to make a melee attack from
 
 class Enemy {
   constructor(game, statemachine, x, y, w, h) {
