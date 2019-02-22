@@ -297,7 +297,6 @@ class Enemy {
   }
 
   update() {
-    console.log(this.currentHP);
     if (this.currentHP <= 0) {
       this.game.entities.remove(this);
     }
@@ -437,7 +436,7 @@ class Beholder extends Enemy {
   constructor(game, spritesheet, x, y, w, h) {
     let statemachine = new StateMachine();
     super(game, statemachine, x, y, w, h);
-    this.attackDistance = 100;
+    this.attackDistance = 300;
     this.canMove = false;
     this.ranged = true;
     this.bounding = new Rectangle(x + 1, y + 1, 61, 57);
@@ -460,56 +459,98 @@ class Beholder extends Enemy {
     statemachine.addState('attackRight', new Animation(
       spritesheet, 0, 448, 64, 64, 3, 0.333, 3, true));
   }
+
+  attack() {
+    let yRange = Math.abs(this.game.player.y) + 30 >= Math.abs(this.y)
+      && Math.abs(this.game.player.y) - 30 < Math.abs(this.y);
+    let shot = null;
+    if (this.game.player.x < this.x && yRange) {
+      this.stateMachine.setState('attackLeft');
+      shot = new BeholderShot(this.game, this.x, this.y, 'left', this.damage);
+    } else if (this.game.player.x > this.x && yRange) {
+      this.stateMachine.setState('attackRight');
+      shot = new BeholderShot(this.game, this.x + this.bounding.w,
+        this.y, 'right', this.damage);
+    } else if (this.game.player.y > this.y) {
+      this.stateMachine.setState('attackDown');
+      shot = new BeholderShot(this.game, this.x, this.y + this.bounding.h,
+        'down', this.damage);
+    } else if (this.game.player.y < this.y) {
+      this.stateMachine.setState('attackUp');
+      shot = new BeholderShot(this.game, this.x, this.y, 'up', this.damage);
+    }
+    this.game.entities.add(shot);
+    this.attackCooldown = 1;
+  }
 }
 
-class Bhshot extends Enemy {
-  constructor(game, statemachine, x, y, w, h) {
-    super(game, statemachine, x, y, w, h);
-    this.stateMachine = new StateMachine();
-    // console.log('Shot created and ready');
+class BeholderShot {
+  constructor(game, x, y, direction, damage) {
+    this.game = game;
+    this.x = x;
+    this.y = y;
     this.speed = 150;
-    this.stateMachine.addState('upBHShot', new Animation(
-      AM.getAsset('./img/shot.png'), 0, 0, 32, 32, 3, 0.333, 3, true));
-    this.stateMachine.addState('rightBHShot', new Animation(
-      AM.getAsset('./img/shot.png'), 0, 32, 32, 32, 3, 0.333, 3, true));
-    this.stateMachine.addState('downBHShot', new Animation(
-      AM.getAsset('./img/shot.png'), 0, 64, 32, 32, 3, 0.333, 3, true));
-    this.stateMachine.addState('leftBHShot', new Animation(
-      AM.getAsset('./img/shot.png'), 0, 96, 32, 32, 3, 0.333, 3, true));
-  }
-
-  update(state) {
-
-    switch(state){
-
-      case 'upBHShot':
-        this.stateMachine.setState('upBHShot');
-        this.y -= this.game.clockTick * this.speed;
-        // console.log('Shots fired NORTH');
+    this.damage = damage;
+    this.bounding = new Rectangle(x, y, 32, 32);
+    this.cooldown = 3;
+    this.direction = direction;
+    switch (direction) {
+      case 'up':
+        this.animation = new Animation(AM.getAsset('./img/shot.png'),
+          0, 0, 32, 32, 3, 0.333, 3, true);
         break;
-      case 'rightBHShot':
-        this.stateMachine.setState('rightBHShot');
-        this.x += this.game.clockTick * this.speed;
-        // console.log('Shots fired EAST');
+      case 'right':
+        this.animation = new Animation(AM.getAsset('./img/shot.png'),
+          0, 32, 32, 32, 3, 0.333, 3, true);
         break;
-      case 'downBHShot':
-        this.stateMachine.setState('downBHShot');
-        this.y += this.game.clockTick * this.speed;
-        // console.log('Shots fired SOUTH');
+      case 'down':
+        this.animation = new Animation(AM.getAsset('./img/shot.png'),
+          0, 64, 32, 32, 3, 0.333, 3, true);
         break;
-      case 'leftBHShot':
-        this.stateMachine.setState('leftBHShot');
-        this.x -= this.game.clockTick* this.speed;
-        // console.log('Shots fired WEST');
+      case 'left':
+        this.animation = new Animation(AM.getAsset('./img/shot.png'),
+          0, 96, 32, 32, 3, 0.333, 3, true);
         break;
     }
   }
 
-  draw(ctx){
-    this.stateMachine.draw(this.game.clockTick, ctx,
-      this.x -this.game.camera.x, this.y-this.game.camera.y);
+  update() {
+    this.cooldown  -= this.game.clockTick;
+    if (this.cooldown <= 0) {
+      this.game.entities.remove(this);
+    } else {
+      let box1 = this.bounding;
+      let box2 = this.game.player.bounding;
+      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+        this.game.player.currentHP -= this.damage;
+        this.game.entities.remove(this);
+      }
+      switch (this.direction) {
+        case 'up':
+          this.y -= this.speed * this.game.clockTick;
+          this.bounding.y = this.y;
+          break;
+        case 'down':
+          this.y += this.speed * this.game.clockTick;
+          this.bounding.y = this.y;
+          break;
+        case 'right':
+          this.x += this.speed * this.game.clockTick;
+          this.bounding.x = this.x;
+          break;
+        case 'left':
+          this.x -= this.speed * this.game.clockTick;
+          this.bounding.x = this.x;
+          break;
+      }
+    }
   }
 
+  draw(ctx){
+    this.animation.drawFrame(this.game.clockTick, ctx,
+      this.x - this.game.camera.x, this.y - this.game.camera.y);
+  }
 }
 
 class Wraith extends Enemy {
@@ -1079,16 +1120,6 @@ AM.downloadAll(function () {
       height: 2,
       number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 0, 0, 0, 0]
     },
-    // {
-    //   name: 'eBhShot',
-    //   constructor: function (x, y) {
-    //     return new Bhshot(gameEngine, AM.getAsset('./img/shot.png'), x, y,
-    //       SIZE * 2, SIZE * 2);
-    //   },
-    //   width: 2,
-    //   height: 2,
-    //   number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 0, 0, 0, 0]
-    // },
     {
       name: 'eWraith',
       constructor: (x, y) => {
