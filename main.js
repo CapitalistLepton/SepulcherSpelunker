@@ -626,6 +626,7 @@ class Gargoyle extends Enemy {
 
 class Dragon extends Enemy {
   constructor(game, spritesheet, x, y, w, h) {
+    console.log('Init dragon');
     let statemachine = new StateMachine();
     // adjust x and y to center dragon in final level
     super(game, statemachine, x - 75, y - 22, w, h);
@@ -647,21 +648,11 @@ class Dragon extends Enemy {
       new Animation(spritesheet, 0, 1280, 256, 256, 3, 0.333, 3, true));
     statemachine.addState('headEastDragon',
       new Animation(spritesheet, 0, 1536, 256, 256, 3, 0.333, 3, true));
-    this.stateMap = new Map();
-    this.stateMap.set(1, 'jumpDragon');
-    this.stateMap.set(2, 'stompLeftDragon');
-    this.stateMap.set(3, 'stompRightDragon');
-    this.stateMap.set(4, 'readyFireDragon');
-    this.stateMap.set(5, 'headWestDragon');
-    this.stateMap.set(6, 'headEastDragon');
-  }
-
-  getStateDragon(){
-    return this.stateMachine.setState(this.stateMap.get(randInt(6)));
+    statemachine.setState('idleDragon');
   }
 
   update(){
-    super.update();
+    //super.update();
 
 //    if(this.distance() < 200) {
 //     this.stateMachine.setState('stompLeftDragon');
