@@ -16,17 +16,12 @@ class AssetManager {
   }
 
   downloadAll(callback) {
-
-
     for (let i = 0; i < this.downloadQueue.length; i++) {
       // For each asset given check to see if its from the sound path or the image path
       let path = this.downloadQueue[i];
       // extract either "img", "snd", or ""
-
       let assetType = path.split('/')[1];
       console.log(path);
-
-
 
       if (assetType === 'img') {
         let img = new Image();
@@ -52,7 +47,7 @@ class AssetManager {
         let snd = new Audio(path);
         // snd.src = path;
         // This is called when the audio can be completely played thru without buffering
-        snd.addEventListener('canplaythrough', function () {
+        snd.addEventListener('canplay', function () {
           console.log('Loaded ' + this.src);
           self.successCount++;
           if (self.isDone()) {

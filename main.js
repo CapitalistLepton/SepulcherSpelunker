@@ -1070,6 +1070,13 @@ AM.queueDownload('./img/bossAttack.png');
 AM.downloadAll(function () {
 
   const canvas = document.getElementById('gameWorld');
+  let started = false;
+  canvas.onclick = function () {
+    if (!started) {
+      gameEngine.start();
+      started = true;
+    }
+  };
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false; // Turn off anti-aliasing
 
@@ -1162,7 +1169,14 @@ AM.downloadAll(function () {
   let world = new World(13, powerups, enemies, AM);
   gameEngine.setWorld(world);
   gameEngine.setLevel(0);
-  gameEngine.start();
+
+  ctx.save();
+  ctx.font = '2rem "Press Start", monospace';
+  ctx.fillStyle = 'white';
+  ctx.fillText('Click to Start', 90, gameEngine.surfaceHeight / 2);
+  ctx.restore();
 
   console.log('Finished downloading assets');
 });
+
+document.getElementById
