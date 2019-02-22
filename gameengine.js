@@ -40,8 +40,6 @@ class GameEngine {
     this.stopped = true;
   }
 
-
-
   init(ctx, backgroundMusic) {
     this.ctx = ctx;
     this.backgroundMusic = backgroundMusic;
