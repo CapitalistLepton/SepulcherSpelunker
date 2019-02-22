@@ -823,7 +823,7 @@ class DonJon {
     });
     if (mouseCooldown) {
       if (mouseValue) {
-//        if(this.god) {
+        if(this.god) {
           let strike = null;
           switch(this.direction) {
             case 'N':
@@ -844,14 +844,28 @@ class DonJon {
               break;
           }
           this.game.entities.add(strike);
-//        } else {
-//          switch(this.direction) {
-//            case 'N': this.stateMachine.setState('attackUpDJ'); break;
-//            case 'E': this.stateMachine.setState('attackRightDJ'); break;
-//            case 'S': this.stateMachine.setState('attackDownDJ'); break;
-//            case 'W': this.stateMachine.setState('attackLeftDJ'); break;
-//          }
-//        }
+        } else {
+          let strike = null;
+          switch(this.direction) {
+            case 'N':
+              this.stateMachine.setState('attackUpDJ');
+              strike = new PlayerStrike(this.game, this.x - 16, this.y - 10, 'up', this.attackDamage);
+              break;
+            case 'E':
+              this.stateMachine.setState('attackRightDJ');
+              strike = new PlayerStrike(this.game, this.x - 20, this.y, 'right', this.attackDamage);
+              break;
+            case 'S':
+              this.stateMachine.setState('attackDownDJ');
+              strike = new PlayerStrike(this.game, this.x - 16, this.y + 10, 'down', this.attackDamage);
+              break;
+            case 'W':
+              this.stateMachine.setState('attackLeftDJ');
+              strike = new PlayerStrike(this.game, this.x - 10, this.y, 'left', this.attackDamage);
+              break;
+          }
+          this.game.entities.add(strike);
+        }
         this.soundSwing.play();
         if (!this.soundWalk.paused) {
           this.soundWalk.pause();
