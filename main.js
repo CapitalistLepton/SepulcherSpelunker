@@ -639,11 +639,12 @@ class Dragon extends Enemy {
     console.log('Init dragon');
     let statemachine = new StateMachine();
     // adjust x and y to center dragon in final level
-    super(game, statemachine, x - 75, y - 22, w, h);
+    super(game, statemachine, x - 60, y - 22, w, h);
     this.canMove = false;
     this.bounding = new Rectangle(x - 11, y - 22, 233, 184);
     this.boundingXOffset = 11;
     this.boundingYOffset = 22;
+    this.attackCooldown = 2;
     statemachine.addState('idleDragon',
       new Animation(spritesheet, 0, 0, 256, 256, 2, 0.5, 2, true));
     statemachine.addState('jumpDragon',
@@ -662,30 +663,156 @@ class Dragon extends Enemy {
   }
 
   update(){
-    //super.update();
+    if (this.currentHP <= 0) {
+      this.game.win();
+    }
 
-//    if(this.distance() < 200) {
-//     this.stateMachine.setState('stompLeftDragon');
-//    } else  if( this.distance() < 150 ) {
-//      this.stateMachine.setState('stompRightDragon');
-//    } else if ( this.distance() < 100) {
-//      this.stateMachine.setState('readyFireDragon');
-//    } else if ( this.distance() < 80) {
-//      this.stateMachine.setState('readyFireDragon');
-//    } else if ( this.distance() < 60) {
-//      this.stateMachine.setState('headWestDragon');
-//    } else if ( this.distance() < 40) {
-//      this.stateMachine.setState('headEastDragon');
-//    } else {
-//      // this.stateMachine.setState('idleDragon');
-//      this.stateMachine.setState('headEastDragon');
-//    }
+    let distance = Math.abs(this.game.player.y - this.y);
+    if (this.attackCooldown <= 0) {
+      if (distance < 220) {
+        this.stateMachine.setState('jumpDragon');
+        this.game.entities.add(new Stomp(this.game, this.x, this.y + this.bounding.h, 'jump'));
+      } else if (distance < 300) {
+        if (this.game.player.x > this.x + 128) {
+          this.stateMachine.setState('stompRightDragon');
+          this.game.entities.add(new Stomp(this.game, this.x + 150, this.y + this.bounding.h, 'right'));
+        } else {
+          this.stateMachine.setState('stompLeftDragon');
+          this.game.entities.add(new Stomp(this.game, this.x - 150, this.y + this.bounding.h, 'left'));
+        }
+      }
+      this.attackCooldown = 2;
+    } else {
+      if (this.game.player.x < this.x + 64) {
+        this.stateMachine.setState('headWestDragon');
+      } else if (this.game.player.x > this.x + 192) {
+        this.stateMachine.setState('headEastDragon');
+      } else {
+        this.stateMachine.setState('idleDragon');
+      }
+      this.attackCooldown -= this.game.clockTick;
+    }
   }
 }
 
-class BossAttack extends Enemy {
-  constructor(game, statemachine, x, y, w, h) {
-    super(game, statemachine, 0, 0, 256, 220, x, y, w, h);
+class Stomp {
+  constructor(game, x, y, type) {
+    this.game = game;
+    this.x = x;
+    this.y = y;
+    this.bounding = new Rectangle(x, y, 256, 256);
+    this.cooldown = 1;
+    this.damage = 3;
+    switch (type) {
+      case 'jump':
+        this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
+          0, 256, 256, 4, 0.25, 4, true);
+        break;
+      case 'left':
+        this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
+          256, 256, 256, 4, 0.25, 4, true);
+        break;
+      case 'right':
+        this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
+          512, 256, 256, 4, 0.25, 4, true);
+        break;
+    }
+  }
+
+  update() {
+    this.cooldown -= this.game.clockTick;
+    if (this.cooldown <= 0) {
+      this.game.entities.remove(this);
+    }
+    let box1 = this.bounding;
+    let box2 = this.game.player.bounding;
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
+      && !this.hit) {
+      if (this.game.player.godTimer > 0) {
+        this.game.entities.remove(this);
+      } else {
+        this.game.player.currentHP -= this.damage;
+        this.game.player.godTimer = GOD_COOLOFF;
+        AM.getAsset('./snd/hit.ogg').play();
+        this.hit = true;
+      }
+    }
+  }
+
+  draw(ctx) {
+    this.animation.drawFrame(this.game.clockTick, ctx,
+      this.x - this.game.camera.x, this.y - this.game.camera.y);
+    if (this.game.collisionDebug) {
+      let prevStyle = ctx.strokeStyle;
+      ctx.strokeStyle = 'grey';
+      ctx.strokeRect(this.bounding.x - this.game.camera.x,
+        this.bounding.y - this.game.camera.y, this.bounding.w, this.bounding.h);
+      ctx.strokeStyle = prevStyle;
+    }
+  }
+}
+
+class Fireball {
+  constructor(game, x, y, type) {
+    this.game = game;
+    this.x = x;
+    this.y = y;
+    this.bounding = new Rectangle(x, y, 256, 256);
+    this.cooldown = 1;
+    this.damage = 3;
+    switch (type) {
+      case 'center':
+        this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
+          768, 256, 256, 4, 0.25, 4, true);
+        break;
+      case 'left':
+        this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
+          1024, 256, 256, 4, 0.25, 4, true);
+        break;
+      case 'right':
+        this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
+          1280, 256, 256, 4, 0.25, 4, true);
+        break;
+    }
+  }
+
+  update() {
+    this.cooldown -= this.game.clockTick;
+    if (this.cooldown <= 0) {
+      this.game.entities.remove(this);
+    }
+    let box1 = this.bounding;
+    let box2 = this.game.player.bounding;
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
+      && !this.hit) {
+      if (this.game.player.godTimer > 0) {
+        this.game.entities.remove(this);
+      } else {
+        this.game.player.currentHP -= this.damage;
+        this.game.player.godTimer = GOD_COOLOFF;
+        AM.getAsset('./snd/hit.ogg').play();
+        this.hit = true;
+      }
+    }
+  }
+
+  draw(ctx) {
+    this.animation.drawFrame(this.game.clockTick, ctx,
+      this.x - this.game.camera.x, this.y - this.game.camera.y);
+    if (this.game.collisionDebug) {
+      let prevStyle = ctx.strokeStyle;
+      ctx.strokeStyle = 'grey';
+      ctx.strokeRect(this.bounding.x - this.game.camera.x,
+        this.bounding.y - this.game.camera.y, this.bounding.w, this.bounding.h);
+      ctx.strokeStyle = prevStyle;
+    }
+  }
+}
+
+class BossAttack {
+  constructor(game, x, y, type, damage) {
     this.stateMachine = new StateMachine();
     this.stateMachine.addState('stomp1',
       new Animation(AM.getAsset('./bossAttack.png'), 0 , 0, 256, 220, 4, 0.25, 4, true));
@@ -700,6 +827,7 @@ class BossAttack extends Enemy {
     this.stateMachine.addState('fire3',
       new Animation(AM.getAsset('./bossAttack.png'), 0 , 1100, 256, 220, 3, 0.333, 3, true));
   }
+
   update(){
 
   }
@@ -796,6 +924,9 @@ class DonJon {
   }
 
   update() {
+    if (this.currentHP <= 0) {
+      this.game.lose();
+    }
     let that = this;
     this.game.walls.iterate(function (wall) {
       let box1 = that.bounding;
@@ -1215,7 +1346,7 @@ AM.downloadAll(function () {
 
   let world = new World(13, powerups, enemies, AM);
   gameEngine.setWorld(world);
-  gameEngine.setLevel(0);
+  gameEngine.setLevel(12);
 
   ctx.save();
   ctx.font = '2rem "Press Start", monospace';

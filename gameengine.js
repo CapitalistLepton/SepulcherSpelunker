@@ -37,7 +37,7 @@ class GameEngine {
     this.collisionDebug = false;
     this.player = null;
     this.camera = null;
-    this.stopped = true;
+    this.gameOver = false;
   }
 
   init(ctx, backgroundMusic) {
@@ -57,7 +57,9 @@ class GameEngine {
     this.backgroundMusic.play();
     var that = this;
     (function gameLoop() {
-      that.loop();
+      if (!that.gameOver) {
+        that.loop();
+      }
       requestAnimFrame(gameLoop, that.ctx.canvas);
     })();
   }
@@ -104,6 +106,30 @@ class GameEngine {
     this.walls = null;
     // TODO add in a transition animation here
     this.world.setLevel(this, level);
+  }
+
+  win() {
+    this.gameOver = true;
+    let that = this;
+    setTimeout(function() {
+      that.ctx.save();
+      that.ctx.font = '2rem "Press Start", monospace';
+      that.ctx.fillStyle = 'white';
+      that.ctx.fillText('You Won!', 220, that.surfaceHeight / 2);
+      that.ctx.restore();
+    }, 300);
+  }
+
+  lose() {
+    this.gameOver = true;
+    let that = this;
+    setTimeout(function() {
+      that.ctx.save();
+      that.ctx.font = '2rem "Press Start", monospace';
+      that.ctx.fillStyle = 'white';
+      that.ctx.fillText('Game Over', 220, that.surfaceHeight / 2);
+      that.ctx.restore();
+    }, 300);
   }
 
   update() {
