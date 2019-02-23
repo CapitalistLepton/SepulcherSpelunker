@@ -271,6 +271,7 @@ class Camera {
 }
 
 const MELEE = 50; // Distance to make a melee attack from
+const GOD_COOLOFF = 1.5;
 
 class Enemy {
   constructor(game, statemachine, x, y, w, h) {
@@ -466,18 +467,18 @@ class Beholder extends Enemy {
     let shot = null;
     if (this.game.player.x < this.x && yRange) {
       this.stateMachine.setState('attackLeft');
-      shot = new BeholderShot(this.game, this.x, this.y, 'left', this.damage);
+      shot = new BeholderShot(this.game, this.x, this.y + this.h / 4, 'left', this.damage);
     } else if (this.game.player.x > this.x && yRange) {
       this.stateMachine.setState('attackRight');
       shot = new BeholderShot(this.game, this.x + this.bounding.w,
-        this.y, 'right', this.damage);
+        this.y + this.h / 4, 'right', this.damage);
     } else if (this.game.player.y > this.y) {
       this.stateMachine.setState('attackDown');
-      shot = new BeholderShot(this.game, this.x, this.y + this.bounding.h,
+      shot = new BeholderShot(this.game, this.x + this.w / 4, this.y + this.bounding.h,
         'down', this.damage);
     } else if (this.game.player.y < this.y) {
       this.stateMachine.setState('attackUp');
-      shot = new BeholderShot(this.game, this.x, this.y, 'up', this.damage);
+      shot = new BeholderShot(this.game, this.x + this.w / 4, this.y, 'up', this.damage);
     }
     this.game.entities.add(shot);
     this.attackCooldown = 1;
@@ -523,7 +524,10 @@ class BeholderShot {
       let box2 = this.game.player.bounding;
       if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
         && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-        this.game.player.currentHP -= this.damage;
+        if (this.game.player.godTimer <= 0) {
+          this.game.player.currentHP -= this.damage;
+          this.game.player.godTimer = GOD_COOLOFF;
+        }
         this.game.entities.remove(this);
       }
       switch (this.direction) {
@@ -712,7 +716,6 @@ class DonJon {
     this.y = y;
     this.w = w;
     this.h = h;
-    this.god = false;
     this.godTimer = 0;
     this.bounding = new Rectangle(x + w/8, y + h/2 + 1, w - w/4, h/2 - 2);
     this.prevX = x;
@@ -797,20 +800,6 @@ class DonJon {
         that.y = that.prevY;
       }
     });
-//    this.game.entities.iterate(function (enemy) {
-//      if(enemy.isEnemy) {
-//        let box1 = that.bounding;
-//        let box2 = enemy.bounding;
-//        if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
-//          && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-//          && !that.god) {
-//          that.x = that.prevX;
-//          that.y = that.prevY;
-//          that.god = true;
-//          that.godTimer = 5;
-//        }
-//      }
-//    });
     if (cursor.rightPressed) {
       this.direction = 'E';
       this.prevX = this.x;
@@ -862,11 +851,8 @@ class DonJon {
     if (this.attackCooldown > 0) {
       this.attackCooldown -= this.game.clockTick;
     }
-    if (this.god) {
+    if (this.godTimer > 0) {
       this.godTimer -= this.game.clockTick;
-      if (this.godTimer <= 0) {
-        this.god = false;
-      }
     }
     this.bounding.x = this.x + 1;
     this.bounding.y = this.y + this.h / 2 + 1;
@@ -874,7 +860,7 @@ class DonJon {
   }
 
   setState() {
-    if (this.god) {
+    if (this.godTimer > 0) {
       if (this.attackCooldown > 0) {
         switch (this.direction) {
             case 'N':
@@ -1051,8 +1037,13 @@ class EnemyStrike extends Strike {
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
       && !this.hit) {
-      this.game.player.currentHP -= this.damage;
-      this.hit = true;
+      if (this.game.player.godTimer > 0) {
+        this.game.entities.remove(this);
+      } else {
+        this.game.player.currentHP -= this.damage;
+        this.game.player.godTimer = GOD_COOLOFF;
+        this.hit = true;
+      }
     }
   }
 }
