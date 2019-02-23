@@ -844,7 +844,7 @@ class DonJon {
         if (!this.soundWalk.paused) {
           this.soundWalk.pause();
         }
-        this.attackCooldown = 0.75;
+        this.attackCooldown = 0.5;
       }
       mouseValue = false;
     }
