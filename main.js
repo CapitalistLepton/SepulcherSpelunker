@@ -101,7 +101,7 @@ class Wall extends Tile {
   constructor(game, spritesheet, version, x, y, w, h) {
     super(game, spritesheet, 64 * (version % 4),
       64 * (1 + Math.floor(version / 4)), 64, 64, x, y, w, h);
-    this.bounding = new Rectangle(x + 1, y + 1, w + 2, h + 2);
+    this.bounding = new Rectangle(x + 1, y + 1, w - 2, h - 2);
   }
 
   draw(ctx) {
@@ -274,7 +274,7 @@ const MELEE = 50; // Distance to make a melee attack from
 const GOD_COOLOFF = 1.5;
 
 class Enemy {
-  constructor(game, statemachine, x, y, w, h) {
+  constructor(game, statemachine, x, y, w, h, level) {
     this.game = game;
     this.stateMachine = statemachine;
     this.x = x;
@@ -283,7 +283,7 @@ class Enemy {
     this.h = h;
     this.prevX = x;
     this.prevY = y;
-    this.damage = 1;
+    this.damage = Math.floor(1 + level / 2);
     this.isEnemy = true;
     this.canMove = true;
     this.bounding = new Rectangle(x, y, w, h);
@@ -294,7 +294,7 @@ class Enemy {
     this.attackDistance = 300;
     this.attackCooldown = 0;
     this.ranged = false;
-    this.maxHP = 4;
+    this.maxHP = 4 + level;
     this.currentHP = this.maxHP;
   }
 
@@ -407,9 +407,10 @@ class Enemy {
 }
 
 class Goblin extends Enemy {
-  constructor(game, spritesheet, x, y, w, h) {
+  constructor(game, spritesheet, x, y, w, h, level) {
     let statemachine = new StateMachine();
-    super(game, statemachine, x, y, w, h);
+    super(game, statemachine, x, y, w, h, level);
+    this.bounding = new Rectangle(x + w/8, y - h/2 * 2 + 10, w - w/4, h/2);
     this.boundingXOffset = 1;
     this.boundingYOffest = 16;
     this.hitSound = AM.getAsset('./snd/goblin.wav');
@@ -429,9 +430,6 @@ class Goblin extends Enemy {
       new Animation(spritesheet, 0, 384, 32, 64, 2, 0.5, 2, true));
     statemachine.addState('runRight',
       new Animation(spritesheet, 0, 448, 32, 64, 4, 0.25, 4, true));
-
-  this.bounding = new Rectangle(x + w/8, y - h/2 * 2 + 10, w - w/4, h/2);
-  
   }
   update(){
     if (this.currentHP <= 0) {
@@ -455,14 +453,13 @@ class Goblin extends Enemy {
 
       if (that.boxGoblin.x < that.boxWall.x + that.boxWall.w && that.boxGoblin.x + that.boxGoblin.w > that.boxWall.x
         && that.boxGoblin.y < that.boxWall.y + that.boxWall.h && that.boxGoblin.y + that.boxGoblin.h > that.boxWall.y) {
-        
         if(that.boxGoblin.x >= that.boxWall.x && yRange){
           console.log('Collision headed left');
           that.collisionWest = true;
         } else
         if(that.boxGoblin.x < that.boxWall.x && yRange){
           console.log('Collision headed right');
-          that.collisionEast = true;    
+          that.collisionEast = true;
         } else
         if(that.boxGoblin.y > that.boxWall.y ){
           console.log('Collision headed Up');
@@ -518,10 +515,9 @@ class Goblin extends Enemy {
         }
 
       }
-        this.collision = false; 
+      this.collision = false;
     } else {
-
-    super.update();
+      super.update();
     }
 
     this.bounding.x = this.x + 1;
@@ -529,9 +525,9 @@ class Goblin extends Enemy {
   }
 }
 class Beholder extends Enemy {
-  constructor(game, spritesheet, x, y, w, h) {
+  constructor(game, spritesheet, x, y, w, h, level) {
     let statemachine = new StateMachine();
-    super(game, statemachine, x, y, w, h);
+    super(game, statemachine, x, y, w, h, level);
     this.attackDistance = 300;
     this.canMove = false;
     this.ranged = true;
@@ -656,9 +652,9 @@ class BeholderShot {
 }
 
 class Wraith extends Enemy {
-  constructor(game, spritesheet, x, y, w, h) {
+  constructor(game, spritesheet, x, y, w, h, level) {
     let statemachine = new StateMachine();
-    super(game, statemachine, x, y, w, h);
+    super(game, statemachine, x, y, w, h, level);
     this.attackDistance = 150;
     this.bounding = new Rectangle(x + 1, y + 1, 30, 44);
     this.boundingXOffset = 1;
@@ -684,9 +680,9 @@ class Wraith extends Enemy {
 }
 
 class Gargoyle extends Enemy {
-  constructor(game, spritesheet, x, y, w, h) {
+  constructor(game, spritesheet, x, y, w, h, level) {
     let statemachine = new StateMachine();
-    super(game, statemachine, x, y, w, h);
+    super(game, statemachine, x, y, w, h, level);
     this.attackDistance = 100;
     this.bounding = new Rectangle(x + 4, y + 2, 25, 45);
     this.boundingXOffset = 4;
@@ -728,11 +724,11 @@ class Gargoyle extends Enemy {
 }
 
 class Dragon extends Enemy {
-  constructor(game, spritesheet, x, y, w, h) {
+  constructor(game, spritesheet, x, y, w, h, level) {
     console.log('Init dragon');
     let statemachine = new StateMachine();
     // adjust x and y to center dragon in final level
-    super(game, statemachine, x - 60, y - 22, w, h);
+    super(game, statemachine, x - 60, y - 22, w, h, level);
     this.canMove = false;
     this.bounding = new Rectangle(x - 11, y - 22, 233, 184);
     this.boundingXOffset = 11;
@@ -754,7 +750,7 @@ class Dragon extends Enemy {
       new Animation(spritesheet, 0, 1536, 256, 256, 3, 0.333, 3, true));
     statemachine.setState('idleDragon');
   }
-  
+
   update(){
     if (this.currentHP <= 0) {
       this.game.win();
@@ -796,7 +792,7 @@ class Stomp {
     this.y = y;
     this.bounding = new Rectangle(x, y, 256, 256);
     this.cooldown = 1;
-    this.damage = 3;
+    this.damage = 9;
     switch (type) {
       case 'jump':
         this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
@@ -1006,7 +1002,6 @@ class DonJon {
       AM.getAsset('./img/main_dude_god.png'), 0, 640, 32, 64, 6, 0.167, 6, true));
     this.stateMachine.addState('attackRightDJG', new Animation(
       AM.getAsset('./img/main_dude_god.png'), 0, 704, 32, 64, 4, 0.25, 4, true));
-    
   }
 
   moveTo(x, y) {
@@ -1392,9 +1387,9 @@ AM.downloadAll(function () {
   const enemies = [
     {
       name: 'eGoblin',
-      constructor: function (x, y) {
+      constructor: function (x, y, level) {
         return new Goblin(gameEngine, AM.getAsset('./img/goblin.png'), x, y,
-          SIZE / 2, SIZE);
+          SIZE / 2, SIZE, level);
       },
       width: 1,
       height: 2,
@@ -1402,9 +1397,9 @@ AM.downloadAll(function () {
     },
     {
       name: 'eBeholder',
-      constructor: function (x, y) {
+      constructor: function (x, y, level) {
         return new Beholder(gameEngine, AM.getAsset('./img/beholder.png'), x, y,
-          SIZE, SIZE);
+          SIZE, SIZE, level);
       },
       width: 2,
       height: 2,
@@ -1412,9 +1407,9 @@ AM.downloadAll(function () {
     },
     {
       name: 'eWraith',
-      constructor: (x, y) => {
+      constructor: (x, y, level) => {
         return new Wraith(gameEngine, AM.getAsset('./img/wraith.png'), x, y,
-          SIZE / 2, SIZE);
+          SIZE / 2, SIZE, level);
       },
       width: 1,
       height: 2,
@@ -1422,9 +1417,9 @@ AM.downloadAll(function () {
     },
     {
       name: 'eGargoyle',
-      constructor: (x, y) => {
+      constructor: (x, y, level) => {
         return new Gargoyle(gameEngine, AM.getAsset('./img/gargoyle.png'), x, y,
-          SIZE / 2, SIZE);
+          SIZE / 2, SIZE, level);
       },
       width: 1,
       height: 2,
@@ -1433,9 +1428,9 @@ AM.downloadAll(function () {
     ,
     {
       name: 'eDragon',
-      constructor: (x, y) => {
+      constructor: (x, y, level) => {
         return new Dragon(gameEngine, AM.getAsset('./img/dragon.png'), x, y,
-          SIZE * 2, SIZE * 2);
+          SIZE * 2, SIZE * 2, level);
       },
       width: 4,
       height: 4,
@@ -1456,5 +1451,3 @@ AM.downloadAll(function () {
 
   console.log('Finished downloading assets');
 });
-
-document.getElementById

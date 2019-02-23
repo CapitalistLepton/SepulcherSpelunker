@@ -96,7 +96,8 @@ class World {
             if (level.tiles[j][i] === this.enemies[k].name) {
               tiles.push(new Dirt(game, this.AM.getAsset('./img/map2.png'),
                 pos.x, pos.y, SIZE, SIZE));
-              enemyEntities.push(this.enemies[k].constructor(pos.x, pos.y));
+              enemyEntities.push(this.enemies[k].constructor(pos.x, pos.y,
+                levelIndex));
             }
           }
         }
