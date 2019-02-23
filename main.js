@@ -289,6 +289,7 @@ class Enemy {
     this.bounding = new Rectangle(x, y, w, h);
     this.boundingXOffset = 0;
     this.boundingYOffset = 0;
+    this.hitSound = AM.getAsset('./snd/goblin.wav');
     this.speed = SPEED * 0.75;
     this.attackDistance = 200;
     this.attackCooldown = 0;
@@ -414,6 +415,7 @@ class Goblin extends Enemy {
     this.bounding = new Rectangle(x + 1, y + 16, 30, 40);
     this.boundingXOffset = 1;
     this.boundingYOffest = 16;
+    this.hitSound = AM.getAsset('./snd/goblin.wav');
     statemachine.addState('idleDown',
       new Animation(spritesheet, 0, 0, 32, 64, 4, 0.25, 4, true));
     statemachine.addState('idleLeft',
@@ -443,6 +445,8 @@ class Beholder extends Enemy {
     this.bounding = new Rectangle(x + 1, y + 1, 61, 57);
     this.boundingXOffset = 1;
     this.boundingYOffset = 1;
+    this.hitSound = AM.getAsset('./snd/wraith.wav');
+    this.shootSound = AM.getAsset('./snd/beholder_shoot.wav');
     statemachine.addState('idleDown', new Animation(
       spritesheet, 0, 0, 64, 64, 2, 0.5, 2, true));
     statemachine.addState('idleLeft', new Animation(
@@ -481,7 +485,8 @@ class Beholder extends Enemy {
       shot = new BeholderShot(this.game, this.x + this.w / 4, this.y, 'up', this.damage);
     }
     this.game.entities.add(shot);
-    this.attackCooldown = 1;
+    this.shootSound.play();
+    this.attackCooldown = 2;
   }
 }
 
@@ -565,6 +570,7 @@ class Wraith extends Enemy {
     this.bounding = new Rectangle(x + 1, y + 1, 30, 44);
     this.boundingXOffset = 1;
     this.boundingYOffset = 1;
+    this.hitSound = AM.getAsset('./snd/wraith.wav');
     statemachine.addState('idleDown', new Animation(spritesheet, 0, 0, 32, 64,
       2, 0.5, 2, true));
     statemachine.addState('runDown', new Animation(spritesheet, 0, 0, 32, 64,
@@ -818,9 +824,13 @@ class DonJon {
       this.prevY = this.y;
       this.y += this.game.clockTick * SPEED;
     }
-    if (this.soundWalk.paused && (cursor.upPressed || cursor.downPressed
-      || cursor.leftPressed || cursor.rightPressed)) {
-      this.soundWalk.play();
+    if (cursor.upPressed || cursor.downPressed
+      || cursor.leftPressed || cursor.rightPressed) {
+      if (this.soundWalk.paused) {
+        this.soundWalk.play();
+      }
+    } else {
+      this.soundWalk.pause();
     }
     if (mouseValue) {
       if (this.attackCooldown <= 0) {
@@ -1042,6 +1052,7 @@ class EnemyStrike extends Strike {
       } else {
         this.game.player.currentHP -= this.damage;
         this.game.player.godTimer = GOD_COOLOFF;
+        AM.getAsset('./snd/hit.ogg').play();
         this.hit = true;
       }
     }
@@ -1066,6 +1077,7 @@ class PlayerStrike extends Strike {
           && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
           && !that.hit) {
           entity.currentHP -= that.damage;
+          entity.hitSound.play();
           that.hit = true;
         }
       }
@@ -1082,14 +1094,6 @@ AM.queueDownload('./img/goblin.png');
 AM.queueDownload('./img/beholder.png');
 AM.queueDownload('./img/main_dude.png');
 AM.queueDownload('./img/main_dude_god.png');
-AM.queueDownload('./snd/background.mp3');
-AM.queueDownload('./snd/walking_down_stairs.mp3');
-AM.queueDownload('./snd/walking_up_stairs.mp3');
-AM.queueDownload('./snd/footsteps.wav');
-AM.queueDownload('./snd/swing.wav');
-AM.queueDownload('./snd/life.wav');
-AM.queueDownload('./snd/health.wav');
-AM.queueDownload('./snd/strength.wav');
 AM.queueDownload('./img/shot.png');
 AM.queueDownload('./img/Strike.png');
 AM.queueDownload('./img/wraith.png');
@@ -1097,6 +1101,19 @@ AM.queueDownload('./img/gargoyle.png');
 AM.queueDownload('./img/dragon.png');
 AM.queueDownload('./img/bossAttack.png');
 
+AM.queueDownload('./snd/background.mp3');
+AM.queueDownload('./snd/ladder.wav');
+AM.queueDownload('./snd/hole.wav');
+AM.queueDownload('./snd/footsteps.wav');
+AM.queueDownload('./snd/swing.wav');
+AM.queueDownload('./snd/life.wav');
+AM.queueDownload('./snd/health.wav');
+AM.queueDownload('./snd/strength.wav');
+AM.queueDownload('./snd/goblin.wav');
+AM.queueDownload('./snd/wraith.wav');
+AM.queueDownload('./snd/beholder_shoot.wav');
+AM.queueDownload('./snd/beholder_hit.wav');
+AM.queueDownload('./snd/hit.ogg');
 
 AM.downloadAll(function () {
 
