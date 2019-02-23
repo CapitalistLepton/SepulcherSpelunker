@@ -1112,7 +1112,6 @@ AM.queueDownload('./snd/strength.wav');
 AM.queueDownload('./snd/goblin.wav');
 AM.queueDownload('./snd/wraith.wav');
 AM.queueDownload('./snd/beholder_shoot.wav');
-AM.queueDownload('./snd/beholder_hit.wav');
 AM.queueDownload('./snd/hit.ogg');
 
 AM.downloadAll(function () {
