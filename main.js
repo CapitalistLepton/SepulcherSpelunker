@@ -708,10 +708,6 @@ class DonJon {
     this.game = gameEngine;
     this.spritesheet = spritesheet;
     this.name = 'DonJon';
-    this.sx = 0;
-    this.sy = 66;
-    this.sw = 32;
-    this.sh = 64;
     this.x = x;
     this.y = y;
     this.w = w;
@@ -725,6 +721,7 @@ class DonJon {
     this.maxHP= 24;
     this.currentHP = 24;
     this.attackDamage = 1;
+    this.attackCooldown = 0;
     this.direction = 'S';
     this.soundWalk = sounds.walk;
     this.soundWalk.loop = true;
@@ -796,9 +793,8 @@ class DonJon {
         let box1 = that.bounding;
         let box2 = enemy.bounding;
         if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
-          && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
-          && !that.god) {
-          //that.currentHP -= enemy.damage;
+          && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+//          && !that.god) {
           that.x = that.prevX;
           that.y = that.prevY;
           that.god = true;
@@ -821,8 +817,71 @@ class DonJon {
         that.y = that.prevY;
       }
     });
-    if (mouseCooldown) {
-      if (mouseValue) {
+//    } else {
+      if (cursor.rightPressed) {
+        if(this.god) {
+          this.stateMachine.setState('runRightDJG');
+        } else {
+          this.stateMachine.setState('runRightDJ');
+        }
+        this.direction = 'E';
+        this.prevX = this.x;
+        this.x += this.game.clockTick * SPEED;
+      } else if (cursor.leftPressed) {
+        if(this.god) {
+          this.stateMachine.setState('runLeftDJG');
+        } else {
+          this.stateMachine.setState('runLeftDJ');
+        }
+        this.direction = 'W';
+        this.prevX = this.x;
+        this.x -= this.game.clockTick * SPEED;
+      }
+      if (cursor.upPressed) {
+        if(this.god) {
+          this.stateMachine.setState('runUpDJG');
+        } else {
+          this.stateMachine.setState('runUpDJ');
+        }
+        this.direction = 'N';
+        this.prevY = this.y;
+        this.y -= this.game.clockTick * SPEED;
+      } else if (cursor.downPressed) {
+        if(this.god) {
+          this.stateMachine.setState('runDownDJG');
+        } else {
+          this.stateMachine.setState('runDownDJ');
+        }
+        this.direction = 'S';
+        this.prevY = this.y;
+        this.y += this.game.clockTick * SPEED;
+      }
+      if (this.attackCooldown <= 0 && !cursor.upPressed && !cursor.downPressed &&
+        !cursor.rightPressed && !cursor.leftPressed) {
+        this.soundWalk.pause();
+        if(this.god) {
+          switch(this.direction) {
+            case 'N': this.stateMachine.setState('idleUpDJG'); break;
+            case 'E': this.stateMachine.setState('idleRightDJG'); break;
+            case 'S': this.stateMachine.setState('idleDownDJG'); break;
+            case 'W': this.stateMachine.setState('idleLeftDJG'); break;
+          }
+        } else {
+          switch(this.direction) {
+            case 'N': this.stateMachine.setState('idleUpDJ'); break;
+            case 'E': this.stateMachine.setState('idleRightDJ'); break;
+            case 'S': this.stateMachine.setState('idleDownDJ'); break;
+            case 'W': this.stateMachine.setState('idleLeftDJ'); break;
+          }
+        }
+      } else if(this.soundWalk.paused) {
+        this.soundWalk.play();
+      }
+      this.bounding.x = this.x + 1;
+      this.bounding.y = this.y + this.h / 2 + 1;
+//    }
+    if (mouseValue) {
+      if (this.attackCooldown <= 0) {
         if(this.god) {
           let strike = null;
           switch(this.direction) {
@@ -870,70 +929,12 @@ class DonJon {
         if (!this.soundWalk.paused) {
           this.soundWalk.pause();
         }
-        mouseValue = false;
+        this.attackCooldown = 0.75;
       }
-    } else {
-      if (cursor.rightPressed) {
-        if(this.god) {
-          this.stateMachine.setState('runRightDJG');
-        } else {
-          this.stateMachine.setState('runRightDJ');
-        }
-        this.direction = 'E';
-        this.prevX = this.x;
-        this.x += this.game.clockTick * SPEED;
-      } else if (cursor.leftPressed) {
-        if(this.god) {
-          this.stateMachine.setState('runLeftDJG');
-        } else {
-          this.stateMachine.setState('runLeftDJ');
-        }
-        this.direction = 'W';
-        this.prevX = this.x;
-        this.x -= this.game.clockTick * SPEED;
-      }
-      if (cursor.upPressed) {
-        if(this.god) {
-          this.stateMachine.setState('runUpDJG');
-        } else {
-          this.stateMachine.setState('runUpDJ');
-        }
-        this.direction = 'N';
-        this.prevY = this.y;
-        this.y -= this.game.clockTick * SPEED;
-      } else if (cursor.downPressed) {
-        if(this.god) {
-          this.stateMachine.setState('runDownDJG');
-        } else {
-          this.stateMachine.setState('runDownDJ');
-        }
-        this.direction = 'S';
-        this.prevY = this.y;
-        this.y += this.game.clockTick * SPEED;
-      }
-      if (!cursor.upPressed && !cursor.downPressed && !cursor.rightPressed &&
-        !cursor.leftPressed) {
-        this.soundWalk.pause();
-        if(this.god) {
-          switch(this.direction) {
-            case 'N': this.stateMachine.setState('idleUpDJG'); break;
-            case 'E': this.stateMachine.setState('idleRightDJG'); break;
-            case 'S': this.stateMachine.setState('idleDownDJG'); break;
-            case 'W': this.stateMachine.setState('idleLeftDJG'); break;
-          }
-        } else {
-          switch(this.direction) {
-            case 'N': this.stateMachine.setState('idleUpDJ'); break;
-            case 'E': this.stateMachine.setState('idleRightDJ'); break;
-            case 'S': this.stateMachine.setState('idleDownDJ'); break;
-            case 'W': this.stateMachine.setState('idleLeftDJ'); break;
-          }
-        }
-      } else if(this.soundWalk.paused) {
-        this.soundWalk.play();
-      }
-      this.bounding.x = this.x + 1;
-      this.bounding.y = this.y + this.h / 2 + 1;
+      mouseValue = false;
+    }
+    if (this.attackCooldown > 0) {
+      this.attackCooldown -= this.game.clockTick;
     }
   }
 

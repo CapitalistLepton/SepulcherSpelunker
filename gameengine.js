@@ -46,12 +46,12 @@ class GameEngine {
     this.surfaceWidth = this.ctx.canvas.width;
     this.surfaceHeight = this.ctx.canvas.height;
     this.timer = new Timer();
-    this.startInput();
     console.log('Game Initialized');
   }
 
   start() {
     console.log('Starting the game');
+    this.startInput();
     this.backgroundMusic.loop = true;
     this.backgroundMusic.volume = 0.1;
     this.backgroundMusic.play();
