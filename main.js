@@ -681,6 +681,7 @@ class Dragon extends Enemy {
           this.game.entities.add(new Stomp(this.game, this.x - 150, this.y + this.bounding.h, 'left'));
         }
       }
+      AM.getAsset('./snd/shoot.wav');
       this.attackCooldown = 2;
     } else {
       if (this.game.player.x < this.x + 64) {
@@ -1244,6 +1245,9 @@ AM.queueDownload('./snd/goblin.wav');
 AM.queueDownload('./snd/wraith.wav');
 AM.queueDownload('./snd/beholder_shoot.wav');
 AM.queueDownload('./snd/hit.ogg');
+AM.queueDownload('./snd/win.wav');
+AM.queueDownload('./snd/shoot.wav');
+AM.queueDownload('./snd/death.wav');
 
 AM.downloadAll(function () {
 
@@ -1260,7 +1264,9 @@ AM.downloadAll(function () {
 
   const gameEngine = new GameEngine();
   const background = AM.getAsset('./snd/background.mp3');
-  gameEngine.init(ctx, background);
+  const win = AM.getAsset('./snd/win.wav');
+  const loss = AM.getAsset('./snd/death.wav');
+  gameEngine.init(ctx, background, win, loss);
 
   const powerups = [
     {
@@ -1346,7 +1352,7 @@ AM.downloadAll(function () {
 
   let world = new World(13, powerups, enemies, AM);
   gameEngine.setWorld(world);
-  gameEngine.setLevel(12);
+  gameEngine.setLevel(0);
 
   ctx.save();
   ctx.font = '2rem "Press Start", monospace';

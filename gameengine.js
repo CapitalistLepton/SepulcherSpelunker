@@ -40,9 +40,11 @@ class GameEngine {
     this.gameOver = false;
   }
 
-  init(ctx, backgroundMusic) {
+  init(ctx, backgroundMusic, winMusic, lossMusic) {
     this.ctx = ctx;
     this.backgroundMusic = backgroundMusic;
+    this.winMusic = winMusic;
+    this.lossMusic = lossMusic;
     this.surfaceWidth = this.ctx.canvas.width;
     this.surfaceHeight = this.ctx.canvas.height;
     this.timer = new Timer();
@@ -112,6 +114,8 @@ class GameEngine {
     this.gameOver = true;
     let that = this;
     setTimeout(function() {
+      that.backgroundMusic.pause();
+      that.winMusic.play();
       that.ctx.save();
       that.ctx.font = '2rem "Press Start", monospace';
       that.ctx.fillStyle = 'white';
@@ -124,6 +128,8 @@ class GameEngine {
     this.gameOver = true;
     let that = this;
     setTimeout(function() {
+      that.backgroundMusic.pause();
+      that.lossMusic.play();
       that.ctx.save();
       that.ctx.font = '2rem "Press Start", monospace';
       that.ctx.fillStyle = 'white';
