@@ -1304,7 +1304,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [3, 5, 7, 7, 7, 7, 5, 3, 0, 0, 0, 0]
+      number: [3, 5, 5, 5, 5, 3, 2, 3, 2, 3, 2, 0]
     },
     {
       name: 'eBeholder',
@@ -1314,7 +1314,7 @@ AM.downloadAll(function () {
       },
       width: 2,
       height: 2,
-      number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 0, 0, 0, 0]
+      number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 3, 3, 2, 0]
     },
     {
       name: 'eWraith',
@@ -1324,7 +1324,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [7, 7, 7, 7, 3, 4, 3, 2, 2, 0, 0, 0, 0]
+      number: [0, 0, 2, 2, 3, 4, 3, 3, 3, 3, 4, 5, 0]
     },
     {
       name: 'eGargoyle',
@@ -1334,7 +1334,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 0, 0, 0, 0]
+      number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 3, 3, 2, 0]
     }
     ,
     {
