@@ -37,27 +37,31 @@ class GameEngine {
     this.collisionDebug = true;
     this.player = null;
     this.camera = null;
-    this.stopped = true;
+    this.gameOver = false;
   }
 
-  init(ctx, backgroundMusic) {
+  init(ctx, backgroundMusic, winMusic, lossMusic) {
     this.ctx = ctx;
     this.backgroundMusic = backgroundMusic;
+    this.winMusic = winMusic;
+    this.lossMusic = lossMusic;
     this.surfaceWidth = this.ctx.canvas.width;
     this.surfaceHeight = this.ctx.canvas.height;
     this.timer = new Timer();
-    this.startInput();
     console.log('Game Initialized');
   }
 
   start() {
     console.log('Starting the game');
+    this.startInput();
     this.backgroundMusic.loop = true;
     this.backgroundMusic.volume = 0.1;
     this.backgroundMusic.play();
     var that = this;
     (function gameLoop() {
-      that.loop();
+      if (!that.gameOver) {
+        that.loop();
+      }
       requestAnimFrame(gameLoop, that.ctx.canvas);
     })();
   }
@@ -104,6 +108,34 @@ class GameEngine {
     this.walls = null;
     // TODO add in a transition animation here
     this.world.setLevel(this, level);
+  }
+
+  win() {
+    this.gameOver = true;
+    let that = this;
+    setTimeout(function() {
+      that.backgroundMusic.pause();
+      that.winMusic.play();
+      that.ctx.save();
+      that.ctx.font = '2rem "Press Start", monospace';
+      that.ctx.fillStyle = 'white';
+      that.ctx.fillText('You Won!', 220, that.surfaceHeight / 2);
+      that.ctx.restore();
+    }, 300);
+  }
+
+  lose() {
+    this.gameOver = true;
+    let that = this;
+    setTimeout(function() {
+      that.backgroundMusic.pause();
+      that.lossMusic.play();
+      that.ctx.save();
+      that.ctx.font = '2rem "Press Start", monospace';
+      that.ctx.fillStyle = 'white';
+      that.ctx.fillText('Game Over', 220, that.surfaceHeight / 2);
+      that.ctx.restore();
+    }, 300);
   }
 
   update() {

@@ -57,11 +57,5 @@ function keyUpHandler(e) {
 }
 
 function clickHandler(e) {
-  if (mouseCooldown === false) {
-    mouseCooldown = true;
-    mouseValue = true;
-    setTimeout(function () {
-      mouseCooldown = false;
-    }, 1000); // Adjust to match attacks per second
-  }
+  mouseValue = true;
 }

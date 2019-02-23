@@ -66,7 +66,7 @@ class World {
               break;
             case 'End':
               stationary.push(new Hole(game, this.AM.getAsset('./img/map2.png'),
-                this.AM.getAsset('./snd/walking_down_stairs.mp3'), pos.x, pos.y,
+                this.AM.getAsset('./snd/hole.wav'), pos.x, pos.y,
                 SIZE, SIZE));
               // Place at hole if going up to previous level
               if (levelChange > 0) {
@@ -75,7 +75,7 @@ class World {
               break;
             case 'Start':
               let ladder = new Ladder(game, this.AM.getAsset('./img/map2.png'),
-                this.AM.getAsset('./snd/walking_up_stairs.mp3'), pos.x, pos.y,
+                this.AM.getAsset('./snd/ladder.wav'), pos.x, pos.y,
                 SIZE, SIZE);
               stationary.push(ladder);
               // If setting level to 0 then place DonJon at start,
