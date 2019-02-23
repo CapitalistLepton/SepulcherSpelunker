@@ -214,9 +214,7 @@ class HealthPotion extends Powerup {
   update() {
     super.update();
     if (this.collided) {
-      this.game.player.currentHP = Math.min(this.game.player.currentHP + 8,
-        this.game.player.maxHP);
-      console.log('hit health potion. Current HP:', this.game.player.currentHP);
+      this.game.player.currentHP = this.game.player.maxHP;
       this.game.entities.remove(this);
     }
   }
@@ -232,7 +230,6 @@ class LifeBuff extends Powerup {
     super.update();
     if (this.collided) {
       this.game.player.maxHP += 1;
-      console.log('hit life buff. Max HP:', this.game.player.maxHP);
       this.game.entities.remove(this);
     }
   }
@@ -248,8 +245,6 @@ class StrengthBuff extends Powerup {
     super.update();
     if (this.collided) {
       this.game.player.attackDamage += 1;
-      console.log('hit strength buff. Attack damage:',
-        this.game.player.attackDamage);
       this.game.entities.remove(this);
     }
   }
@@ -286,6 +281,7 @@ class Enemy {
     this.damage = Math.floor(1 + level / 2);
     this.isEnemy = true;
     this.canMove = true;
+    this.collidesWithWalls = true;
     this.bounding = new Rectangle(x, y, w, h);
     this.boundingXOffset = 0;
     this.boundingYOffset = 0;
@@ -303,16 +299,18 @@ class Enemy {
       this.game.entities.remove(this);
     }
     // Check for collision with walls
-    let that = this;
-    this.game.walls.iterate(function (wall) {
-      let box1 = that.bounding;
-      let box2 = wall.bounding;
-      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
-        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-        that.x = that.prevX;
-        that.y = that.prevY;
-      }
-    });
+    if (this.collidesWithWalls) {
+      let that = this;
+      this.game.walls.iterate(function (wall) {
+        let box1 = that.bounding;
+        let box2 = wall.bounding;
+        if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+          && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+          that.x = that.prevX;
+          that.y = that.prevY;
+        }
+      });
+    }
     // Check for collision with DonJon
     let box1 = this.bounding;
     let box2 = this.game.player.bounding;
@@ -411,6 +409,7 @@ class Goblin extends Enemy {
     let statemachine = new StateMachine();
     super(game, statemachine, x, y, w, h, level);
     this.bounding = new Rectangle(x + w/8, y - h/2 * 2 + 10, w - w/4, h/2);
+    this.speed = SPEED * 0.5;
     this.boundingXOffset = 1;
     this.boundingYOffest = 16;
     this.hitSound = AM.getAsset('./snd/goblin.wav');
@@ -655,11 +654,12 @@ class Wraith extends Enemy {
   constructor(game, spritesheet, x, y, w, h, level) {
     let statemachine = new StateMachine();
     super(game, statemachine, x, y, w, h, level);
-    this.attackDistance = 150;
+    this.attackDistance = 450;
     this.bounding = new Rectangle(x + 1, y + 1, 30, 44);
     this.boundingXOffset = 1;
     this.boundingYOffset = 1;
     this.hitSound = AM.getAsset('./snd/wraith.wav');
+    this.collidesWithWalls = false;
     statemachine.addState('idleDown', new Animation(spritesheet, 0, 0, 32, 64,
       2, 0.5, 2, true));
     statemachine.addState('runDown', new Animation(spritesheet, 0, 0, 32, 64,

@@ -34,7 +34,7 @@ class GameEngine {
     this.ctx = null;
     this.surfaceWidth = null;
     this.surfaceHeight = null;
-    this.collisionDebug = true;
+    this.collisionDebug = false;
     this.player = null;
     this.camera = null;
     this.gameOver = false;
