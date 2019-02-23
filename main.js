@@ -101,7 +101,7 @@ class Wall extends Tile {
   constructor(game, spritesheet, version, x, y, w, h) {
     super(game, spritesheet, 64 * (version % 4),
       64 * (1 + Math.floor(version / 4)), 64, 64, x, y, w, h);
-    this.bounding = new Rectangle(x + 1, y + 1, w - 2, h - 2);
+    this.bounding = new Rectangle(x + 1, y + 1, w + 2, h + 2);
   }
 
   draw(ctx) {
@@ -291,7 +291,7 @@ class Enemy {
     this.boundingYOffset = 0;
     this.hitSound = AM.getAsset('./snd/goblin.wav');
     this.speed = SPEED * 0.75;
-    this.attackDistance = 200;
+    this.attackDistance = 300;
     this.attackCooldown = 0;
     this.ranged = false;
     this.maxHP = 4;
@@ -410,9 +410,6 @@ class Goblin extends Enemy {
   constructor(game, spritesheet, x, y, w, h) {
     let statemachine = new StateMachine();
     super(game, statemachine, x, y, w, h);
-    // this.speed = SPEED * 0.75;
-    // this.attackDistance = 200;
-    this.bounding = new Rectangle(x + 1, y + 16, 30, 40);
     this.boundingXOffset = 1;
     this.boundingYOffest = 16;
     this.hitSound = AM.getAsset('./snd/goblin.wav');
@@ -432,9 +429,105 @@ class Goblin extends Enemy {
       new Animation(spritesheet, 0, 384, 32, 64, 2, 0.5, 2, true));
     statemachine.addState('runRight',
       new Animation(spritesheet, 0, 448, 32, 64, 4, 0.25, 4, true));
+
+  this.bounding = new Rectangle(x + w/8, y - h/2 * 2 + 10, w - w/4, h/2);
+  
+  }
+  update(){
+    if (this.currentHP <= 0) {
+      this.game.entities.remove(this);
+    }
+      // Check for collision with DonJon
+      let box1 = this.bounding;
+      let box2 = this.game.player.bounding;
+      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+        this.x = this.prevX;
+        this.y = this.prevY;
+      }
+
+    let that = this;
+    this.game.walls.iterate(function (wall) {
+       that.boxGoblin = that.bounding;
+      that.boxWall = wall.bounding;
+      let yRange = Math.abs(that.game.player.y) + 30 >= Math.abs(that.y)
+        && Math.abs(that.game.player.y) - 30 < Math.abs(that.y);
+
+      if (that.boxGoblin.x < that.boxWall.x + that.boxWall.w && that.boxGoblin.x + that.boxGoblin.w > that.boxWall.x
+        && that.boxGoblin.y < that.boxWall.y + that.boxWall.h && that.boxGoblin.y + that.boxGoblin.h > that.boxWall.y) {
+        
+        if(that.boxGoblin.x >= that.boxWall.x && yRange){
+          console.log('Collision headed left');
+          that.collisionWest = true;
+        } else
+        if(that.boxGoblin.x < that.boxWall.x && yRange){
+          console.log('Collision headed right');
+          that.collisionEast = true;    
+        } else
+        if(that.boxGoblin.y > that.boxWall.y ){
+          console.log('Collision headed Up');
+          that.collisionNorth = true;
+        } else
+        if(that.boxGoblin.y < that.boxWall.y ){
+          console.log('Collision headed Down');
+          that.collisionSouth = true;
+        }
+         that.collision = true;
+      }
+    });
+
+    if(this.collision){
+        console.log('collision');
+      if(this.collisionWest){
+        this.collisionWest = false;
+        if(this.game.player.y > this.y) {
+          this.stateMachine.setState('runDown');
+          this.y += this.game.clockTick * this.speed;
+        } else {
+          this.stateMachine.setState('runUp');
+          this.y -= this.game.clockTick * this.speed;
+        }
+      } else if(this.collisionEast) {
+        this.collisionEast = false;
+        if(this.game.player.y > this.y){
+          this.stateMachine.setState('runDown');
+          this.y += this.game.clockTick * this.speed;
+        } else {
+          this.stateMachine.setState('runUp');
+          this.y -= this.game.clockTick * this.speed;
+        }
+
+      } else if(this.collisionNorth) {
+        this.collisionNorth = false;
+        if(this.game.player.x > this.x){
+          this.stateMachine.setState('runRight');
+          this.x += this.game.clockTick * this.speed;
+        } else {
+          this.stateMachine.setState('runLeft');
+          this.x -= this.game.clockTick * this.speed;
+        }
+
+      } else if (this.collisionSouth) {
+        this.collisionSouth = false;
+        if(this.game.player.x > this.x) {
+          this.stateMachine.setState('runRight');
+          this.x += this.game.clockTick * this.speed;
+        } else {
+          this.stateMachine.setState('runLeft');
+          this.x -= this.game.clockTick * this.speed;
+        }
+
+      }
+        this.collision = false; 
+    } else {
+
+    super.update();
+    }
+
+    this.bounding.x = this.x + 1;
+    this.bounding.y = this.y + this.boundingYOffest;
   }
 }
-
 class Beholder extends Enemy {
   constructor(game, spritesheet, x, y, w, h) {
     let statemachine = new StateMachine();
@@ -661,7 +754,7 @@ class Dragon extends Enemy {
       new Animation(spritesheet, 0, 1536, 256, 256, 3, 0.333, 3, true));
     statemachine.setState('idleDragon');
   }
-
+  
   update(){
     if (this.currentHP <= 0) {
       this.game.win();
@@ -840,7 +933,7 @@ class BossAttack {
 }
 
 
-const SPEED = 100;
+const SPEED = 200;
 
 class DonJon {
   constructor(gameEngine, spritesheet, sounds, x, y, w, h) {
@@ -913,6 +1006,7 @@ class DonJon {
       AM.getAsset('./img/main_dude_god.png'), 0, 640, 32, 64, 6, 0.167, 6, true));
     this.stateMachine.addState('attackRightDJG', new Animation(
       AM.getAsset('./img/main_dude_god.png'), 0, 704, 32, 64, 4, 0.25, 4, true));
+    
   }
 
   moveTo(x, y) {
