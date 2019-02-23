@@ -788,26 +788,6 @@ class DonJon {
 
   update() {
     let that = this;
-    this.game.entities.iterate(function (enemy) {
-      if(enemy.isEnemy) {
-        let box1 = that.bounding;
-        let box2 = enemy.bounding;
-        if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
-          && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-//          && !that.god) {
-          that.x = that.prevX;
-          that.y = that.prevY;
-          that.god = true;
-          that.godTimer = 5;
-        }
-      }
-    });
-    if (that.god) {
-      that.godTimer -= that.game.clockTick;
-      if (that.godTimer <= 0) {
-        that.god = false;
-      }
-    }
     this.game.walls.iterate(function (wall) {
       let box1 = that.bounding;
       let box2 = wall.bounding;
@@ -817,114 +797,60 @@ class DonJon {
         that.y = that.prevY;
       }
     });
-//    } else {
-      if (cursor.rightPressed) {
-        if(this.god) {
-          this.stateMachine.setState('runRightDJG');
-        } else {
-          this.stateMachine.setState('runRightDJ');
-        }
-        this.direction = 'E';
-        this.prevX = this.x;
-        this.x += this.game.clockTick * SPEED;
-      } else if (cursor.leftPressed) {
-        if(this.god) {
-          this.stateMachine.setState('runLeftDJG');
-        } else {
-          this.stateMachine.setState('runLeftDJ');
-        }
-        this.direction = 'W';
-        this.prevX = this.x;
-        this.x -= this.game.clockTick * SPEED;
-      }
-      if (cursor.upPressed) {
-        if(this.god) {
-          this.stateMachine.setState('runUpDJG');
-        } else {
-          this.stateMachine.setState('runUpDJ');
-        }
-        this.direction = 'N';
-        this.prevY = this.y;
-        this.y -= this.game.clockTick * SPEED;
-      } else if (cursor.downPressed) {
-        if(this.god) {
-          this.stateMachine.setState('runDownDJG');
-        } else {
-          this.stateMachine.setState('runDownDJ');
-        }
-        this.direction = 'S';
-        this.prevY = this.y;
-        this.y += this.game.clockTick * SPEED;
-      }
-      if (this.attackCooldown <= 0 && !cursor.upPressed && !cursor.downPressed &&
-        !cursor.rightPressed && !cursor.leftPressed) {
-        this.soundWalk.pause();
-        if(this.god) {
-          switch(this.direction) {
-            case 'N': this.stateMachine.setState('idleUpDJG'); break;
-            case 'E': this.stateMachine.setState('idleRightDJG'); break;
-            case 'S': this.stateMachine.setState('idleDownDJG'); break;
-            case 'W': this.stateMachine.setState('idleLeftDJG'); break;
-          }
-        } else {
-          switch(this.direction) {
-            case 'N': this.stateMachine.setState('idleUpDJ'); break;
-            case 'E': this.stateMachine.setState('idleRightDJ'); break;
-            case 'S': this.stateMachine.setState('idleDownDJ'); break;
-            case 'W': this.stateMachine.setState('idleLeftDJ'); break;
-          }
-        }
-      } else if(this.soundWalk.paused) {
-        this.soundWalk.play();
-      }
-      this.bounding.x = this.x + 1;
-      this.bounding.y = this.y + this.h / 2 + 1;
-//    }
+//    this.game.entities.iterate(function (enemy) {
+//      if(enemy.isEnemy) {
+//        let box1 = that.bounding;
+//        let box2 = enemy.bounding;
+//        if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+//          && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+//          && !that.god) {
+//          that.x = that.prevX;
+//          that.y = that.prevY;
+//          that.god = true;
+//          that.godTimer = 5;
+//        }
+//      }
+//    });
+    if (cursor.rightPressed) {
+      this.direction = 'E';
+      this.prevX = this.x;
+      this.x += this.game.clockTick * SPEED;
+    } else if (cursor.leftPressed) {
+      this.direction = 'W';
+      this.prevX = this.x;
+      this.x -= this.game.clockTick * SPEED;
+    }
+    if (cursor.upPressed) {
+      this.direction = 'N';
+      this.prevY = this.y;
+      this.y -= this.game.clockTick * SPEED;
+    } else if (cursor.downPressed) {
+      this.direction = 'S';
+      this.prevY = this.y;
+      this.y += this.game.clockTick * SPEED;
+    }
+    if (this.soundWalk.paused && (cursor.upPressed || cursor.downPressed
+      || cursor.leftPressed || cursor.rightPressed)) {
+      this.soundWalk.play();
+    }
     if (mouseValue) {
       if (this.attackCooldown <= 0) {
-        if(this.god) {
-          let strike = null;
-          switch(this.direction) {
-            case 'N':
-              this.stateMachine.setState('attackUpDJG');
-              strike = new PlayerStrike(this.game, this.x - 16, this.y - 10, 'up', this.attackDamage);
-              break;
-            case 'E':
-              this.stateMachine.setState('attackRightDJG');
-              strike = new PlayerStrike(this.game, this.x - 20, this.y, 'right', this.attackDamage);
-              break;
-            case 'S':
-              this.stateMachine.setState('attackDownDJG');
-              strike = new PlayerStrike(this.game, this.x - 16, this.y + 10, 'down', this.attackDamage);
-              break;
-            case 'W':
-              this.stateMachine.setState('attackLeftDJG');
-              strike = new PlayerStrike(this.game, this.x - 10, this.y, 'left', this.attackDamage);
-              break;
-          }
-          this.game.entities.add(strike);
-        } else {
-          let strike = null;
-          switch(this.direction) {
-            case 'N':
-              this.stateMachine.setState('attackUpDJ');
-              strike = new PlayerStrike(this.game, this.x - 16, this.y - 10, 'up', this.attackDamage);
-              break;
-            case 'E':
-              this.stateMachine.setState('attackRightDJ');
-              strike = new PlayerStrike(this.game, this.x - 20, this.y, 'right', this.attackDamage);
-              break;
-            case 'S':
-              this.stateMachine.setState('attackDownDJ');
-              strike = new PlayerStrike(this.game, this.x - 16, this.y + 10, 'down', this.attackDamage);
-              break;
-            case 'W':
-              this.stateMachine.setState('attackLeftDJ');
-              strike = new PlayerStrike(this.game, this.x - 10, this.y, 'left', this.attackDamage);
-              break;
-          }
-          this.game.entities.add(strike);
+        let strike = null;
+        switch(this.direction) {
+          case 'N':
+            strike = new PlayerStrike(this.game, this.x - 16, this.y - 10, 'up', this.attackDamage);
+            break;
+          case 'E':
+            strike = new PlayerStrike(this.game, this.x - 20, this.y, 'right', this.attackDamage);
+            break;
+          case 'S':
+            strike = new PlayerStrike(this.game, this.x - 16, this.y + 10, 'down', this.attackDamage);
+            break;
+          case 'W':
+            strike = new PlayerStrike(this.game, this.x - 10, this.y, 'left', this.attackDamage);
+            break;
         }
+        this.game.entities.add(strike);
         this.soundSwing.play();
         if (!this.soundWalk.paused) {
           this.soundWalk.pause();
@@ -935,6 +861,115 @@ class DonJon {
     }
     if (this.attackCooldown > 0) {
       this.attackCooldown -= this.game.clockTick;
+    }
+    if (this.god) {
+      this.godTimer -= this.game.clockTick;
+      if (this.godTimer <= 0) {
+        this.god = false;
+      }
+    }
+    this.bounding.x = this.x + 1;
+    this.bounding.y = this.y + this.h / 2 + 1;
+    this.setState();
+  }
+
+  setState() {
+    if (this.god) {
+      if (this.attackCooldown > 0) {
+        switch (this.direction) {
+            case 'N':
+              this.stateMachine.setState('attackUpDJG');
+              break;
+            case 'E':
+              this.stateMachine.setState('attackRightDJG');
+              break;
+            case 'S':
+              this.stateMachine.setState('attackDownDJG');
+              break;
+            case 'W':
+              this.stateMachine.setState('attackLeftDJG');
+              break;
+        }
+      } else if (!cursor.upPressed && !cursor.downPressed &&
+        !cursor.rightPressed && !cursor.leftPressed) {
+        switch (this.direction) {
+            case 'N':
+              this.stateMachine.setState('idleUpDJG');
+              break;
+            case 'E':
+              this.stateMachine.setState('idleRightDJG');
+              break;
+            case 'S':
+              this.stateMachine.setState('idleDownDJG');
+              break;
+            case 'W':
+              this.stateMachine.setState('idleLeftDJG');
+              break;
+        }
+      } else {
+        switch (this.direction) {
+            case 'N':
+              this.stateMachine.setState('runUpDJG');
+              break;
+            case 'E':
+              this.stateMachine.setState('runRightDJG');
+              break;
+            case 'S':
+              this.stateMachine.setState('runDownDJG');
+              break;
+            case 'W':
+              this.stateMachine.setState('runLeftDJG');
+              break;
+        }
+      }
+    } else {
+      if (this.attackCooldown > 0) {
+        switch (this.direction) {
+            case 'N':
+              this.stateMachine.setState('attackUpDJ');
+              break;
+            case 'E':
+              this.stateMachine.setState('attackRightDJ');
+              break;
+            case 'S':
+              this.stateMachine.setState('attackDownDJ');
+              break;
+            case 'W':
+              this.stateMachine.setState('attackLeftDJ');
+              break;
+        }
+      } else if (!cursor.upPressed && !cursor.downPressed &&
+        !cursor.rightPressed && !cursor.leftPressed) {
+        switch (this.direction) {
+            case 'N':
+              this.stateMachine.setState('idleUpDJ');
+              break;
+            case 'E':
+              this.stateMachine.setState('idleRightDJ');
+              break;
+            case 'S':
+              this.stateMachine.setState('idleDownDJ');
+              break;
+            case 'W':
+              this.stateMachine.setState('idleLeftDJ');
+              break;
+        }
+      } else {
+        switch (this.direction) {
+            case 'N':
+              this.stateMachine.setState('runUpDJ');
+              break;
+            case 'E':
+              this.stateMachine.setState('runRightDJ');
+              break;
+            case 'S':
+              this.stateMachine.setState('runDownDJ');
+              break;
+            case 'W':
+              this.stateMachine.setState('runLeftDJ');
+              break;
+        }
+      }
     }
   }
 
@@ -952,27 +987,31 @@ class DonJon {
 }
 
 class Strike {
-  constructor(gameEngine, x, y, direction) {
+  constructor(gameEngine, x, y, direction, durationOfAnimation) {
     this.game = gameEngine;
     this.x = x;
     this.y = y;
     this.bounding = new Rectangle(x, y, 64, 64);
-    this.cooldown = 1;
+    this.cooldown = durationOfAnimation;
     switch (direction) {
       case 'up': this.animation = new Animation(
-        AM.getAsset('./img/Strike.png'), 0, 0, 64, 64, 5, 0.2, 5, true);
+        AM.getAsset('./img/Strike.png'), 0, 0, 64, 64, 5,
+          durationOfAnimation / 5, 5, true);
         this.bounding.y -= 40;
         break;
       case 'right': this.animation = new Animation(
-        AM.getAsset('./img/Strike.png'), 0, 64, 64, 64, 5, 0.2, 5, true);
+        AM.getAsset('./img/Strike.png'), 0, 64, 64, 64, 5,
+          durationOfAnimation / 5, 5, true);
         this.bounding.x += 49;
         break;
       case 'down': this.animation = new Animation(
-        AM.getAsset('./img/Strike.png'), 0, 128, 64, 64, 5, 0.2, 5, true);
+        AM.getAsset('./img/Strike.png'), 0, 128, 64, 64, 5,
+          durationOfAnimation / 5, 5, true);
         this.bounding.y += 49;
         break;
       case 'left': this.animation = new Animation(
-        AM.getAsset('./img/Strike.png'), 0, 192, 64, 64, 5, 0.2, 5, true);
+        AM.getAsset('./img/Strike.png'), 0, 192, 64, 64, 5,
+          durationOfAnimation / 5, 5, true);
         this.bounding.x -= 49;
         break;
     }
@@ -1000,7 +1039,7 @@ class Strike {
 
 class EnemyStrike extends Strike {
   constructor(gameEngine, x, y, direction, damage) {
-    super(gameEngine, x, y, direction);
+    super(gameEngine, x, y, direction, 1);
     this.hit = false;
     this.damage = damage;
   }
@@ -1020,7 +1059,7 @@ class EnemyStrike extends Strike {
 
 class PlayerStrike extends Strike {
   constructor(gameEngine, x, y, direction, damage) {
-    super(gameEngine, x, y, direction);
+    super(gameEngine, x, y, direction, 0.2);
     this.hit = false;
     this.damage = damage;
   }
