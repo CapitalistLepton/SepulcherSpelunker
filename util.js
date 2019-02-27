@@ -84,7 +84,6 @@ class LinkedList {
 
   removeRandom() {
     let index = randInt(this.length);
-    console.log(index);
     let current = this.head
     let data;
     if (index === 0) {
