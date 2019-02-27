@@ -1091,6 +1091,14 @@ class DonJon {
       AM.getAsset('./img/main_dude.png'), 64, 704, 32, 64, 1, 1, 1, true));
     this.stateMachine.addState('blockLeftDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 64, 576, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockDownDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 64, 512, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockUpDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 64, 640, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockRightDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 64, 704, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockLeftDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 64, 576, 32, 64, 1, 1, 1, true));
   }
 
   moveTo(x, y) {
