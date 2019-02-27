@@ -70,10 +70,7 @@ class GameEngine {
     this.ctx.canvas.addEventListener('keydown', keyDownHandler);
     this.ctx.canvas.addEventListener('keyup', keyUpHandler);
     this.ctx.canvas.addEventListener('click', clickHandler);
-
-    this.ctx.canvas.addEventListener('click', function (e) {
-      // Attack on left click
-    }, false);
+    this.ctx.canvas.addEventListener('contextmenu', rightClickHandler);
   }
 
   loop() {

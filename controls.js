@@ -2,7 +2,8 @@ let cursor = {
   rightPressed: false,
   leftPressed: false,
   downPressed: false,
-  upPressed: false
+  upPressed: false,
+  rightClick: false
 };
 
 let mouseCooldown = false;
@@ -27,8 +28,10 @@ function keyDownHandler(e) {
     case "ArrowDown":
     case "Down":
     case "KeyS": cursor.downPressed = true; break;
-    // Space Pressed
+    // Attack
     case "Space": clickHandler(e); break;
+    // Block
+    case "KeyJ": cursor.rightClick = true; break;
     default: return;
   }
 }
@@ -58,4 +61,8 @@ function keyUpHandler(e) {
 
 function clickHandler(e) {
   mouseValue = true;
+}
+
+function rightClickHandler(e) {
+  cursor.rightClick = true;
 }

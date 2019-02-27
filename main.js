@@ -149,7 +149,6 @@ class Ladder extends Tile {
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
       if (this.left) {
-        console.log('hit ladder');
         if (this.game.world.level > 0) {
           this.sound.play();
           this.game.setLevel(this.game.world.level - 1);
@@ -160,7 +159,6 @@ class Ladder extends Tile {
       if (!this.left) {
         // Mark when the player leaves the bounding box of the ladder
         this.left = true;
-        console.log('left ladder');
       }
     }
     }
@@ -181,7 +179,6 @@ class Hole extends Tile {
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
       if (this.left) {
-        console.log('hit hole');
         if (this.game.world.level < 12) {
           this.sound.play();
           this.game.setLevel(this.game.world.level + 1);
@@ -190,7 +187,6 @@ class Hole extends Tile {
       }
     } else {
       if (!this.left) {
-        console.log('left hole');
         this.left = true;
       }
     }
@@ -638,11 +634,13 @@ class BeholderShot {
       let box2 = this.game.player.bounding;
       if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
         && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-        if (this.game.player.godTimer <= 0) {
+        if (this.game.player.godTimer <= 0 &&
+          this.game.player.blockCooldown <= 0) {
           this.game.player.currentHP -= this.damage;
           this.game.player.godTimer = GOD_COOLOFF;
+        } else {
+          this.game.entities.remove(this);
         }
-        this.game.entities.remove(this);
       }
       switch (this.direction) {
         case 'up':
@@ -808,7 +806,6 @@ class Gargoyle extends Enemy {
 
 class Dragon extends Enemy {
   constructor(game, spritesheet, x, y, w, h, level) {
-    console.log('Init dragon');
     let statemachine = new StateMachine();
     // adjust x and y to center dragon in final level
     super(game, statemachine, x - 60, y - 22, w, h, level);
@@ -1032,6 +1029,7 @@ class DonJon {
     this.currentHP = 24;
     this.attackDamage = 1;
     this.attackCooldown = 0;
+    this.blockCooldown = 0;
     this.direction = 'S';
     this.soundWalk = sounds.walk;
     this.soundWalk.loop = true;
@@ -1085,6 +1083,14 @@ class DonJon {
       AM.getAsset('./img/main_dude_god.png'), 0, 640, 32, 64, 6, 0.167, 6, true));
     this.stateMachine.addState('attackRightDJG', new Animation(
       AM.getAsset('./img/main_dude_god.png'), 0, 704, 32, 64, 4, 0.25, 4, true));
+    this.stateMachine.addState('blockDownDJ', new Animation(
+      AM.getAsset('./img/main_dude.png'), 64, 512, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockUpDJ', new Animation(
+      AM.getAsset('./img/main_dude.png'), 64, 640, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockRightDJ', new Animation(
+      AM.getAsset('./img/main_dude.png'), 64, 704, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockLeftDJ', new Animation(
+      AM.getAsset('./img/main_dude.png'), 64, 576, 32, 64, 1, 1, 1, true));
   }
 
   moveTo(x, y) {
@@ -1162,8 +1168,17 @@ class DonJon {
       }
       mouseValue = false;
     }
+    if (cursor.rightClick) {
+      if (this.blockCooldown <= 0) {
+        this.blockCooldown = 1;
+      }
+      cursor.rightClick = false;
+    }
     if (this.attackCooldown > 0) {
       this.attackCooldown -= this.game.clockTick;
+    }
+    if (this.blockCooldown > 0) {
+      this.blockCooldown -= this.game.clockTick;
     }
     if (this.godTimer > 0) {
       this.godTimer -= this.game.clockTick;
@@ -1189,6 +1204,21 @@ class DonJon {
             case 'W':
               this.stateMachine.setState('attackLeftDJG');
               break;
+        }
+      } else if (this.blockCooldown > 0) {
+        switch (this.direction) {
+          case 'N':
+            this.stateMachine.setState('blockUpDJG');
+            break;
+          case 'E':
+            this.stateMachine.setState('blockRightDJG');
+            break;
+          case 'S':
+            this.stateMachine.setState('blockDownDJG');
+            break;
+          case 'W':
+            this.stateMachine.setState('blockLeftDJG');
+            break;
         }
       } else if (!cursor.upPressed && !cursor.downPressed &&
         !cursor.rightPressed && !cursor.leftPressed) {
@@ -1238,9 +1268,24 @@ class DonJon {
               this.stateMachine.setState('attackLeftDJ');
               break;
         }
+      } else if (this.blockCooldown > 0) {
+        switch (this.direction) {
+          case 'N':
+            this.stateMachine.setState('blockUpDJ');
+            break;
+          case 'E':
+            this.stateMachine.setState('blockRightDJ');
+            break;
+          case 'S':
+            this.stateMachine.setState('blockDownDJ');
+            break;
+          case 'W':
+            this.stateMachine.setState('blockLeftDJ');
+            break;
+        }
       } else if (!cursor.upPressed && !cursor.downPressed &&
         !cursor.rightPressed && !cursor.leftPressed) {
-        switch (this.direction) {
+          switch (this.direction) {
             case 'N':
               this.stateMachine.setState('idleUpDJ');
               break;
@@ -1253,7 +1298,7 @@ class DonJon {
             case 'W':
               this.stateMachine.setState('idleLeftDJ');
               break;
-        }
+          }
       } else {
         switch (this.direction) {
             case 'N':
@@ -1351,7 +1396,7 @@ class EnemyStrike extends Strike {
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
       && !this.hit) {
-      if (this.game.player.godTimer > 0) {
+      if (this.game.player.godTimer > 0 || this.game.player.blockCooldown > 0) {
         this.game.entities.remove(this);
       } else {
         this.game.player.currentHP -= this.damage;
