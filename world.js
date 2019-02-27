@@ -84,6 +84,34 @@ class World {
                 don.moveTo(pos.x, pos.y - SIZE / 2);
               }
               break;
+            case 'statueNorth':
+              tiles.push(new Dirt(game,
+              this.AM.getAsset('./img/map2.png'), pos.x, pos.y, SIZE, SIZE));
+              stationary.push(new Statue(game,
+                this.AM.getAsset('./img/gargoyle.png'), pos.x, pos.y, SIZE,
+                SIZE, 'N'));
+              break;
+            case 'statueEast':
+              tiles.push(new Dirt(game,
+              this.AM.getAsset('./img/map2.png'), pos.x, pos.y, SIZE, SIZE));
+              stationary.push(new Statue(game,
+                this.AM.getAsset('./img/gargoyle.png'), pos.x, pos.y, SIZE,
+                SIZE, 'E'));
+              break;
+            case 'statueSouth':
+              tiles.push(new Dirt(game,
+              this.AM.getAsset('./img/map2.png'), pos.x, pos.y, SIZE, SIZE));
+              stationary.push(new Statue(game,
+                this.AM.getAsset('./img/gargoyle.png'), pos.x, pos.y, SIZE,
+                SIZE, 'S'));
+              break;
+            case 'statueWest':
+              tiles.push(new Dirt(game,
+              this.AM.getAsset('./img/map2.png'), pos.x, pos.y, SIZE, SIZE));
+              stationary.push(new Statue(game,
+                this.AM.getAsset('./img/gargoyle.png'), pos.x, pos.y, SIZE,
+                SIZE, 'W'));
+              break;
           }
           for (let k = 0; k < this.powerups.length; k++) {
             if (level.tiles[j][i] === this.powerups[k].name) {
@@ -93,11 +121,19 @@ class World {
             }
           }
           for (let k = 0; k < this.enemies.length; k++) {
-            if (level.tiles[j][i] === this.enemies[k].name) {
+            let str = level.tiles[j][i];
+            if (str === this.enemies[k].name) {
               tiles.push(new Dirt(game, this.AM.getAsset('./img/map2.png'),
                 pos.x, pos.y, SIZE, SIZE));
               enemyEntities.push(this.enemies[k].constructor(pos.x, pos.y,
                 levelIndex));
+            } else if (str.startsWith('eGargoyle')) {
+              let dir = str.charAt(str.length - 1);
+              tiles.push(new Dirt(game, this.AM.getAsset('./img/map2.png'),
+                pos.x, pos.y, SIZE, SIZE));
+              enemyEntities.push(new Gargoyle(game,
+                AM.getAsset('./img/gargoyle.png'), pos.x, pos.y, SIZE / 2,
+                SIZE, levelIndex, dir));
             }
           }
         }
@@ -257,6 +293,7 @@ class World {
 class Level {
   constructor(powerups, enemies, levelIndex) {
     this.valid = true;
+    this.statues = new LinkedList();
     this.initTiles();
     this.drunkardsWalk();
     this.cleanupTiles(levelIndex);
@@ -316,7 +353,9 @@ class Level {
   placeEnemies(enemies, level) {
     for (let i = 0; i < enemies.length; i++) {
       for (let j = 0; j < enemies[i].number[level]; j++) {
-        if (!this.placeEnemy(enemies[i])) {
+        if (enemies[i].name === 'eGargoyle') {
+          this.replaceStatue();
+        } else if (!this.placeEnemy(enemies[i])) {
           this.valid = false;
         }
       }
@@ -384,6 +423,7 @@ class Level {
     let pos = this.floor.get(randInt(this.floor.length));
     this.tiles[pos.y][pos.x] = tile;
     this.removeRadius(pos.x, pos.y, 1);
+    this.placeStatue(pos.x, pos.y);
   }
 
   removeRadius(x, y, radius) {
@@ -474,6 +514,49 @@ class Level {
     this.tiles[pos.y][pos.x] = enemy.name;
     this.removeRadius(pos.x, pos.y, 1 + enemy.width);
     return true;
+  }
+
+  /*
+   * Places a statue facing the x, y point provided.
+   */
+  placeStatue(x, y) {
+    let options = [];
+    if (x - 1 >= 0 && this.tiles[y][x - 1] === 'F') {
+      options.push('W');
+    }
+    if (x + 1 < WORLD_WIDTH && this.tiles[y][x + 1] === 'F') {
+      options.push('E');
+    }
+    if (y - 1 >= 0 && this.tiles[y - 1][x] === 'F') {
+      options.push('N');
+    }
+    if (y + 1 < WORLD_HEIGHT && this.tiles[y + 1][x] === 'F') {
+      options.push('S');
+    }
+    let choice = options[randInt(options.length)];
+    switch (choice) {
+      case 'N':
+        this.tiles[y - 1][x] = 'statueNorth';
+        this.statues.add({ x: x, y: y - 1, dir: 'N' });
+        break;
+      case 'E':
+        this.tiles[y][x + 1] = 'statueEast';
+        this.statues.add({ x: x + 1, y: y, dir: 'E' });
+        break;
+      case 'S':
+        this.tiles[y + 1][x] = 'statueSouth';
+        this.statues.add({ x: x, y: y + 1, dir: 'S' });
+        break;
+      case 'W':
+        this.tiles[y][x - 1] = 'statueWest';
+        this.statues.add({ x: x - 1, y: y, dir: 'W'});
+        break;
+    }
+  }
+
+  replaceStatue() {
+    let pos = this.statues.removeRandom();
+    this.tiles[pos.y][pos.x] = 'eGargoyle' + pos.dir;
   }
 }
 

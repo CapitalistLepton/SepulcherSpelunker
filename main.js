@@ -97,6 +97,27 @@ class Dirt extends Tile {
   }
 }
 
+class Statue extends Tile {
+  constructor(game, spritesheet, x, y, w, h, direction) {
+    let row = 0;
+    switch (direction) {
+      case 'N':
+        row = 0;
+        break;
+      case 'E':
+        row = 64;
+        break;
+      case 'S':
+        row = 128;
+        break;
+      case 'W':
+        row = 192;
+        break;
+    }
+    super(game, spritesheet, 0, row, 64, 64, x, y, w, h);
+  }
+}
+
 class Wall extends Tile {
   constructor(game, spritesheet, version, x, y, w, h) {
     super(game, spritesheet, 64 * (version % 4),
@@ -680,7 +701,7 @@ class Wraith extends Enemy {
 }
 
 class Gargoyle extends Enemy {
-  constructor(game, spritesheet, x, y, w, h, level) {
+  constructor(game, spritesheet, x, y, w, h, level, dir) {
     let statemachine = new StateMachine();
     super(game, statemachine, x, y, w, h, level);
     this.attackDistance = 100;
@@ -688,38 +709,100 @@ class Gargoyle extends Enemy {
     this.boundingXOffset = 4;
     this.boundingYOffest = 2;
     this.canMove = false;
+    this.direction = dir;
+    switch (dir) {
+      case 'N':
     statemachine.addState('idleDown',
       new Animation(spritesheet, 0, 0, 32, 64, 1, 1, 1, true));
-    statemachine.addState('idleLeft',
-      new Animation(spritesheet, 0, 64, 32, 64, 1, 1, 1, true));
-    statemachine.addState('idleUp',
-      new Animation(spritesheet, 0, 128, 32, 64, 1, 1, 1, true));
-    statemachine.addState('idleRight',
-      new Animation(spritesheet, 0, 192, 32, 64, 1, 1, 1, true));
     statemachine.addState('attackDown',
       new Animation(spritesheet, 0, 256, 32, 64, 2, 0.5, 2, true));
+        break;
+      case 'E':
+    statemachine.addState('idleLeft',
+      new Animation(spritesheet, 0, 64, 32, 64, 1, 1, 1, true));
     statemachine.addState('attackLeft',
       new Animation(spritesheet, 0, 320, 32, 64, 3, 0.333, 3, true));
+        break;
+      case 'S':
+    statemachine.addState('idleUp',
+      new Animation(spritesheet, 0, 128, 32, 64, 1, 1, 1, true));
     statemachine.addState('attackUp',
       new Animation(spritesheet, 0, 384, 32, 64, 2, 0.5, 2, true));
+        break;
+      case 'W':
+    statemachine.addState('idleRight',
+      new Animation(spritesheet, 0, 192, 32, 64, 1, 1, 1, true));
     statemachine.addState('attackRight',
       new Animation(spritesheet, 0, 448, 32, 64, 3, 0.333, 3, true));
+        break;
+    }
   }
 
   update() {
-    super.update();
-    let distance = cartesianDistance(this, this.game.player);
-    if (distance <= this.attackDistance) {
-      if (this.game.player.y < this.y) {
-        this.stateMachine.setState('attackUp');
-      } else if (this.game.player.x < this.x){
-        this.stateMachine.setState('attackLeft');
-      } else if (this.game.player.x > this.x){
-        this.stateMachine.setState('attackRight');
-      } else if (this.game.player.y > this.y){
-        this.stateMachine.setState('attackDown');
-      }
+    let box1 = new Rectangle(this.x, this.y, 64, 64);
+    let box2 = this.game.player.bounding;
+    switch (this.direction) {
+      case 'N':
+        box1.y += this.h;
+        break;
+      case 'E':
+        box1.x -= this.w;
+        break;
+      case 'S':
+        box1.y -= this.h;
+        break;
+      case 'W':
+        box1.x += this.w;
+        break;
     }
+
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+      this.attack();
+    } else if (this.attackCooldown <= 0) {
+      switch (this.direction) {
+        case 'N':
+          this.stateMachine.setState('idleDown');
+          break;
+        case 'E':
+          this.stateMachine.setState('idleLeft');
+          break;
+        case 'S':
+          this.stateMachine.setState('idleUp');
+          break;
+        case 'W':
+          this.stateMachine.setState('idleRight');
+          break;
+      }
+    } else {
+      this.attackCooldown -= this.game.clockTick;
+    }
+  }
+
+  attack() {
+    let strike = null;
+    switch (this.direction) {
+      case 'N':
+        this.stateMachine.setState('attackDown');
+        strike = new EnemyStrike(this.game, this.x, this.y, 'down', this.damage);
+        break;
+      case 'E':
+        this.stateMachine.setState('attackLeft');
+        strike = new EnemyStrike(this.game, this.x - 6,
+          this.y, 'left', this.damage);
+        break;
+      case 'S':
+        this.stateMachine.setState('attackUp');
+        strike = new EnemyStrike(this.game, this.x, this.y, 'up', this.damage);
+        break;
+      case 'W':
+        this.stateMachine.setState('attackRight');
+        strike = new EnemyStrike(this.game, this.x - 52 + this.bounding.w,
+          this.y, 'right', this.damage);
+        break;
+    }
+    this.game.entities.add(strike);
+    this.attackCooldown = 1;
   }
 }
 
@@ -1417,13 +1500,13 @@ AM.downloadAll(function () {
     },
     {
       name: 'eGargoyle',
-      constructor: (x, y, level) => {
+      constructor: (x, y, level, dir) => {
         return new Gargoyle(gameEngine, AM.getAsset('./img/gargoyle.png'), x, y,
-          SIZE / 2, SIZE, level);
+          SIZE / 2, SIZE, level, dir);
       },
       width: 1,
       height: 2,
-      number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 3, 3, 2, 0]
+      number: [0, 1, 1, 2, 3, 1, 1, 2, 2, 3, 3, 2, 0] // must be <= # of powerups
     }
     ,
     {

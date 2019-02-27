@@ -82,6 +82,26 @@ class LinkedList {
     }
   }
 
+  removeRandom() {
+    let index = randInt(this.length);
+    console.log(index);
+    let current = this.head
+    let data;
+    if (index === 0) {
+      data = current.data;
+      this.head = this.head.next;
+    } else {
+      while (current.next && index > 1) {
+        current = current.next;
+        index--;
+      }
+      data = current.next.data;
+      current.next = current.next.next;
+    }
+    this.length--;
+    return data;
+  }
+
   removeAll() {
     this.head = null;
   }
@@ -351,7 +371,7 @@ function findPath(world, pathStart, pathEnd) {
     console.log("Scope this out: " + result);
     result.forEach(function(tile) {
         tile[0] = (tile[0] * 64) + 18; // center goblin on the tile
-        tile[1] = (tile[1] * 64) + 10; // center gobline on the tile. 
+        tile[1] = (tile[1] * 64) + 10; // center gobline on the tile.
       });
       console.log("Scope this out: " + result);
       
