@@ -48,7 +48,6 @@ class AssetManager {
         // snd.src = path;
         // This is called when the audio can be completely played thru without buffering
         snd.addEventListener('canplay', function () {
-          console.log('Loaded ' + this.src);
           self.successCount++;
           if (self.isDone()) {
             callback();
