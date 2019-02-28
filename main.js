@@ -1,4 +1,5 @@
 const AM = new AssetManager();
+let mute = false;
 
 class Animation {
   constructor(spritesheet, startX, startY, frameWidth, frameHeight, sheetWidth, frameDuration,
@@ -140,6 +141,7 @@ class Ladder extends Tile {
     this.bounding = new Rectangle(x + 1, y + h/4, w - 2, h - h/4);
     this.left = false;
     this.sound = sound;
+    this.game.sounds.add(this.sound);
   }
 
   update() {
@@ -171,6 +173,7 @@ class Hole extends Tile {
     this.bounding = new Rectangle(x + 1, y + 1, w - 2, h - 1);
     this.sound = sound;
     this.left = false;
+    this.game.sounds.add(this.sound);
   }
 
   update() {
@@ -198,6 +201,7 @@ class Powerup {
     this.game = game;
     this.animation = animation;
     this.sound = sound;
+    this.game.sounds.add(sound);
     this.x = x;
     this.y = y;
     this.bounding = new Rectangle(x, y, SIZE / 2, SIZE / 2);
@@ -227,6 +231,7 @@ class HealthPotion extends Powerup {
   constructor(game, spritesheet, sound, x, y) {
     super(game, new Animation(spritesheet, 0, 0, 32, 32, 192, 0.167, 6, true),
       sound, x, y);
+
   }
 
   update() {
@@ -315,6 +320,7 @@ class Enemy {
     this.boundingXOffset = 0;
     this.boundingYOffset = 0;
     this.hitSound = AM.getAsset('./snd/goblin.wav');
+    this.game.sounds.add(this.hitSound);
     this.speed = SPEED * 0.75;
     this.attackDistance = 300;
     this.attackCooldown = 0;
@@ -564,6 +570,7 @@ class Beholder extends Enemy {
     this.boundingYOffset = 1;
     this.hitSound = AM.getAsset('./snd/wraith.wav');
     this.shootSound = AM.getAsset('./snd/beholder_shoot.wav');
+    this.game.sounds.add(this.shootSound);
     statemachine.addState('idleDown', new Animation(
       spritesheet, 0, 0, 64, 64, 2, 0.5, 2, true));
     statemachine.addState('idleLeft', new Animation(
@@ -885,6 +892,8 @@ class Dragon extends Enemy {
     this.boundingXOffset = 11;
     this.boundingYOffset = 22;
     this.attackCooldown = 2;
+    this.shootSound = AM.getAsset('./snd/shoot.wav');
+    this.game.sounds.add(this.shootSound);
     statemachine.addState('idleDragon',
       new Animation(spritesheet, 0, 0, 256, 256, 2, 0.5, 2, true));
     statemachine.addState('jumpDragon',
@@ -921,7 +930,7 @@ class Dragon extends Enemy {
           this.game.entities.add(new Stomp(this.game, this.x - 150, this.y + this.bounding.h, 'left'));
         }
       }
-      AM.getAsset('./snd/shoot.wav');
+      this.shootSound; //<---- should this have play ?
       this.attackCooldown = 2;
     } else {
       if (this.game.player.x < this.x + 64) {
@@ -944,6 +953,8 @@ class Stomp {
     this.bounding = new Rectangle(x, y, 256, 256);
     this.cooldown = 1;
     this.damage = 9;
+    this.hitSound = AM.getAsset('./snd/hit.ogg');
+    this.game.sounds.add(this.hitSound);
     switch (type) {
       case 'jump':
         this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
@@ -975,7 +986,7 @@ class Stomp {
       } else {
         this.game.player.currentHP -= this.damage;
         this.game.player.godTimer = GOD_COOLOFF;
-        AM.getAsset('./snd/hit.ogg').play();
+        this.hitSound.play();
         this.hit = true;
       }
     }
@@ -1002,6 +1013,8 @@ class Fireball {
     this.bounding = new Rectangle(x, y, 256, 256);
     this.cooldown = 1;
     this.damage = 3;
+    this.hitSound = AM.getAsset('./snd/hit.ogg');
+    this.game.sounds.add(this.hitSound);
     switch (type) {
       case 'center':
         this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
@@ -1033,7 +1046,7 @@ class Fireball {
       } else {
         this.game.player.currentHP -= this.damage;
         this.game.player.godTimer = GOD_COOLOFF;
-        AM.getAsset('./snd/hit.ogg').play();
+        this.hitSound.play();
         this.hit = true;
       }
     }
@@ -1109,6 +1122,9 @@ class DonJon {
     this.soundWalk.loop = true;
     this.soundSwing = sounds.swing;
     this.soundSpell = sounds.spell;
+    this.game.sounds.add(this.soundWalk);
+    this.game.sounds.add(this.soundSwing);
+    this.game.sounds.add(this.soundSpell);
     this.stateMachine = new StateMachine();
     this.stateMachine.addState('idleDownDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 0, 0, 32, 64, 2, 0.5, 2, true));
@@ -1501,6 +1517,8 @@ class EnemyStrike extends Strike {
     super(gameEngine, x, y, direction, 1);
     this.hit = false;
     this.damage = damage;
+    this.enemyStike = AM.getAsset('./snd/hit.ogg');
+    this.game.sounds.add(this.enemyStike);
   }
 
   update() {
@@ -1515,7 +1533,10 @@ class EnemyStrike extends Strike {
       } else {
         this.game.player.currentHP -= this.damage;
         this.game.player.godTimer = GOD_COOLOFF;
-        AM.getAsset('./snd/hit.ogg').play();
+        if(!mute){
+
+          this.enemyStike.play();
+        }
         this.hit = true;
       }
     }
@@ -1601,12 +1622,30 @@ AM.downloadAll(function () {
   const loss = AM.getAsset('./snd/death.wav');
   gameEngine.init(ctx, background, win, loss);
 
+
+  let stopMusic = document.getElementById('sound');
+
+  stopMusic.onclick = () => {
+    console.log('Mute was clicked ');
+    mute = !mute;
+    document.getElementById('sound').innerHTML = mute ? 'Sound On' : 'Sound Off';
+
+
+      gameEngine.sounds.iterate((sound) => {
+        sound.muted = mute;
+      });
+
+  }
+
+
   const powerups = [
     {
       name: 'pHealth',
       constructor: function (x, y) {
+        let potionSound = AM.getAsset('./snd/health.wav');
+        gameEngine.sounds.add(potionSound);
         return new HealthPotion(gameEngine, AM.getAsset('./img/potion.png'),
-          AM.getAsset('./snd/health.wav'), x, y);
+          potionSound, x, y);
       },
       number: 1
     },
@@ -1621,8 +1660,10 @@ AM.downloadAll(function () {
     {
       name: 'pStrength',
       constructor: function (x, y) {
+        let strengthSound = AM.getAsset('./snd/strength.wav');
+        gameEngine.sounds.add(strengthSound);
         return new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'),
-          AM.getAsset('./snd/strength.wav'), x, y);
+          strengthSound, x, y);
       },
       number: 1
     },
