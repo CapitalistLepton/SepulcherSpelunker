@@ -212,6 +212,7 @@ class Powerup {
         && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
         this.collided = true;
         this.sound.play();
+        this.game.entities.remove(this);
       }
     }
   }
@@ -232,7 +233,20 @@ class HealthPotion extends Powerup {
     super.update();
     if (this.collided) {
       this.game.player.currentHP = this.game.player.maxHP;
-      this.game.entities.remove(this);
+    }
+  }
+}
+
+class ManaPotion extends Powerup {
+  constructor(game, spritesheet, sound, x, y) {
+    super(game, new Animation(spritesheet, 0, 0, 32, 32, 192, 0.167, 6, true),
+      sound, x, y);
+  }
+
+  update() {
+    super.update();
+    if (this.collided) {
+      this.game.player.currentMana = this.game.player.maxMana;
     }
   }
 }
@@ -247,7 +261,6 @@ class LifeBuff extends Powerup {
     super.update();
     if (this.collided) {
       this.game.player.maxHP += 1;
-      this.game.entities.remove(this);
     }
   }
 }
@@ -262,7 +275,6 @@ class StrengthBuff extends Powerup {
     super.update();
     if (this.collided) {
       this.game.player.attackDamage += 1;
-      this.game.entities.remove(this);
     }
   }
 }
@@ -1027,6 +1039,8 @@ class DonJon {
     this.speed = 200; // in px/s
     this.maxHP= 24;
     this.currentHP = 24;
+    this.maxMana = 4;
+    this.currentMana = 4;
     this.attackDamage = 1;
     this.attackCooldown = 0;
     this.blockCooldown = 0;
@@ -1457,6 +1471,7 @@ AM.queueDownload('./img/wraith.png');
 AM.queueDownload('./img/gargoyle.png');
 AM.queueDownload('./img/dragon.png');
 AM.queueDownload('./img/bossAttack.png');
+AM.queueDownload('./img/mana.png');
 
 AM.queueDownload('./snd/background.mp3');
 AM.queueDownload('./snd/ladder.wav');
@@ -1515,6 +1530,14 @@ AM.downloadAll(function () {
       constructor: function (x, y) {
         return new StrengthBuff(gameEngine, AM.getAsset('./img/strength.png'),
           AM.getAsset('./snd/strength.wav'), x, y);
+      },
+      number: 1
+    },
+    {
+      name: 'pMana',
+      constructor: function (x, y) {
+        return new ManaPotion(gameEngine, AM.getAsset('./img/mana.png'),
+          AM.getAsset('./snd/health.wav'), x, y);
       },
       number: 1
     }

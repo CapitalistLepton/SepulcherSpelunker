@@ -143,6 +143,8 @@ class GameEngine {
       this.player.update();
       document.getElementById('health').innerHTML = 'HP ' +
         this.player.currentHP + '/' + this.player.maxHP;
+      document.getElementById('mana').innerHTML = 'Mana ' +
+        this.player.currentMana + '/' + this.player.maxMana;
       document.getElementById('level').innerHTML = 'Level ' + (this.world.level + 1);
       document.getElementById('damage').innerHTML = 'ATK ' +
         this.player.attackDamage;
