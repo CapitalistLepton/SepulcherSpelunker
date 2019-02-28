@@ -38,6 +38,7 @@ class GameEngine {
     this.player = null;
     this.camera = null;
     this.gameOver = false;
+    this.sounds = new LinkedList();
   }
 
   init(ctx, backgroundMusic, winMusic, lossMusic) {
@@ -48,6 +49,10 @@ class GameEngine {
     this.surfaceWidth = this.ctx.canvas.width;
     this.surfaceHeight = this.ctx.canvas.height;
     this.timer = new Timer();
+
+    this.sounds.add(this.backgroundMusic);
+    this.sounds.add(this.winMusic);
+    this.sounds.add(this.lossMusic);
     console.log('Game Initialized');
   }
 
