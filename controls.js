@@ -3,7 +3,8 @@ let cursor = {
   leftPressed: false,
   downPressed: false,
   upPressed: false,
-  rightClick: false
+  rightClick: false,
+  spell: false
 };
 
 let mouseCooldown = false;
@@ -32,6 +33,8 @@ function keyDownHandler(e) {
     case "Space": clickHandler(e); break;
     // Block
     case "KeyJ": cursor.rightClick = true; break;
+    // Spell
+    case "KeyR": cursor.spell = true; break;
     default: return;
   }
 }
