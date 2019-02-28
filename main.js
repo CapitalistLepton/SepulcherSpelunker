@@ -98,6 +98,27 @@ class Dirt extends Tile {
   }
 }
 
+class Statue extends Tile {
+  constructor(game, spritesheet, x, y, w, h, direction) {
+    let row = 0;
+    switch (direction) {
+      case 'N':
+        row = 0;
+        break;
+      case 'E':
+        row = 64;
+        break;
+      case 'S':
+        row = 128;
+        break;
+      case 'W':
+        row = 192;
+        break;
+    }
+    super(game, spritesheet, 0, row, 64, 64, x, y, w, h);
+  }
+}
+
 class Wall extends Tile {
   constructor(game, spritesheet, version, x, y, w, h) {
     super(game, spritesheet, 64 * (version % 4),
@@ -130,7 +151,6 @@ class Ladder extends Tile {
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
       if (this.left) {
-        console.log('hit ladder');
         if (this.game.world.level > 0) {
           this.sound.play();
           this.game.setLevel(this.game.world.level - 1);
@@ -141,7 +161,6 @@ class Ladder extends Tile {
       if (!this.left) {
         // Mark when the player leaves the bounding box of the ladder
         this.left = true;
-        console.log('left ladder');
       }
     }
     }
@@ -163,7 +182,6 @@ class Hole extends Tile {
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
       if (this.left) {
-        console.log('hit hole');
         if (this.game.world.level < 12) {
           this.sound.play();
           this.game.setLevel(this.game.world.level + 1);
@@ -172,7 +190,6 @@ class Hole extends Tile {
       }
     } else {
       if (!this.left) {
-        console.log('left hole');
         this.left = true;
       }
     }
@@ -199,6 +216,7 @@ class Powerup {
         && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
         this.collided = true;
         this.sound.play();
+        this.game.entities.remove(this);
       }
     }
   }
@@ -220,7 +238,20 @@ class HealthPotion extends Powerup {
     super.update();
     if (this.collided) {
       this.game.player.currentHP = this.game.player.maxHP;
-      this.game.entities.remove(this);
+    }
+  }
+}
+
+class ManaPotion extends Powerup {
+  constructor(game, spritesheet, sound, x, y) {
+    super(game, new Animation(spritesheet, 0, 0, 32, 32, 192, 0.167, 6, true),
+      sound, x, y);
+  }
+
+  update() {
+    super.update();
+    if (this.collided) {
+      this.game.player.currentMana = this.game.player.maxMana;
     }
   }
 }
@@ -235,7 +266,6 @@ class LifeBuff extends Powerup {
     super.update();
     if (this.collided) {
       this.game.player.maxHP += 1;
-      this.game.entities.remove(this);
     }
   }
 }
@@ -250,7 +280,6 @@ class StrengthBuff extends Powerup {
     super.update();
     if (this.collided) {
       this.game.player.attackDamage += 1;
-      this.game.entities.remove(this);
     }
   }
 }
@@ -585,9 +614,10 @@ class Beholder extends Enemy {
   }
 }
 
-class BeholderShot {
-  constructor(game, x, y, direction, damage) {
+class Projectile {
+  constructor(game, animation, x, y, direction, damage) {
     this.game = game;
+    this.animation = animation;
     this.x = x;
     this.y = y;
     this.speed = 150;
@@ -595,24 +625,6 @@ class BeholderShot {
     this.bounding = new Rectangle(x, y, 32, 32);
     this.cooldown = 3;
     this.direction = direction;
-    switch (direction) {
-      case 'up':
-        this.animation = new Animation(AM.getAsset('./img/shot.png'),
-          0, 0, 32, 32, 3, 0.333, 3, true);
-        break;
-      case 'right':
-        this.animation = new Animation(AM.getAsset('./img/shot.png'),
-          0, 32, 32, 32, 3, 0.333, 3, true);
-        break;
-      case 'down':
-        this.animation = new Animation(AM.getAsset('./img/shot.png'),
-          0, 64, 32, 32, 3, 0.333, 3, true);
-        break;
-      case 'left':
-        this.animation = new Animation(AM.getAsset('./img/shot.png'),
-          0, 96, 32, 32, 3, 0.333, 3, true);
-        break;
-    }
   }
 
   update() {
@@ -620,16 +632,6 @@ class BeholderShot {
     if (this.cooldown <= 0) {
       this.game.entities.remove(this);
     } else {
-      let box1 = this.bounding;
-      let box2 = this.game.player.bounding;
-      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
-        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-        if (this.game.player.godTimer <= 0) {
-          this.game.player.currentHP -= this.damage;
-          this.game.player.godTimer = GOD_COOLOFF;
-        }
-        this.game.entities.remove(this);
-      }
       switch (this.direction) {
         case 'up':
           this.y -= this.speed * this.game.clockTick;
@@ -651,9 +653,97 @@ class BeholderShot {
     }
   }
 
-  draw(ctx){
+  draw(ctx) {
     this.animation.drawFrame(this.game.clockTick, ctx,
       this.x - this.game.camera.x, this.y - this.game.camera.y);
+  }
+}
+
+class BeholderShot extends Projectile {
+  constructor(game, x, y, direction, damage) {
+    let animation;
+    switch (direction) {
+      case 'up':
+        animation = new Animation(AM.getAsset('./img/shot.png'),
+          0, 0, 32, 32, 3, 0.333, 3, true);
+        break;
+      case 'right':
+        animation = new Animation(AM.getAsset('./img/shot.png'),
+          0, 32, 32, 32, 3, 0.333, 3, true);
+        break;
+      case 'down':
+        animation = new Animation(AM.getAsset('./img/shot.png'),
+          0, 64, 32, 32, 3, 0.333, 3, true);
+        break;
+      case 'left':
+        animation = new Animation(AM.getAsset('./img/shot.png'),
+          0, 96, 32, 32, 3, 0.333, 3, true);
+        break;
+    }
+    super(game, animation, x, y, direction, damage);
+  }
+
+  update() {
+    super.update();
+    let box1 = this.bounding;
+    let box2 = this.game.player.bounding;
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+      if (this.game.player.godTimer <= 0 &&
+        this.game.player.blockCooldown <= 0) {
+        this.game.player.currentHP -= this.damage;
+        this.game.player.godTimer = GOD_COOLOFF;
+      } else {
+        this.game.entities.remove(this);
+      }
+    }
+  }
+}
+
+class PlayerShot extends Projectile {
+  constructor(game, x, y, direction, damage) {
+    let animation;
+    switch (direction) {
+      case 'up':
+        animation = new Animation(AM.getAsset('./img/playerShot.png'),
+          0, 0, 32, 32, 3, 0.333, 3, true);
+        break;
+      case 'right':
+        animation = new Animation(AM.getAsset('./img/playerShot.png'),
+          0, 32, 32, 32, 3, 0.333, 3, true);
+        break;
+      case 'down':
+        animation = new Animation(AM.getAsset('./img/playerShot.png'),
+          0, 64, 32, 32, 3, 0.333, 3, true);
+        break;
+      case 'left':
+        animation = new Animation(AM.getAsset('./img/playerShot.png'),
+          0, 96, 32, 32, 3, 0.333, 3, true);
+        break;
+    }
+    super(game, animation, x, y, direction, damage);
+  }
+
+  update() {
+    super.update();
+    let that = this;
+    let remove = false;
+    this.game.entities.iterate(function (entity) {
+      if (entity.isEnemy) {
+        let box1 = that.bounding;
+        let box2 = entity.bounding;
+        if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+          && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
+          && !that.hit) {
+          entity.currentHP -= that.damage;
+          entity.hitSound.play();
+          remove = true;
+        }
+      }
+    });
+    if (remove) {
+      this.game.entities.remove(this);
+    }
   }
 }
 
@@ -687,7 +777,7 @@ class Wraith extends Enemy {
 }
 
 class Gargoyle extends Enemy {
-  constructor(game, spritesheet, x, y, w, h, level) {
+  constructor(game, spritesheet, x, y, w, h, level, dir) {
     let statemachine = new StateMachine();
     super(game, statemachine, x, y, w, h, level);
     this.attackDistance = 100;
@@ -695,44 +785,105 @@ class Gargoyle extends Enemy {
     this.boundingXOffset = 4;
     this.boundingYOffest = 2;
     this.canMove = false;
+    this.direction = dir;
+    switch (dir) {
+      case 'N':
     statemachine.addState('idleDown',
       new Animation(spritesheet, 0, 0, 32, 64, 1, 1, 1, true));
-    statemachine.addState('idleLeft',
-      new Animation(spritesheet, 0, 64, 32, 64, 1, 1, 1, true));
-    statemachine.addState('idleUp',
-      new Animation(spritesheet, 0, 128, 32, 64, 1, 1, 1, true));
-    statemachine.addState('idleRight',
-      new Animation(spritesheet, 0, 192, 32, 64, 1, 1, 1, true));
     statemachine.addState('attackDown',
       new Animation(spritesheet, 0, 256, 32, 64, 2, 0.5, 2, true));
+        break;
+      case 'E':
+    statemachine.addState('idleLeft',
+      new Animation(spritesheet, 0, 64, 32, 64, 1, 1, 1, true));
     statemachine.addState('attackLeft',
       new Animation(spritesheet, 0, 320, 32, 64, 3, 0.333, 3, true));
+        break;
+      case 'S':
+    statemachine.addState('idleUp',
+      new Animation(spritesheet, 0, 128, 32, 64, 1, 1, 1, true));
     statemachine.addState('attackUp',
       new Animation(spritesheet, 0, 384, 32, 64, 2, 0.5, 2, true));
+        break;
+      case 'W':
+    statemachine.addState('idleRight',
+      new Animation(spritesheet, 0, 192, 32, 64, 1, 1, 1, true));
     statemachine.addState('attackRight',
       new Animation(spritesheet, 0, 448, 32, 64, 3, 0.333, 3, true));
+        break;
+    }
   }
 
   update() {
-    super.update();
-    let distance = cartesianDistance(this, this.game.player);
-    if (distance <= this.attackDistance) {
-      if (this.game.player.y < this.y) {
-        this.stateMachine.setState('attackUp');
-      } else if (this.game.player.x < this.x){
-        this.stateMachine.setState('attackLeft');
-      } else if (this.game.player.x > this.x){
-        this.stateMachine.setState('attackRight');
-      } else if (this.game.player.y > this.y){
-        this.stateMachine.setState('attackDown');
-      }
+    let box1 = new Rectangle(this.x, this.y, 64, 64);
+    let box2 = this.game.player.bounding;
+    switch (this.direction) {
+      case 'N':
+        box1.y += this.h;
+        break;
+      case 'E':
+        box1.x -= this.w;
+        break;
+      case 'S':
+        box1.y -= this.h;
+        break;
+      case 'W':
+        box1.x += this.w;
+        break;
     }
+
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+      this.attack();
+    } else if (this.attackCooldown <= 0) {
+      switch (this.direction) {
+        case 'N':
+          this.stateMachine.setState('idleDown');
+          break;
+        case 'E':
+          this.stateMachine.setState('idleLeft');
+          break;
+        case 'S':
+          this.stateMachine.setState('idleUp');
+          break;
+        case 'W':
+          this.stateMachine.setState('idleRight');
+          break;
+      }
+    } else {
+      this.attackCooldown -= this.game.clockTick;
+    }
+  }
+
+  attack() {
+    let strike = null;
+    switch (this.direction) {
+      case 'N':
+        this.stateMachine.setState('attackDown');
+        strike = new EnemyStrike(this.game, this.x, this.y, 'down', this.damage);
+        break;
+      case 'E':
+        this.stateMachine.setState('attackLeft');
+        strike = new EnemyStrike(this.game, this.x - 6,
+          this.y, 'left', this.damage);
+        break;
+      case 'S':
+        this.stateMachine.setState('attackUp');
+        strike = new EnemyStrike(this.game, this.x, this.y, 'up', this.damage);
+        break;
+      case 'W':
+        this.stateMachine.setState('attackRight');
+        strike = new EnemyStrike(this.game, this.x - 52 + this.bounding.w,
+          this.y, 'right', this.damage);
+        break;
+    }
+    this.game.entities.add(strike);
+    this.attackCooldown = 1;
   }
 }
 
 class Dragon extends Enemy {
   constructor(game, spritesheet, x, y, w, h, level) {
-    console.log('Init dragon');
     let statemachine = new StateMachine();
     // adjust x and y to center dragon in final level
     super(game, statemachine, x - 60, y - 22, w, h, level);
@@ -960,14 +1111,20 @@ class DonJon {
     this.speed = 200; // in px/s
     this.maxHP= 24;
     this.currentHP = 24;
+    this.maxMana = 4;
+    this.currentMana = 4;
     this.attackDamage = 1;
     this.attackCooldown = 0;
+    this.blockCooldown = 0;
+    this.spellCooldown = 0;
     this.direction = 'S';
     this.soundWalk = sounds.walk;
     this.soundWalk.loop = true;
     this.soundSwing = sounds.swing;
+    this.soundSpell = sounds.spell;
     this.game.sounds.add(this.soundWalk);
     this.game.sounds.add(this.soundSwing);
+    this.game.sounds.add(this.soundSpell);
     this.stateMachine = new StateMachine();
     this.stateMachine.addState('idleDownDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 0, 0, 32, 64, 2, 0.5, 2, true));
@@ -1017,6 +1174,22 @@ class DonJon {
       AM.getAsset('./img/main_dude_god.png'), 0, 640, 32, 64, 6, 0.167, 6, true));
     this.stateMachine.addState('attackRightDJG', new Animation(
       AM.getAsset('./img/main_dude_god.png'), 0, 704, 32, 64, 4, 0.25, 4, true));
+    this.stateMachine.addState('blockDownDJ', new Animation(
+      AM.getAsset('./img/main_dude.png'), 64, 512, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockUpDJ', new Animation(
+      AM.getAsset('./img/main_dude.png'), 64, 640, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockRightDJ', new Animation(
+      AM.getAsset('./img/main_dude.png'), 64, 704, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockLeftDJ', new Animation(
+      AM.getAsset('./img/main_dude.png'), 64, 576, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockDownDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 64, 512, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockUpDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 64, 640, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockRightDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 64, 704, 32, 64, 1, 1, 1, true));
+    this.stateMachine.addState('blockLeftDJG', new Animation(
+      AM.getAsset('./img/main_dude_god.png'), 64, 576, 32, 64, 1, 1, 1, true));
   }
 
   moveTo(x, y) {
@@ -1094,8 +1267,48 @@ class DonJon {
       }
       mouseValue = false;
     }
+    if (cursor.rightClick) {
+      if (this.blockCooldown <= 0) {
+        this.blockCooldown = 1;
+      }
+      cursor.rightClick = false;
+    }
+    if (cursor.spell) {
+      if (this.spellCooldown <= 0 && this.currentMana > 0) {
+        let spell = null;
+        switch(this.direction) {
+          case 'N':
+            spell = new PlayerShot(this.game, this.x + this.w / 4, this.y, 'up',
+              this.attackDamage);
+            break;
+          case 'E':
+            spell = new PlayerShot(this.game, this.x + this.bounding.w,
+              this.y + this.h / 4, 'right', this.attackDamage);
+            break;
+          case 'S':
+            spell = new PlayerShot(this.game, this.x + this.w / 4,
+              this.y + this.bounding.h, 'down', this.attackDamage);
+            break;
+          case 'W':
+            spell = new PlayerShot(this.game, this.x - 32, this.y + this.h / 4,
+              'left', this.attackDamage);
+            break;
+        }
+        this.game.entities.add(spell);
+        this.soundSpell.play();
+        this.currentMana--;
+        this.spellCooldown = 1;
+      }
+      cursor.spell = false;
+    }
     if (this.attackCooldown > 0) {
       this.attackCooldown -= this.game.clockTick;
+    }
+    if (this.blockCooldown > 0) {
+      this.blockCooldown -= this.game.clockTick;
+    }
+    if (this.spellCooldown > 0) {
+      this.spellCooldown -= this.game.clockTick;
     }
     if (this.godTimer > 0) {
       this.godTimer -= this.game.clockTick;
@@ -1121,6 +1334,21 @@ class DonJon {
             case 'W':
               this.stateMachine.setState('attackLeftDJG');
               break;
+        }
+      } else if (this.blockCooldown > 0) {
+        switch (this.direction) {
+          case 'N':
+            this.stateMachine.setState('blockUpDJG');
+            break;
+          case 'E':
+            this.stateMachine.setState('blockRightDJG');
+            break;
+          case 'S':
+            this.stateMachine.setState('blockDownDJG');
+            break;
+          case 'W':
+            this.stateMachine.setState('blockLeftDJG');
+            break;
         }
       } else if (!cursor.upPressed && !cursor.downPressed &&
         !cursor.rightPressed && !cursor.leftPressed) {
@@ -1170,9 +1398,24 @@ class DonJon {
               this.stateMachine.setState('attackLeftDJ');
               break;
         }
+      } else if (this.blockCooldown > 0) {
+        switch (this.direction) {
+          case 'N':
+            this.stateMachine.setState('blockUpDJ');
+            break;
+          case 'E':
+            this.stateMachine.setState('blockRightDJ');
+            break;
+          case 'S':
+            this.stateMachine.setState('blockDownDJ');
+            break;
+          case 'W':
+            this.stateMachine.setState('blockLeftDJ');
+            break;
+        }
       } else if (!cursor.upPressed && !cursor.downPressed &&
         !cursor.rightPressed && !cursor.leftPressed) {
-        switch (this.direction) {
+          switch (this.direction) {
             case 'N':
               this.stateMachine.setState('idleUpDJ');
               break;
@@ -1185,7 +1428,7 @@ class DonJon {
             case 'W':
               this.stateMachine.setState('idleLeftDJ');
               break;
-        }
+          }
       } else {
         switch (this.direction) {
             case 'N':
@@ -1285,7 +1528,7 @@ class EnemyStrike extends Strike {
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
       && !this.hit) {
-      if (this.game.player.godTimer > 0) {
+      if (this.game.player.godTimer > 0 || this.game.player.blockCooldown > 0) {
         this.game.entities.remove(this);
       } else {
         this.game.player.currentHP -= this.damage;
@@ -1341,6 +1584,8 @@ AM.queueDownload('./img/wraith.png');
 AM.queueDownload('./img/gargoyle.png');
 AM.queueDownload('./img/dragon.png');
 AM.queueDownload('./img/bossAttack.png');
+AM.queueDownload('./img/mana.png');
+AM.queueDownload('./img/playerShot.png');
 
 AM.queueDownload('./snd/background.mp3');
 AM.queueDownload('./snd/ladder.wav');
@@ -1421,6 +1666,14 @@ AM.downloadAll(function () {
           strengthSound, x, y);
       },
       number: 1
+    },
+    {
+      name: 'pMana',
+      constructor: function (x, y) {
+        return new ManaPotion(gameEngine, AM.getAsset('./img/mana.png'),
+          AM.getAsset('./snd/health.wav'), x, y);
+      },
+      number: 1
     }
   ];
 
@@ -1457,13 +1710,13 @@ AM.downloadAll(function () {
     },
     {
       name: 'eGargoyle',
-      constructor: (x, y, level) => {
+      constructor: (x, y, level, dir) => {
         return new Gargoyle(gameEngine, AM.getAsset('./img/gargoyle.png'), x, y,
-          SIZE / 2, SIZE, level);
+          SIZE / 2, SIZE, level, dir);
       },
       width: 1,
       height: 2,
-      number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 3, 3, 2, 0]
+      number: [0, 1, 1, 2, 3, 1, 1, 2, 2, 3, 3, 2, 0] // must be <= # of powerups
     }
     ,
     {
