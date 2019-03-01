@@ -1129,9 +1129,10 @@ class DonJon {
     this.soundWalk = sounds.walk;
     this.soundWalk.loop = true;
     this.soundSwing = sounds.swing;
+    this.soundSpell = sounds.spell;
     this.game.sounds.add(this.soundWalk);
     this.game.sounds.add(this.soundSwing);
-    this.soundSpell = sounds.spell;
+    this.game.sounds.add(this.soundSpell);
     this.stateMachine = new StateMachine();
     this.stateMachine.addState('idleDownDJ', new Animation(
       AM.getAsset('./img/main_dude.png'), 0, 0, 32, 64, 2, 0.5, 2, true));
