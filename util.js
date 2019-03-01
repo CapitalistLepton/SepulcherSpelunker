@@ -254,7 +254,7 @@ function findPath(world, pathStart, pathEnd) {
     if(myE) result.push({x: E, y: y});
     if(myS) result.push({x: x, y: S});
     if(myW) result.push({x: W, y: y});
-    findNeighbours(myN, myS, myE, myW, N, S, E, W, result);
+    // findNeighbours(myN, myS, myE, myW, N, S, E, W, result);
     return result;
   }
 
