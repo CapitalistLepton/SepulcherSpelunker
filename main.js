@@ -1,5 +1,4 @@
 const AM = new AssetManager();
-let mute = false;
 
 class Animation {
   constructor(spritesheet, startX, startY, frameWidth, frameHeight, sheetWidth, frameDuration,
@@ -451,7 +450,11 @@ class Goblin extends Enemy {
     this.boundingXOffset = 1;
     this.boundingYOffest = 16;
     this.hitSound = AM.getAsset('./snd/goblin.wav');
+
     this.points = 5;
+
+    this.game.sounds.add(this.hitSound);
+
     statemachine.addState('idleDown',
       new Animation(spritesheet, 0, 0, 32, 64, 4, 0.25, 4, true));
     statemachine.addState('idleLeft',
@@ -574,6 +577,7 @@ class Beholder extends Enemy {
     this.boundingYOffset = 1;
     this.hitSound = AM.getAsset('./snd/wraith.wav');
     this.shootSound = AM.getAsset('./snd/beholder_shoot.wav');
+    this.game.sounds.add(this.hitSound);
     this.game.sounds.add(this.shootSound);
     this.points = 20;
     statemachine.addState('idleDown', new Animation(
@@ -762,6 +766,7 @@ class Wraith extends Enemy {
     this.boundingYOffset = 1;
     this.points = 30;
     this.hitSound = AM.getAsset('./snd/wraith.wav');
+    this.game.sounds.add(this.hitSound);
     this.collidesWithWalls = false;
     statemachine.addState('idleDown', new Animation(spritesheet, 0, 0, 32, 64,
       2, 0.5, 2, true));
@@ -1541,13 +1546,15 @@ class EnemyStrike extends Strike {
       } else {
         this.game.player.currentHP -= this.damage;
         this.game.player.godTimer = GOD_COOLOFF;
-        if(!mute){
-          this.enemyStike.play();
+
+          if (!this.game.isMuted) {
+
+            this.enemyStike.play();
+          }
+          this.hit = true;
         }
-        this.hit = true;
       }
     }
-  }
 }
 
 class PlayerStrike extends Strike {
@@ -1628,22 +1635,6 @@ AM.downloadAll(function () {
   const win = AM.getAsset('./snd/win.wav');
   const loss = AM.getAsset('./snd/death.wav');
   gameEngine.init(ctx, background, win, loss);
-
-
-  let stopMusic = document.getElementById('sound');
-
-  stopMusic.onclick = () => {
-    console.log('Mute was clicked ');
-    mute = !mute;
-    document.getElementById('sound').innerHTML = mute ? 'Sound On' : 'Sound Off';
-
-
-      gameEngine.sounds.iterate((sound) => {
-        sound.muted = mute;
-      });
-
-  }
-
 
   const powerups = [
     {

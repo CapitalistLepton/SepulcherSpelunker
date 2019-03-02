@@ -39,6 +39,7 @@ class GameEngine {
     this.camera = null;
     this.gameOver = false;
     this.sounds = new LinkedList();
+    this.muted = false;
   }
 
   init(ctx, backgroundMusic, winMusic, lossMusic) {
@@ -76,6 +77,14 @@ class GameEngine {
     this.ctx.canvas.addEventListener('keyup', keyUpHandler);
     this.ctx.canvas.addEventListener('click', clickHandler);
     this.ctx.canvas.addEventListener('contextmenu', rightClickHandler);
+
+    let that = this;
+    this.ctx.canvas.addEventListener('keydown', function(e) {
+      e.preventDefaults;
+      if (e.code === 'KeyM') {
+        that.muteAudio();
+      }
+    });
   }
 
   loop() {
@@ -110,6 +119,14 @@ class GameEngine {
     this.walls = null;
     // TODO add in a transition animation here
     this.world.setLevel(this, level);
+  }
+
+  muteAudio() {
+    this.isMuted = !this.isMuted;
+    let that = this;
+    this.sounds.iterate(function(sound) {
+      sound.muted = that.isMuted;
+    });
   }
 
   win() {
