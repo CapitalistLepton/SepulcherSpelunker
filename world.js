@@ -9,6 +9,7 @@ class World {
     this.enemies = enemies;
     this.AM = AM;
     this.levels = [];
+    this.starLevels = [];
     this.levelEntities = [];
     this.levelWalls = [];
     for (let i = 0; i < numLevels - 1; i++) {
@@ -177,6 +178,7 @@ class World {
     }
     game.setEntities(this.levelEntities[levelIndex]);
     game.walls = this.levelWalls[levelIndex];
+    this.starLevel(); // Calculate array for A*
     console.log('[World] Switched to level', levelIndex);
   }
 
@@ -220,6 +222,24 @@ class World {
       version = 15;
     }
     return version;
+  }
+
+  starLevel() {
+    if (!this.starLevels[this.level]) {
+      let spaces = [];
+      for (let i = 0; i < 2 * WORLD_HEIGHT; i++) {
+        spaces[i] = new Array(2 * WORLD_WIDTH).fill(1);
+      }
+      let level = this.levels[this.level].tiles;
+      for (let i = 0; i < 2 * WORLD_HEIGHT; i++) {
+        for (let j = 0; j < 2 * WORLD_WIDTH; j++) {
+          spaces[i][j] = (level[Math.floor(i/2)][Math.floor(j/2)] === 'W') ?
+            1 : 0;
+        }
+      }
+      this.starLevels[this.level] = spaces;
+    }
+    return this.starLevels[this.level];
   }
 
   finalLevel() {
