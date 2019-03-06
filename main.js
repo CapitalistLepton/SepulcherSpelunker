@@ -316,7 +316,7 @@ class Enemy {
     this.h = h;
     this.prevX = x;
     this.prevY = y;
-    this.damage = Math.floor(1 + level / 2);
+    this.damage = Math.floor(1 + level / 4);
     this.isEnemy = true;
     this.canMove = true;
     this.collidesWithWalls = true;
