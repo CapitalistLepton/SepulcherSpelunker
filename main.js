@@ -503,9 +503,14 @@ class Goblin extends Enemy {
           this.stateMachine.setState('idleUp');
         }
       } else if (distance <= this.attackDistance) {
+        /*
+         * Use A* to find a path and recalculate A* everytime the first point
+         * is reached.
+         */
         let currentX = this.x + this.w / 2;
         let currentY = this.y + this.h / 2;
-        if (!this.goalPoint) {
+        if (!this.goalPoint) { // Hit goal, recalculate A*
+          // Divide by 32 since there 4 squares per tile in A* map
           let pathStart = new Point(Math.floor(currentX / 32),
             Math.floor(currentY / 32));
           let endX = this.game.player.bounding.x +
@@ -520,19 +525,19 @@ class Goblin extends Enemy {
         } else {
           this.prevX = this.x;
           this.prevY = this.y;
-          let wantX = this.goalPoint.x + this.goalPoint.w;
-          let wantY = this.goalPoint.y + this.goalPoint.h;
-          if (wantY > currentY && this.goalPoint.y > currentY) {
+          let maxX = this.goalPoint.x + this.goalPoint.w;
+          let maxY = this.goalPoint.y + this.goalPoint.h;
+          if (maxY > currentY && this.goalPoint.y > currentY) {
             this.y += this.speed * this.game.clockTick;
             this.stateMachine.setState('runDown');
-          } else if (wantY < currentY && this.goalPoint.y < currentY) {
+          } else if (maxY < currentY && this.goalPoint.y < currentY) {
             this.y -= this.speed * this.game.clockTick;
             this.stateMachine.setState('runUp');
           }
-          if (wantX > currentX && this.goalPoint.x > currentX) {
+          if (maxX > currentX && this.goalPoint.x > currentX) {
             this.x += this.speed * this.game.clockTick;
             this.stateMachine.setState('runRight');
-          } else if (wantX < currentX && this.goalPoint.x < currentX) {
+          } else if (maxX < currentX && this.goalPoint.x < currentX) {
             this.x -= this.speed * this.game.clockTick;
             this.stateMachine.setState('runLeft');
           }
@@ -692,7 +697,8 @@ class BeholderShot extends Projectile {
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
       if (this.game.player.godTimer <= 0 &&
         this.game.player.blockCooldown <= 0) {
-        this.game.player.currentHP -= this.damage;
+        this.game.player.currentHP = Math.max(
+          this.game.player.currentHP - this.damage, 0);
         this.game.player.godTimer = GOD_COOLOFF;
       } else {
         this.game.entities.remove(this);
@@ -986,7 +992,8 @@ class Stomp {
       if (this.game.player.godTimer > 0) {
         this.game.entities.remove(this);
       } else {
-        this.game.player.currentHP -= this.damage;
+        this.game.player.currentHP = Math.max(
+          this.game.player.currentHP - this.damage, 0);
         this.game.player.godTimer = GOD_COOLOFF;
         this.hitSound.play();
         this.hit = true;
@@ -1046,7 +1053,8 @@ class Fireball {
       if (this.game.player.godTimer > 0) {
         this.game.entities.remove(this);
       } else {
-        this.game.player.currentHP -= this.damage;
+        this.game.player.currentHP = Math.max(
+          this.game.player.currentHP - this.damage, 0);
         this.game.player.godTimer = GOD_COOLOFF;
         this.hitSound.play();
         this.hit = true;
@@ -1205,6 +1213,7 @@ class DonJon {
 
   update() {
     if (this.currentHP <= 0) {
+      this.soundWalk.pause();
       this.game.lose();
     }
     let that = this;
@@ -1533,7 +1542,8 @@ class EnemyStrike extends Strike {
       if (this.game.player.godTimer > 0 || this.game.player.blockCooldown > 0) {
         this.game.entities.remove(this);
       } else {
-        this.game.player.currentHP -= this.damage;
+        this.game.player.currentHP = Math.max(
+          this.game.player.currentHP - this.damage, 0);
         this.game.player.godTimer = GOD_COOLOFF;
         if(!this.game.isMuted){
           this.enemyStike.play();
