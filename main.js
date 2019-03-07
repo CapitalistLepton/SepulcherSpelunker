@@ -331,11 +331,14 @@ class Enemy {
     this.ranged = false;
     this.maxHP = 4 + level;
     this.currentHP = this.maxHP;
+    this.points = 5;
+
   }
 
   update() {
     if (this.currentHP <= 0) {
       this.game.entities.remove(this);
+      this.game.player.score += this.points;
     }
     // Check for collision with walls
     if (this.collidesWithWalls) {
@@ -453,7 +456,11 @@ class Goblin extends Enemy {
     this.boundingYOffest = 16;
     this.goalPoint = null;
     this.hitSound = AM.getAsset('./snd/goblin.wav');
+
+    this.points = 5;
+
     this.game.sounds.add(this.hitSound);
+
     statemachine.addState('idleDown',
       new Animation(spritesheet, 0, 0, 32, 64, 4, 0.25, 4, true));
     statemachine.addState('idleLeft',
@@ -475,6 +482,7 @@ class Goblin extends Enemy {
     if (this.currentHP <= 0) {
       this.game.entities.remove(this);
     }
+    
     // Check for collision with DonJon
     let box1 = this.bounding;
     let box2 = this.game.player.bounding;
@@ -577,6 +585,7 @@ class Beholder extends Enemy {
     this.shootSound = AM.getAsset('./snd/beholder_shoot.wav');
     this.game.sounds.add(this.hitSound);
     this.game.sounds.add(this.shootSound);
+    this.points = 20;
     statemachine.addState('idleDown', new Animation(
       spritesheet, 0, 0, 64, 64, 2, 0.5, 2, true));
     statemachine.addState('idleLeft', new Animation(
@@ -762,6 +771,7 @@ class Wraith extends Enemy {
     this.bounding = new Rectangle(x + 1, y + 1, 30, 44);
     this.boundingXOffset = 1;
     this.boundingYOffset = 1;
+    this.points = 30;
     this.hitSound = AM.getAsset('./snd/wraith.wav');
     this.game.sounds.add(this.hitSound);
     this.collidesWithWalls = false;
@@ -902,6 +912,7 @@ class Dragon extends Enemy {
     this.attackCooldown = 2;
     this.shootSound = AM.getAsset('./snd/shoot.wav');
     this.game.sounds.add(this.shootSound);
+    this.points = 1000;
     statemachine.addState('idleDragon',
       new Animation(spritesheet, 0, 0, 256, 256, 2, 0.5, 2, true));
     statemachine.addState('jumpDragon',
@@ -1124,6 +1135,7 @@ class DonJon {
     this.maxMana = 4;
     this.currentMana = 4;
     this.attackDamage = 1;
+    this.score = 0;
     this.attackCooldown = 0;
     this.blockCooldown = 0;
     this.spellCooldown = 0;
@@ -1545,13 +1557,15 @@ class EnemyStrike extends Strike {
         this.game.player.currentHP = Math.max(
           this.game.player.currentHP - this.damage, 0);
         this.game.player.godTimer = GOD_COOLOFF;
-        if(!this.game.isMuted){
-          this.enemyStike.play();
+
+          if (!this.game.isMuted) {
+
+            this.enemyStike.play();
+          }
+          this.hit = true;
         }
-        this.hit = true;
       }
     }
-  }
 }
 
 class PlayerStrike extends Strike {

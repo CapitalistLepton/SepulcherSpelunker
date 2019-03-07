@@ -170,6 +170,7 @@ class GameEngine {
       document.getElementById('level').innerHTML = 'Level ' + (this.world.level + 1);
       document.getElementById('damage').innerHTML = 'ATK ' +
         this.player.attackDamage;
+      document.getElementById('score').innerHTML = 'Score ' + this.player.score;
     }
     if (this.camera) {
       this.camera.update();
