@@ -1282,16 +1282,16 @@ class DonJon {
         let strike = null;
         switch(this.direction) {
           case 'N':
-            strike = new PlayerStrike(this.game, this.x - 16, this.y - 10, 'up', this.attackDamage);
+            strike = new PlayerStrike(this.game, this.x - 16, this.y - 10, 'up', this.attackDamage, -16, -10);
             break;
           case 'E':
-            strike = new PlayerStrike(this.game, this.x - 20, this.y, 'right', this.attackDamage);
+            strike = new PlayerStrike(this.game, this.x - 20, this.y, 'right', this.attackDamage, -20, 0);
             break;
           case 'S':
-            strike = new PlayerStrike(this.game, this.x - 16, this.y + 10, 'down', this.attackDamage);
+            strike = new PlayerStrike(this.game, this.x - 16, this.y + 10, 'down', this.attackDamage, -16, 10);
             break;
           case 'W':
-            strike = new PlayerStrike(this.game, this.x - 10, this.y, 'left', this.attackDamage);
+            strike = new PlayerStrike(this.game, this.x - 10, this.y, 'left', this.attackDamage, -10, 0);
             break;
         }
         this.game.entities.add(strike);
@@ -1582,14 +1582,23 @@ class EnemyStrike extends Strike {
 }
 
 class PlayerStrike extends Strike {
-  constructor(gameEngine, x, y, direction, damage) {
+  constructor(gameEngine, x, y, direction, damage, xOffset, yOffset) {
     super(gameEngine, x, y, direction, 0.2);
     this.hit = false;
     this.damage = damage;
+    this.xOffset = xOffset;
+    this.yOffset = yOffset;
   }
 
   update() {
     super.update();
+    let dx = this.game.player.x - this.x + this.xOffset;
+    let dy = this.game.player.y - this.y + this.yOffset;
+    console.debug(dx, dy);
+    this.x += dx;
+    this.bounding.x += dx;
+    this.y += dy;
+    this.bounding.y += dy;
     let that = this;
     this.game.entities.iterate(function (entity) {
       if (entity.isEnemy) {
