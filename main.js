@@ -670,6 +670,13 @@ class Projectile {
   draw(ctx) {
     this.animation.drawFrame(this.game.clockTick, ctx,
       this.x - this.game.camera.x, this.y - this.game.camera.y);
+    if (this.game.collisionDebug) {
+      let prevStyle = ctx.strokeStyle;
+      ctx.strokeStyle = 'lightblue';
+      ctx.strokeRect(this.bounding.x - this.game.camera.x,
+        this.bounding.y - this.game.camera.y, this.bounding.w, this.bounding.h);
+      ctx.strokeStyle = prevStyle;
+    }
   }
 }
 
@@ -737,6 +744,13 @@ class PlayerShot extends Projectile {
         break;
     }
     super(game, animation, x, y, direction, damage);
+    if (direction === 'up' || direction === 'down') {
+      this.bounding.w = 64;
+      this.bounding.x -= 16;
+    } else {
+      this.bounding.h = 64;
+      this.bounding.y -= 16;
+    }
   }
 
   update() {
@@ -1133,7 +1147,7 @@ class DonJon {
     this.currentHP = 24;
     this.maxMana = 4;
     this.currentMana = 4;
-    this.attackDamage = 1;
+    this.attackDamage = 2;
     this.score = 0;
     this.attackCooldown = 0;
     this.blockCooldown = 0;
