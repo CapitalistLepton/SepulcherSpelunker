@@ -419,7 +419,15 @@ class Enemy {
     if(this.isBomb) {
         console.log("BOOOOM from enemy attack ");
       this.game.entities.remove(this);
-       strike = new BombStrike(this.game, this.x, this.y, 'bomb', this.damage);
+      if(this.game.player.x < this.x && yRange){
+        strike = new BombStrike(this.game, this.x, this.y, 'bombLeft', this.damage);
+      } else if(this.game.player.x > this.x && yRange){
+        strike = new BombStrike(this.game, this.x, this.y, 'bombRight', this.damage);
+      } else if(this.game.player.y > this.y){
+        strike = new BombStrike(this.game, this.x, this.y, 'bombDown', this.damage);
+      } else if(this.game.player.y < this.y){
+        strike = new BombStrike(this.game, this.x, this.y, 'bombUp', this.damage);
+      }
 
     } else
     if (this.game.player.x < this.x && yRange) {
@@ -686,8 +694,11 @@ class DragonShot extends Projectile {
       AM.getAsset('./img/dshot.png'), 0 , 0, 64, 64, 3, 0.333, 3, true);
 
 
-    super(game, animation, x, y, 'down', damage);
+    super(game, animation, x, y, 'down', 9);
     this.isDragonShot = true;
+    this.bounding = new Rectangle(x, y, 80, 80);
+    this.hitSound = AM.getAsset('./snd/hit.ogg');
+    this.game.sounds.add(this.hitSound);
 
   }
   update() {
@@ -696,6 +707,7 @@ class DragonShot extends Projectile {
     let box2 = this.game.player.bounding;
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+      if(!this.game.isMuted){this.hitSound.play();}
       if (this.game.player.godTimer <= 0 &&
         this.game.player.blockCooldown <= 0) {
         this.game.player.currentHP = Math.max(
@@ -944,7 +956,7 @@ class Dragon extends Enemy {
     this.boundingXOffset = 11;
     this.boundingYOffset = 22;
     this.attackCooldown = 2;
-    this.shootSound = AM.getAsset('./snd/shoot.wav');
+    this.shootSound = AM.getAsset('./snd/dragonFire.wav');
     this.game.sounds.add(this.shootSound);
     this.points = 1000;
     statemachine.addState('idleDragon',
@@ -974,11 +986,17 @@ class Dragon extends Enemy {
     let distance = Math.abs(this.game.player.y - this.y);
     if (this.attackCooldown <= 0) {
       if (distance < 220) {
-        this.stateMachine.setState('jumpDragon');
-        this.game.entities.add(new Stomp(this.game, this.x, this.y + this.bounding.h, 'jump'));
-        this.stateMachine.setState('readyFireDragon');
-        this.game.entities.add(new DragonShot(this.game, this.x + 100 , this.y + 75, 'down'));
-        if(!this.game.isMuted){this.shootSound.play();}
+
+        if(this.game.player.y > this.y ) {
+          this.stateMachine.setState('readyFireDragon');
+          this.game.entities.add(new DragonShot(this.game, this.x + 100, this.y + 75, 'down', this.damage));
+          if (!this.game.isMuted) {
+            this.shootSound.play();
+          }
+        } else {
+          this.stateMachine.setState('jumpDragon');
+          this.game.entities.add(new Stomp(this.game, this.x, this.y + this.bounding.h, 'jump'));
+        }
       } else if (distance < 300) {
         if (this.game.player.x > this.x + 128) {
           this.stateMachine.setState('stompRightDragon');
@@ -1568,7 +1586,6 @@ class Strike {
     this.bounding = new Rectangle(x, y, 64, 64);
     this.cooldown = durationOfAnimation;
 
-
       switch (direction) {
         case 'up': this.animation = new Animation(
           AM.getAsset('./img/Strike.png'), 0, 0, 64, 64, 5,
@@ -1590,10 +1607,29 @@ class Strike {
           durationOfAnimation / 5, 5, true);
           this.bounding.x -= 49;
           break;
-        case 'bomb':this.animation = new Animation(
+        case 'bombRight':
+          this.animation = new Animation(
+            AM.getAsset('./img/bomb.png'), 0, 128, 32, 32, 5,
+            0.20, 5, true);
+          this.bounding.x += 25;
+          break;
+        case 'bombLeft':this.animation = new Animation(
           AM.getAsset('./img/bomb.png'), 0, 128, 32, 32, 5,
           0.20, 5, true);
+          this.bounding.x -= 25;
         break;
+        case 'bombUp':
+          this.animation = new Animation(
+            AM.getAsset('./img/bomb.png'), 0, 128, 32, 32, 5,
+            0.20, 5, true);
+          this.bounding.y -= 20;
+          break;
+        case 'bombDown':
+          this.animation = new Animation(
+            AM.getAsset('./img/bomb.png'), 0, 128, 32, 32, 5,
+            0.20, 5, true);
+          this.bounding.y += 20;
+          break;
       }
   }
 
@@ -1624,7 +1660,7 @@ class EnemyStrike extends Strike {
     this.damage = damage;
     this.enemyStrike = AM.getAsset('./snd/hit.ogg');
     this.game.sounds.add(this.enemyStrike);
-    this.shootSound = AM.getAsset('./snd/beholder_shoot.wav');
+    this.bombSound = AM.getAsset('./snd/bomb8BitShort.wav');
     this.game.sounds.add(this.hitSound);
     this.isBombStrike = false;
   }
@@ -1646,7 +1682,7 @@ class EnemyStrike extends Strike {
           if (!this.game.isMuted) {
             if(this.isBombStrike){
               console.log('explosion sounds');
-              this.shootSound.play();
+              this.bombSound.play();
             }  else {
               this.enemyStrike.play();
             }
@@ -1709,6 +1745,9 @@ AM.queueDownload('./img/dragon.png');
 AM.queueDownload('./img/bossAttack.png');
 AM.queueDownload('./img/mana.png');
 AM.queueDownload('./img/playerShot.png');
+AM.queueDownload('./img/bomb.png');
+AM.queueDownload('./img/dshot.png');
+
 
 AM.queueDownload('./snd/background.mp3');
 AM.queueDownload('./snd/ladder.wav');
@@ -1725,8 +1764,9 @@ AM.queueDownload('./snd/hit.ogg');
 AM.queueDownload('./snd/win.wav');
 AM.queueDownload('./snd/shoot.wav');
 AM.queueDownload('./snd/death.wav');
-AM.queueDownload('./img/bomb.png');
-AM.queueDownload('./img/dshot.png');
+AM.queueDownload('./snd/dragonFire.wav');
+AM.queueDownload('./snd/bomb8BitShort.wav');
+
 
 AM.downloadAll(function () {
 
