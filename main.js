@@ -327,10 +327,12 @@ class Enemy {
     this.maxHP = 4 + level;
     this.currentHP = this.maxHP;
     this.points = 5;
-
+    this.isBomb = false;
   }
 
   update() {
+      /**Bomb bounding doesn't respect inheritance **/
+      if(this.isBomb){this.bounding = new Rectangle(this.x, this.y, 32, 32)}
     if (this.currentHP <= 0) {
       this.game.entities.remove(this);
       this.game.player.score += this.points;
@@ -409,6 +411,13 @@ class Enemy {
     let yRange = Math.abs(this.game.player.y) + 30 >= Math.abs(this.y)
       && Math.abs(this.game.player.y) - 30 < Math.abs(this.y);
     let strike = null;
+    if(this.isBomb) {
+        console.log("BOOOOM from enemy attack ");
+      this.game.entities.remove(this);
+      this.damage = 0; /// DELETE this just here for testing.
+       strike = new BombStrike(this.game, this.x, this.y, 'bomb', this.damage);
+
+    } else
     if (this.game.player.x < this.x && yRange) {
       this.stateMachine.setState('idleLeft');
       strike = new EnemyStrike(this.game, this.x - 6,
@@ -1104,6 +1113,41 @@ class BossAttack {
   }
 }
 
+class Bomb extends Enemy {
+  constructor(game, spritesheet, x, y, w, h, level) {
+    let statemachine = new StateMachine();
+    super(game, statemachine, x, y, w, h, level);
+    this.canMove = true;
+    this.attackDistance = 200;
+    this.isBomb = true;
+    this.bounding = new Rectangle(x, y, w, h);
+    statemachine.addState('idleDown',
+      new Animation(AM.getAsset('./img/bomb.png'), 0, 0, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('idleLeft',
+      new Animation(AM.getAsset('./img/bomb.png'), 0, 32, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('idleUp',
+      new Animation(AM.getAsset('./img/bomb.png'), 0, 64, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('idleRight',
+      new Animation(AM.getAsset('./img/bomb.png'), 0, 96, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('runDown',
+      new Animation(AM.getAsset('./img/bomb.png'), 0, 0, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('runLeft',
+      new Animation(AM.getAsset('./img/bomb.png'), 0, 32, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('runUp',
+      new Animation(AM.getAsset('./img/bomb.png'), 0, 64, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('runRight',
+      new Animation(AM.getAsset('./img/bomb.png'), 0, 96, 32, 32, 2,
+        0.5, 2, true));
+  }
+}
+
 
 const SPEED = 200;
 
@@ -1481,28 +1525,34 @@ class Strike {
     this.y = y;
     this.bounding = new Rectangle(x, y, 64, 64);
     this.cooldown = durationOfAnimation;
-    switch (direction) {
-      case 'up': this.animation = new Animation(
-        AM.getAsset('./img/Strike.png'), 0, 0, 64, 64, 5,
+
+
+      switch (direction) {
+        case 'up': this.animation = new Animation(
+          AM.getAsset('./img/Strike.png'), 0, 0, 64, 64, 5,
           durationOfAnimation / 5, 5, true);
-        this.bounding.y -= 40;
-        break;
-      case 'right': this.animation = new Animation(
-        AM.getAsset('./img/Strike.png'), 0, 64, 64, 64, 5,
+          this.bounding.y -= 40;
+          break;
+        case 'right': this.animation = new Animation(
+          AM.getAsset('./img/Strike.png'), 0, 64, 64, 64, 5,
           durationOfAnimation / 5, 5, true);
-        this.bounding.x += 49;
-        break;
-      case 'down': this.animation = new Animation(
-        AM.getAsset('./img/Strike.png'), 0, 128, 64, 64, 5,
+          this.bounding.x += 49;
+          break;
+        case 'down': this.animation = new Animation(
+          AM.getAsset('./img/Strike.png'), 0, 128, 64, 64, 5,
           durationOfAnimation / 5, 5, true);
-        this.bounding.y += 49;
-        break;
-      case 'left': this.animation = new Animation(
-        AM.getAsset('./img/Strike.png'), 0, 192, 64, 64, 5,
+          this.bounding.y += 49;
+          break;
+        case 'left': this.animation = new Animation(
+          AM.getAsset('./img/Strike.png'), 0, 192, 64, 64, 5,
           durationOfAnimation / 5, 5, true);
-        this.bounding.x -= 49;
+          this.bounding.x -= 49;
+          break;
+        case 'bomb':this.animation = new Animation(
+          AM.getAsset('./img/bomb.png'), 0, 128, 32, 32, 5,
+          0.20, 5, true);
         break;
-    }
+      }
   }
 
   update() {
@@ -1530,8 +1580,11 @@ class EnemyStrike extends Strike {
     super(gameEngine, x, y, direction, 1);
     this.hit = false;
     this.damage = damage;
-    this.enemyStike = AM.getAsset('./snd/hit.ogg');
-    this.game.sounds.add(this.enemyStike);
+    this.enemyStrike = AM.getAsset('./snd/hit.ogg');
+    this.game.sounds.add(this.enemyStrike);
+    this.shootSound = AM.getAsset('./snd/beholder_shoot.wav');
+    this.game.sounds.add(this.hitSound);
+    this.isBombStrike = false;
   }
 
   update() {
@@ -1548,13 +1601,26 @@ class EnemyStrike extends Strike {
         this.game.player.godTimer = GOD_COOLOFF;
 
           if (!this.game.isMuted) {
-
-            this.enemyStike.play();
+            if(this.isBombStrike){
+              console.log('explosion sounds');
+              this.shootSound.play();
+            }  else {
+              this.enemyStrike.play();
+            }
           }
           this.hit = true;
         }
       }
     }
+}
+
+class BombStrike extends EnemyStrike {
+  constructor(gameEngine, x, y, direction, damage){
+    super(gameEngine, x, y, direction, damage);
+    this.hit = false;
+    this.isBombStrike = true;
+    this.damage = damage;
+  }
 }
 
 class PlayerStrike extends Strike {
@@ -1616,6 +1682,8 @@ AM.queueDownload('./snd/hit.ogg');
 AM.queueDownload('./snd/win.wav');
 AM.queueDownload('./snd/shoot.wav');
 AM.queueDownload('./snd/death.wav');
+AM.queueDownload('./img/bomb.png');
+AM.queueDownload('./img/dshot.png');
 
 AM.downloadAll(function () {
 
@@ -1725,7 +1793,17 @@ AM.downloadAll(function () {
       },
       width: 4,
       height: 4,
-      number: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      number: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+      name: 'eBomb',
+      constructor: (x, y, level) => {
+        return new Bomb(gameEngine, AM.getAsset('./img/bomb.png'), x, y,
+          SIZE * 2, SIZE * 2, level);
+    },
+      width: 1,
+      height: 2,
+      number: [20, 5, 5, 5, 5, 3, 2, 3, 2, 3, 2, 0]
     }
 
   ];
