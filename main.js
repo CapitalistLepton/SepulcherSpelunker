@@ -456,9 +456,7 @@ class Goblin extends Enemy {
     this.boundingYOffest = 16;
     this.goalPoint = null;
     this.hitSound = AM.getAsset('./snd/goblin.wav');
-
     this.points = 5;
-
     this.game.sounds.add(this.hitSound);
 
     statemachine.addState('idleDown',
@@ -481,8 +479,9 @@ class Goblin extends Enemy {
   update(){
     if (this.currentHP <= 0) {
       this.game.entities.remove(this);
+      this.game.player.score += this.points;
     }
-    
+
     // Check for collision with DonJon
     let box1 = this.bounding;
     let box2 = this.game.player.bounding;
