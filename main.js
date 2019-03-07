@@ -64,6 +64,11 @@ class Rectangle {
     this.w = w;
     this.h = h;
   }
+
+  contains(x, y) {
+    return (x >= this.x && x <= this.x + this.w && y >= this.y &&
+      y <= this.y + this.h);
+  }
 }
 
 class Tile {
@@ -311,7 +316,7 @@ class Enemy {
     this.h = h;
     this.prevX = x;
     this.prevY = y;
-    this.damage = Math.floor(1 + level / 2);
+    this.damage = Math.floor(1 + level / 4);
     this.isEnemy = true;
     this.canMove = true;
     this.collidesWithWalls = true;
@@ -449,12 +454,9 @@ class Goblin extends Enemy {
     this.speed = SPEED * 0.5;
     this.boundingXOffset = 1;
     this.boundingYOffest = 16;
+    this.goalPoint = null;
     this.hitSound = AM.getAsset('./snd/goblin.wav');
-
-    this.points = 5;
-
     this.game.sounds.add(this.hitSound);
-
     statemachine.addState('idleDown',
       new Animation(spritesheet, 0, 0, 32, 64, 4, 0.25, 4, true));
     statemachine.addState('idleLeft',
@@ -476,93 +478,92 @@ class Goblin extends Enemy {
     if (this.currentHP <= 0) {
       this.game.entities.remove(this);
     }
-      // Check for collision with DonJon
-      let box1 = this.bounding;
-      let box2 = this.game.player.bounding;
-      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
-        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-        this.x = this.prevX;
-        this.y = this.prevY;
-      }
-
-    let that = this;
-    this.game.walls.iterate(function (wall) {
-       that.boxGoblin = that.bounding;
-      that.boxWall = wall.bounding;
-      let yRange = Math.abs(that.game.player.y) + 30 >= Math.abs(that.y)
-        && Math.abs(that.game.player.y) - 30 < Math.abs(that.y);
-
-      if (that.boxGoblin.x < that.boxWall.x + that.boxWall.w && that.boxGoblin.x + that.boxGoblin.w > that.boxWall.x
-        && that.boxGoblin.y < that.boxWall.y + that.boxWall.h && that.boxGoblin.y + that.boxGoblin.h > that.boxWall.y) {
-        if(that.boxGoblin.x >= that.boxWall.x && yRange){
-          console.log('Collision headed left');
-          that.collisionWest = true;
-        } else
-        if(that.boxGoblin.x < that.boxWall.x && yRange){
-          console.log('Collision headed right');
-          that.collisionEast = true;
-        } else
-        if(that.boxGoblin.y > that.boxWall.y ){
-          console.log('Collision headed Up');
-          that.collisionNorth = true;
-        } else
-        if(that.boxGoblin.y < that.boxWall.y ){
-          console.log('Collision headed Down');
-          that.collisionSouth = true;
-        }
-         that.collision = true;
-      }
-    });
-
-    if(this.collision) {
-        console.log('collision');
-      if(this.collisionWest){
-        this.collisionWest = false;
-        if(this.game.player.y > this.y) {
-          this.stateMachine.setState('runDown');
-          this.y += this.game.clockTick * this.speed;
-        } else {
-          this.stateMachine.setState('runUp');
-          this.y -= this.game.clockTick * this.speed;
-        }
-      } else if(this.collisionEast) {
-        this.collisionEast = false;
-        if(this.game.player.y > this.y){
-          this.stateMachine.setState('runDown');
-          this.y += this.game.clockTick * this.speed;
-        } else {
-          this.stateMachine.setState('runUp');
-          this.y -= this.game.clockTick * this.speed;
-        }
-
-      } else if(this.collisionNorth) {
-        this.collisionNorth = false;
-        if(this.game.player.x > this.x){
-          this.stateMachine.setState('runRight');
-          this.x += this.game.clockTick * this.speed;
-        } else {
-          this.stateMachine.setState('runLeft');
-          this.x -= this.game.clockTick * this.speed;
-        }
-
-      } else if (this.collisionSouth) {
-        this.collisionSouth = false;
-        if(this.game.player.x > this.x) {
-          this.stateMachine.setState('runRight');
-          this.x += this.game.clockTick * this.speed;
-        } else {
-          this.stateMachine.setState('runLeft');
-          this.x -= this.game.clockTick * this.speed;
-        }
-
-      }
-      this.collision = false;
-    } else {
-      super.update();
+    // Check for collision with DonJon
+    let box1 = this.bounding;
+    let box2 = this.game.player.bounding;
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+      this.x = this.prevX;
+      this.y = this.prevY;
     }
 
-    this.bounding.x = this.x + 1;
+    let yRange = Math.abs(this.game.player.y) + 30 >= Math.abs(this.y)
+      && Math.abs(this.game.player.y) - 30 < Math.abs(this.y);
+    let distance = cartesianDistance(this.game.player, this);
+    if (this.attackCooldown > 0) {
+      this.attackCooldown -= this.game.clockTick;
+    } else {
+      if (distance <= MELEE) {
+        this.attack();
+      } else if (distance > this.attackDistance) { // Face player
+        if (this.game.player.x < this.x && yRange) {
+          this.stateMachine.setState('idleLeft');
+        } else if (this.game.player.x > this.x && yRange) {
+          this.stateMachine.setState('idleRight');
+        } else if (this.game.player.y > this.y) {
+          this.stateMachine.setState('idleDown');
+        } else if (this.game.player.y < this.y) {
+          this.stateMachine.setState('idleUp');
+        }
+      } else if (distance <= this.attackDistance) {
+        /*
+         * Use A* to find a path and recalculate A* everytime the first point
+         * is reached.
+         */
+        let currentX = this.x + this.w / 2;
+        let currentY = this.y + this.h / 2;
+        if (!this.goalPoint) { // Hit goal, recalculate A*
+          // Divide by 32 since there 4 squares per tile in A* map
+          let pathStart = new Point(Math.floor(currentX / 32),
+            Math.floor(currentY / 32));
+          let endX = this.game.player.bounding.x +
+            this.game.player.bounding.w / 2;
+          let endY = this.game.player.bounding.y +
+            this.game.player.bounding.h / 2;
+          let pathEnd = new Point(Math.floor(endX / 32), Math.floor(endY / 32));
+          let level = this.game.world.starLevel();
+          let path = aStar(level, pathStart, pathEnd);
+          let point = path[path.length - 2]; // Get next point in path
+          this.goalPoint = new Rectangle(point.x, point.y, 16, 16);
+        } else {
+          this.prevX = this.x;
+          this.prevY = this.y;
+          let maxX = this.goalPoint.x + this.goalPoint.w;
+          let maxY = this.goalPoint.y + this.goalPoint.h;
+          if (maxY > currentY && this.goalPoint.y > currentY) {
+            this.y += this.speed * this.game.clockTick;
+            this.stateMachine.setState('runDown');
+          } else if (maxY < currentY && this.goalPoint.y < currentY) {
+            this.y -= this.speed * this.game.clockTick;
+            this.stateMachine.setState('runUp');
+          }
+          if (maxX > currentX && this.goalPoint.x > currentX) {
+            this.x += this.speed * this.game.clockTick;
+            this.stateMachine.setState('runRight');
+          } else if (maxX < currentX && this.goalPoint.x < currentX) {
+            this.x -= this.speed * this.game.clockTick;
+            this.stateMachine.setState('runLeft');
+          }
+          if (this.goalPoint.contains(currentX, currentY)) {
+            this.goalPoint = null;
+          }
+        }
+      }
+    }
+
+    this.bounding.x = this.x + this.boundingXOffset;
     this.bounding.y = this.y + this.boundingYOffest;
+  }
+
+  draw(ctx) {
+    super.draw(ctx);
+    if (this.game.collisionDebug && this.goalPoint) {
+      let prevStyle = ctx.strokeStyle;
+      ctx.strokeStyle = 'yellow';
+      ctx.strokeRect(this.goalPoint.x - this.game.camera.x,
+        this.goalPoint.y - this.game.camera.y, this.goalPoint.w, this.goalPoint.h);
+      ctx.strokeStyle = prevStyle;
+    }
   }
 }
 class Beholder extends Enemy {
@@ -700,7 +701,8 @@ class BeholderShot extends Projectile {
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
       if (this.game.player.godTimer <= 0 &&
         this.game.player.blockCooldown <= 0) {
-        this.game.player.currentHP -= this.damage;
+        this.game.player.currentHP = Math.max(
+          this.game.player.currentHP - this.damage, 0);
         this.game.player.godTimer = GOD_COOLOFF;
       } else {
         this.game.entities.remove(this);
@@ -996,7 +998,8 @@ class Stomp {
       if (this.game.player.godTimer > 0) {
         this.game.entities.remove(this);
       } else {
-        this.game.player.currentHP -= this.damage;
+        this.game.player.currentHP = Math.max(
+          this.game.player.currentHP - this.damage, 0);
         this.game.player.godTimer = GOD_COOLOFF;
         this.hitSound.play();
         this.hit = true;
@@ -1056,7 +1059,8 @@ class Fireball {
       if (this.game.player.godTimer > 0) {
         this.game.entities.remove(this);
       } else {
-        this.game.player.currentHP -= this.damage;
+        this.game.player.currentHP = Math.max(
+          this.game.player.currentHP - this.damage, 0);
         this.game.player.godTimer = GOD_COOLOFF;
         this.hitSound.play();
         this.hit = true;
@@ -1216,6 +1220,7 @@ class DonJon {
 
   update() {
     if (this.currentHP <= 0) {
+      this.soundWalk.pause();
       this.game.lose();
     }
     let that = this;
@@ -1544,7 +1549,8 @@ class EnemyStrike extends Strike {
       if (this.game.player.godTimer > 0 || this.game.player.blockCooldown > 0) {
         this.game.entities.remove(this);
       } else {
-        this.game.player.currentHP -= this.damage;
+        this.game.player.currentHP = Math.max(
+          this.game.player.currentHP - this.damage, 0);
         this.game.player.godTimer = GOD_COOLOFF;
 
           if (!this.game.isMuted) {
