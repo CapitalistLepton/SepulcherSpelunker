@@ -419,7 +419,6 @@ class Enemy {
     if(this.isBomb) {
         console.log("BOOOOM from enemy attack ");
       this.game.entities.remove(this);
-      this.damage = 0; /// DELETE this just here for testing.
        strike = new BombStrike(this.game, this.x, this.y, 'bomb', this.damage);
 
     } else
@@ -626,6 +625,7 @@ class Beholder extends Enemy {
     } else if (this.game.player.y < this.y) {
       this.stateMachine.setState('attackUp');
       shot = new BeholderShot(this.game, this.x + this.w / 4, this.y, 'up', this.damage);
+
     }
     this.game.entities.add(shot);
     this.shootSound.play();
@@ -644,9 +644,11 @@ class Projectile {
     this.bounding = new Rectangle(x, y, 32, 32);
     this.cooldown = 3;
     this.direction = direction;
+    this.isDragon = false;
   }
 
   update() {
+
     this.cooldown  -= this.game.clockTick;
     if (this.cooldown <= 0) {
       this.game.entities.remove(this);
@@ -675,6 +677,34 @@ class Projectile {
   draw(ctx) {
     this.animation.drawFrame(this.game.clockTick, ctx,
       this.x - this.game.camera.x, this.y - this.game.camera.y);
+  }
+}
+
+class DragonShot extends Projectile {
+  constructor(game, x, y, direction, damage) {
+    let animation  =  new Animation(
+      AM.getAsset('./img/dshot.png'), 0 , 0, 64, 64, 3, 0.333, 3, true);
+
+
+    super(game, animation, x, y, 'down', damage);
+    this.isDragonShot = true;
+
+  }
+  update() {
+    super.update();
+    let box1 = this.bounding;
+    let box2 = this.game.player.bounding;
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+      if (this.game.player.godTimer <= 0 &&
+        this.game.player.blockCooldown <= 0) {
+        this.game.player.currentHP = Math.max(
+          this.game.player.currentHP - this.damage, 0);
+        this.game.player.godTimer = GOD_COOLOFF;
+      } else {
+        this.game.entities.remove(this);
+      }
+    }
   }
 }
 
@@ -935,6 +965,8 @@ class Dragon extends Enemy {
   }
 
   update(){
+    let xRange = Math.abs(this.game.player.y) + 30 >= Math.abs(this.y)
+      && Math.abs(this.game.player.y) - 30 < Math.abs(this.y);
     if (this.currentHP <= 0) {
       this.game.win();
     }
@@ -944,10 +976,14 @@ class Dragon extends Enemy {
       if (distance < 220) {
         this.stateMachine.setState('jumpDragon');
         this.game.entities.add(new Stomp(this.game, this.x, this.y + this.bounding.h, 'jump'));
+        this.stateMachine.setState('readyFireDragon');
+        this.game.entities.add(new DragonShot(this.game, this.x + 100 , this.y + 75, 'down'));
+        if(!this.game.isMuted){this.shootSound.play();}
       } else if (distance < 300) {
         if (this.game.player.x > this.x + 128) {
           this.stateMachine.setState('stompRightDragon');
           this.game.entities.add(new Stomp(this.game, this.x + 150, this.y + this.bounding.h, 'right'));
+
         } else {
           this.stateMachine.setState('stompLeftDragon');
           this.game.entities.add(new Stomp(this.game, this.x - 150, this.y + this.bounding.h, 'left'));
@@ -957,9 +993,10 @@ class Dragon extends Enemy {
       this.attackCooldown = 2;
     } else {
       if (this.game.player.x < this.x + 64) {
-        this.stateMachine.setState('headWestDragon');
+        this.stateMachine.setState('readyFireDragon');
       } else if (this.game.player.x > this.x + 192) {
-        this.stateMachine.setState('headEastDragon');
+        this.stateMachine.setState('readyFireDragon');
+
       } else {
         this.stateMachine.setState('idleDragon');
       }
@@ -1809,7 +1846,7 @@ AM.downloadAll(function () {
     },
       width: 1,
       height: 2,
-      number: [20, 5, 5, 5, 5, 3, 2, 3, 2, 3, 2, 0]
+      number: [5, 5, 5, 5, 5, 3, 2, 3, 2, 3, 2, 0]
     }
 
   ];
