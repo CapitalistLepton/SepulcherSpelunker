@@ -406,6 +406,13 @@ class Enemy {
         }
       }
     }
+    if (this.hitCooldown > 0) {
+      this.hitCooldown -= this.game.clockTick;
+      let state = this.stateMachine.getStateName();
+      if (!state.includes('Hurt')) {
+        this.stateMachine.setState(state + 'Hurt');
+      }
+    }
     this.bounding.x = this.x + this.boundingXOffset;
     this.bounding.y = this.y + this.boundingYOffset;
   }
@@ -449,6 +456,7 @@ class Enemy {
 class Goblin extends Enemy {
   constructor(game, spritesheet, x, y, w, h, level) {
     let statemachine = new StateMachine();
+    let hurtSprite = AM.getAsset('./img/goblind.png');
     super(game, statemachine, x, y, w, h, level);
     this.bounding = new Rectangle(x + w/8, y - h/2 * 2 + 10, w - w/4, h/2);
     this.speed = SPEED * 0.5;
@@ -456,6 +464,7 @@ class Goblin extends Enemy {
     this.boundingYOffest = 16;
     this.goalPoint = null;
     this.hitSound = AM.getAsset('./snd/goblin.wav');
+    this.points = 5;
     this.game.sounds.add(this.hitSound);
     statemachine.addState('idleDown',
       new Animation(spritesheet, 0, 0, 32, 64, 4, 0.25, 4, true));
@@ -473,10 +482,29 @@ class Goblin extends Enemy {
       new Animation(spritesheet, 0, 384, 32, 64, 2, 0.5, 2, true));
     statemachine.addState('runRight',
       new Animation(spritesheet, 0, 448, 32, 64, 4, 0.25, 4, true));
+
+    statemachine.addState('idleDownHurt',
+      new Animation(hurtSprite, 0, 0, 32, 64, 4, 0.25, 4, true));
+    statemachine.addState('idleLeftHurt',
+      new Animation(hurtSprite, 0, 64, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleUpHurt',
+      new Animation(hurtSprite, 0, 128, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleRightHurt',
+      new Animation(hurtSprite, 0, 192, 32, 64, 3, 0.333, 3, true));
+    statemachine.addState('runDownHurt',
+      new Animation(hurtSprite, 0, 256, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('runLeftHurt',
+      new Animation(hurtSprite, 0, 320, 32, 64, 4, 0.25, 4, true));
+    statemachine.addState('runUpHurt',
+      new Animation(hurtSprite, 0, 384, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('runRightHurt',
+      new Animation(hurtSprite, 0, 448, 32, 64, 4, 0.25, 4, true));
   }
-  update(){
+
+  update() {
     if (this.currentHP <= 0) {
       this.game.entities.remove(this);
+      this.game.player.score += this.points;
     }
     // Check for collision with DonJon
     let box1 = this.bounding;
@@ -551,6 +579,13 @@ class Goblin extends Enemy {
       }
     }
 
+    if (this.hitCooldown > 0) {
+      this.hitCooldown -= this.game.clockTick;
+      let state = this.stateMachine.getStateName();
+      if (!state.includes('Hurt')) {
+        this.stateMachine.setState(state + 'Hurt');
+      }
+    }
     this.bounding.x = this.x + this.boundingXOffset;
     this.bounding.y = this.y + this.boundingYOffest;
   }
@@ -581,6 +616,7 @@ class Beholder extends Enemy {
     this.game.sounds.add(this.hitSound);
     this.game.sounds.add(this.shootSound);
     this.points = 20;
+    let hurtSprite = AM.getAsset('./img/beholderd.png');
     statemachine.addState('idleDown', new Animation(
       spritesheet, 0, 0, 64, 64, 2, 0.5, 2, true));
     statemachine.addState('idleLeft', new Animation(
@@ -597,6 +633,23 @@ class Beholder extends Enemy {
       spritesheet, 0, 384, 64, 64, 2, 0.5, 2, true));
     statemachine.addState('attackRight', new Animation(
       spritesheet, 0, 448, 64, 64, 3, 0.333, 3, true));
+
+    statemachine.addState('idleDownHurt', new Animation(
+      hurtSprite, 0, 0, 64, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleLeftHurt', new Animation(
+      hurtSprite, 0, 64, 64, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleUpHurt', new Animation(
+      hurtSprite, 0, 128, 64, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleRightHurt', new Animation(
+      hurtSprite, 0, 192, 64, 64, 2, 0.5, 2, true));
+    statemachine.addState('attackDownHurt', new Animation(
+      hurtSprite, 0, 256, 64, 64, 3, 0.333, 3, true));
+    statemachine.addState('attackLeftHurt', new Animation(
+      hurtSprite, 0, 320, 64, 64, 3, 0.333, 3, true));
+    statemachine.addState('attackUpHurt', new Animation(
+      hurtSprite, 0, 384, 64, 64, 2, 0.5, 2, true));
+    statemachine.addState('attackRightHurt', new Animation(
+      hurtSprite, 0, 448, 64, 64, 3, 0.333, 3, true));
   }
 
   attack() {
@@ -666,6 +719,13 @@ class Projectile {
   draw(ctx) {
     this.animation.drawFrame(this.game.clockTick, ctx,
       this.x - this.game.camera.x, this.y - this.game.camera.y);
+    if (this.game.collisionDebug) {
+      let prevStyle = ctx.strokeStyle;
+      ctx.strokeStyle = 'lightblue';
+      ctx.strokeRect(this.bounding.x - this.game.camera.x,
+        this.bounding.y - this.game.camera.y, this.bounding.w, this.bounding.h);
+      ctx.strokeStyle = prevStyle;
+    }
   }
 }
 
@@ -733,6 +793,13 @@ class PlayerShot extends Projectile {
         break;
     }
     super(game, animation, x, y, direction, damage);
+    if (direction === 'up' || direction === 'down') {
+      this.bounding.w = 64;
+      this.bounding.x -= 16;
+    } else {
+      this.bounding.h = 64;
+      this.bounding.y -= 16;
+    }
   }
 
   update() {
@@ -748,6 +815,7 @@ class PlayerShot extends Projectile {
           && !that.hit) {
           entity.currentHP -= that.damage;
           entity.hitSound.play();
+          entity.hitCooldown = 1;
           remove = true;
         }
       }
@@ -770,6 +838,7 @@ class Wraith extends Enemy {
     this.hitSound = AM.getAsset('./snd/wraith.wav');
     this.game.sounds.add(this.hitSound);
     this.collidesWithWalls = false;
+    let hurtSprite = AM.getAsset('./img/wraithd.png');
     statemachine.addState('idleDown', new Animation(spritesheet, 0, 0, 32, 64,
       2, 0.5, 2, true));
     statemachine.addState('runDown', new Animation(spritesheet, 0, 0, 32, 64,
@@ -785,6 +854,23 @@ class Wraith extends Enemy {
     statemachine.addState('idleRight', new Animation(spritesheet, 0, 192, 32, 64,
       2, 0.5, 2, true));
     statemachine.addState('runRight', new Animation(spritesheet, 0, 192, 32, 64,
+      2, 0.5, 2, true));
+
+    statemachine.addState('idleDownHurt', new Animation(hurtSprite, 0, 0, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('runDownHurt', new Animation(hurtSprite, 0, 0, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('idleLeftHurt', new Animation(hurtSprite, 0, 64, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('runLeftHurt', new Animation(hurtSprite, 0, 64, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('idleUpHurt', new Animation(hurtSprite, 0, 128, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('runUpHurt', new Animation(hurtSprite, 0, 128, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('idleRightHurt', new Animation(hurtSprite, 0, 192, 32, 64,
+      2, 0.5, 2, true));
+    statemachine.addState('runRightHurt', new Animation(hurtSprite, 0, 192, 32, 64,
       2, 0.5, 2, true));
   }
 }
@@ -908,6 +994,7 @@ class Dragon extends Enemy {
     this.shootSound = AM.getAsset('./snd/shoot.wav');
     this.game.sounds.add(this.shootSound);
     this.points = 1000;
+    let hurtSprite = AM.getAsset('./img/dragond.png');
     statemachine.addState('idleDragon',
       new Animation(spritesheet, 0, 0, 256, 256, 2, 0.5, 2, true));
     statemachine.addState('jumpDragon',
@@ -922,6 +1009,22 @@ class Dragon extends Enemy {
       new Animation(spritesheet, 0, 1280, 256, 256, 3, 0.333, 3, true));
     statemachine.addState('headEastDragon',
       new Animation(spritesheet, 0, 1536, 256, 256, 3, 0.333, 3, true));
+
+    statemachine.addState('idleDragonHurt',
+      new Animation(spritesheet, 0, 0, 256, 256, 2, 0.5, 2, true));
+    statemachine.addState('jumpDragonHurt',
+      new Animation(spritesheet, 0, 256, 256, 256, 6, 0.166, 6, true));
+    statemachine.addState('stompLeftDragonHurt',
+      new Animation(spritesheet, 0, 512, 256, 256, 4, 0.25, 4, true));
+    statemachine.addState('stompRightDragonHurt',
+      new Animation(spritesheet, 0, 768, 256, 256, 4, 0.25, 4, true));
+    statemachine.addState('readyFireDragonHurt',
+      new Animation(spritesheet, 0, 1024, 256, 256, 3, 0.333, 3, true));
+    statemachine.addState('headWestDragonHurt',
+      new Animation(spritesheet, 0, 1280, 256, 256, 3, 0.333, 3, true));
+    statemachine.addState('headEastDragonHurt',
+      new Animation(spritesheet, 0, 1536, 256, 256, 3, 0.333, 3, true));
+
     statemachine.setState('idleDragon');
   }
 
@@ -1129,7 +1232,7 @@ class DonJon {
     this.currentHP = 24;
     this.maxMana = 4;
     this.currentMana = 4;
-    this.attackDamage = 1;
+    this.attackDamage = 2;
     this.score = 0;
     this.attackCooldown = 0;
     this.blockCooldown = 0;
@@ -1223,6 +1326,9 @@ class DonJon {
       this.soundWalk.pause();
       this.game.lose();
     }
+    if (this.game.gameOver) {
+      this.soundWalk.pause();
+    }
     let that = this;
     this.game.walls.iterate(function (wall) {
       let box1 = that.bounding;
@@ -1264,16 +1370,16 @@ class DonJon {
         let strike = null;
         switch(this.direction) {
           case 'N':
-            strike = new PlayerStrike(this.game, this.x - 16, this.y - 10, 'up', this.attackDamage);
+            strike = new PlayerStrike(this.game, this.x - 16, this.y - 10, 'up', this.attackDamage, -16, -10);
             break;
           case 'E':
-            strike = new PlayerStrike(this.game, this.x - 20, this.y, 'right', this.attackDamage);
+            strike = new PlayerStrike(this.game, this.x - 20, this.y, 'right', this.attackDamage, -20, 0);
             break;
           case 'S':
-            strike = new PlayerStrike(this.game, this.x - 16, this.y + 10, 'down', this.attackDamage);
+            strike = new PlayerStrike(this.game, this.x - 16, this.y + 10, 'down', this.attackDamage, -16, 10);
             break;
           case 'W':
-            strike = new PlayerStrike(this.game, this.x - 10, this.y, 'left', this.attackDamage);
+            strike = new PlayerStrike(this.game, this.x - 10, this.y, 'left', this.attackDamage, -10, 0);
             break;
         }
         this.game.entities.add(strike);
@@ -1564,14 +1670,22 @@ class EnemyStrike extends Strike {
 }
 
 class PlayerStrike extends Strike {
-  constructor(gameEngine, x, y, direction, damage) {
+  constructor(gameEngine, x, y, direction, damage, xOffset, yOffset) {
     super(gameEngine, x, y, direction, 0.2);
     this.hit = false;
     this.damage = damage;
+    this.xOffset = xOffset;
+    this.yOffset = yOffset;
   }
 
   update() {
     super.update();
+    let dx = this.game.player.x - this.x + this.xOffset;
+    let dy = this.game.player.y - this.y + this.yOffset;
+    this.x += dx;
+    this.bounding.x += dx;
+    this.y += dy;
+    this.bounding.y += dy;
     let that = this;
     this.game.entities.iterate(function (entity) {
       if (entity.isEnemy) {
@@ -1582,6 +1696,7 @@ class PlayerStrike extends Strike {
           && !that.hit) {
           entity.currentHP -= that.damage;
           entity.hitSound.play();
+          entity.hitCooldown = 1;
           that.hit = true;
         }
       }
@@ -1592,17 +1707,20 @@ class PlayerStrike extends Strike {
 AM.queueDownload('./img/potion.png');
 AM.queueDownload('./img/life.png');
 AM.queueDownload('./img/strength.png');
-AM.queueDownload('./img/map.png');
 AM.queueDownload('./img/map2.png');
 AM.queueDownload('./img/goblin.png');
+AM.queueDownload('./img/goblind.png');
 AM.queueDownload('./img/beholder.png');
+AM.queueDownload('./img/beholderd.png');
 AM.queueDownload('./img/main_dude.png');
 AM.queueDownload('./img/main_dude_god.png');
 AM.queueDownload('./img/shot.png');
 AM.queueDownload('./img/Strike.png');
 AM.queueDownload('./img/wraith.png');
+AM.queueDownload('./img/wraithd.png');
 AM.queueDownload('./img/gargoyle.png');
 AM.queueDownload('./img/dragon.png');
+AM.queueDownload('./img/dragond.png');
 AM.queueDownload('./img/bossAttack.png');
 AM.queueDownload('./img/mana.png');
 AM.queueDownload('./img/playerShot.png');
@@ -1733,7 +1851,6 @@ AM.downloadAll(function () {
       height: 4,
       number: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
-
   ];
 
   let world = new World(13, powerups, enemies, AM);
