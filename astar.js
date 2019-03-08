@@ -122,12 +122,10 @@ function aStar(world, start, goal) {
         tile.x = (tile.x * 32) + 0;
         tile.y = (tile.y * 32) + 0;
       }
-      console.debug('Found path', result);
       return result;
     } else {
       closed.add(pointToString(current.point));
       if (newPoints.size > 9600) {
-        console.debug(newPoints);
         return null;
       }
       let neighbors = getNeighbors(world, current.point);

@@ -7,12 +7,17 @@ class StateMachine {
     return this.state;
   }
 
+  getStateName() {
+    return this.stateName;
+  }
+
   addState(stateName, stateAnimation) {
     this.stateMap.set(stateName, stateAnimation);
   }
 
   setState(stateName) {
     this.state = this.stateMap.get(stateName);
+    this.stateName = stateName;
   }
 
   draw(clockTick, ctx, x, y) {
