@@ -1709,7 +1709,6 @@ class PlayerStrike extends Strike {
 AM.queueDownload('./img/potion.png');
 AM.queueDownload('./img/life.png');
 AM.queueDownload('./img/strength.png');
-AM.queueDownload('./img/map.png');
 AM.queueDownload('./img/map2.png');
 AM.queueDownload('./img/goblin.png');
 AM.queueDownload('./img/goblind.png');
