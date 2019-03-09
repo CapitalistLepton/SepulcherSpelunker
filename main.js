@@ -333,6 +333,7 @@ class Enemy {
     this.currentHP = this.maxHP;
     this.points = 5;
     this.isBomb = false;
+
   }
 
   update() {
@@ -493,6 +494,8 @@ class Goblin extends Enemy {
   update(){
     if (this.currentHP <= 0) {
       this.game.entities.remove(this);
+      this.game.player.score += this.points;
+
     }
     // Check for collision with DonJon
     let box1 = this.bounding;
@@ -946,6 +949,60 @@ class Gargoyle extends Enemy {
   }
 }
 
+class Golem extends Enemy {
+  constructor(game, spritesheet, x, y, w, h, level, dir) {
+    let statemachine = new StateMachine();
+    super(game, statemachine, x, y, w, h, level);
+    this.attackDistance = 70;
+    this.bounding = new Rectangle(x + 4, y + 2, 64, 96);
+    this.attackCooldown = 2;
+    this.damage = 10;
+    this.currentHP = 4;
+        statemachine.addState('idleDown', new Animation(AM.getAsset('./img/golem.png'), 0, 0, 64, 96,
+          5, 0.20, 5, true));
+        statemachine.addState('attackDown', new Animation(AM.getAsset('./img/golem.png'), 0, 96, 64, 96,
+          9, 0.111, 9, true));
+
+  }
+
+  update() {
+
+    if (this.currentHP <= 0) {
+      this.game.entities.remove(this);
+      this.game.player.score += this.points;
+    }
+    // Check for collision with DonJon
+    let box1 = this.bounding;
+    let box2 = this.game.player.bounding;
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+      this.x = this.prevX;
+      this.y = this.prevY;
+    }
+
+    let distance = cartesianDistance(this.game.player, this);
+
+    if (this.attackCooldown > 0) {
+      this.attackCooldown -= this.game.clockTick;
+    } else {
+      if (distance <= 100) {
+        this.attack();
+      } else if (distance > this.attackDistance) { // Face player
+        this.stateMachine.setState('idleDown');
+      }
+    }
+  }
+
+  attack() {
+
+    this.stateMachine.setState('attackDown');
+     let strike = new GolemStrike(this.game, this.x - 10, this.y + 50, 'golemDown',this.damage);
+    this.game.entities.add(strike);
+    this.attackCooldown = 1;
+  }
+
+}
+
 class Dragon extends Enemy {
   constructor(game, spritesheet, x, y, w, h, level) {
     let statemachine = new StateMachine();
@@ -1081,94 +1138,6 @@ class Stomp {
         this.bounding.y - this.game.camera.y, this.bounding.w, this.bounding.h);
       ctx.strokeStyle = prevStyle;
     }
-  }
-}
-
-class Fireball {
-  constructor(game, x, y, type) {
-    this.game = game;
-    this.x = x;
-    this.y = y;
-    this.bounding = new Rectangle(x, y, 256, 256);
-    this.cooldown = 1;
-    this.damage = 3;
-    this.hitSound = AM.getAsset('./snd/hit.ogg');
-    this.game.sounds.add(this.hitSound);
-    switch (type) {
-      case 'center':
-        this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
-          768, 256, 256, 4, 0.25, 4, true);
-        break;
-      case 'left':
-        this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
-          1024, 256, 256, 4, 0.25, 4, true);
-        break;
-      case 'right':
-        this.animation = new Animation(AM.getAsset('./img/bossAttack.png'), 0,
-          1280, 256, 256, 4, 0.25, 4, true);
-        break;
-    }
-  }
-
-  update() {
-    this.cooldown -= this.game.clockTick;
-    if (this.cooldown <= 0) {
-      this.game.entities.remove(this);
-    }
-    let box1 = this.bounding;
-    let box2 = this.game.player.bounding;
-    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
-      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y
-      && !this.hit) {
-      if (this.game.player.godTimer > 0) {
-        this.game.entities.remove(this);
-      } else {
-        this.game.player.currentHP = Math.max(
-          this.game.player.currentHP - this.damage, 0);
-        this.game.player.godTimer = GOD_COOLOFF;
-        this.hitSound.play();
-        this.hit = true;
-      }
-    }
-  }
-
-  draw(ctx) {
-    this.animation.drawFrame(this.game.clockTick, ctx,
-      this.x - this.game.camera.x, this.y - this.game.camera.y);
-    if (this.game.collisionDebug) {
-      let prevStyle = ctx.strokeStyle;
-      ctx.strokeStyle = 'grey';
-      ctx.strokeRect(this.bounding.x - this.game.camera.x,
-        this.bounding.y - this.game.camera.y, this.bounding.w, this.bounding.h);
-      ctx.strokeStyle = prevStyle;
-    }
-  }
-}
-
-class BossAttack {
-  constructor(game, x, y, type, damage) {
-    this.stateMachine = new StateMachine();
-    this.stateMachine.addState('stomp1',
-      new Animation(AM.getAsset('./bossAttack.png'), 0 , 0, 256, 220, 4, 0.25, 4, true));
-    this.stateMachine.addState('stomp2',
-      new Animation(AM.getAsset('./bossAttack.png'), 0 , 220, 256, 220, 4, 0.25, 4, true));
-    this.stateMachine.addState('stomp3',
-      new Animation(AM.getAsset('./bossAttack.png'), 0 , 440, 256, 220, 4, 0.25, 4, true));
-    this.stateMachine.addState('fire1',
-      new Animation(AM.getAsset('./bossAttack.png'), 0 , 660, 256, 220, 3, 0.333, 3, true));
-    this.stateMachine.addState('fire2',
-      new Animation(AM.getAsset('./bossAttack.png'), 0 , 880, 256, 220, 3, 0.333, 3, true));
-    this.stateMachine.addState('fire3',
-      new Animation(AM.getAsset('./bossAttack.png'), 0 , 1100, 256, 220, 3, 0.333, 3, true));
-  }
-
-  update(){
-
-  }
-
-  draw(ctx){
-    this.stateMachine.draw(this.game.clockTick, ctx,
-      this.x - this.game.camera.x, this.y - this.game.camera.y);
   }
 }
 
@@ -1630,6 +1599,11 @@ class Strike {
             0.20, 5, true);
           this.bounding.y += 20;
           break;
+        case 'golemDown': this.animation = new Animation(
+          AM.getAsset('./img/golem_attack.png'), 0, 0, 101, 90, 3,
+          1, .037, true);
+          this.bounding.y += 75;
+          break;
       }
   }
 
@@ -1660,9 +1634,12 @@ class EnemyStrike extends Strike {
     this.damage = damage;
     this.enemyStrike = AM.getAsset('./snd/hit.ogg');
     this.game.sounds.add(this.enemyStrike);
-    this.bombSound = AM.getAsset('./snd/bomb8BitShort.wav');
+    this.bombSound = AM.getAsset('./snd/bomb8Bit.m4a');
+    this.golemSound = AM.getAsset('./snd/golemSmash-2.wav');
+    this.game.sounds.add(this.golemSound);
     this.game.sounds.add(this.hitSound);
     this.isBombStrike = false;
+    this.isGolem = false;
   }
 
   update() {
@@ -1683,7 +1660,9 @@ class EnemyStrike extends Strike {
             if(this.isBombStrike){
               console.log('explosion sounds');
               this.bombSound.play();
-            }  else {
+            }  else if(this.isGolem) {
+              this.golemSound.play();
+            } else {
               this.enemyStrike.play();
             }
           }
@@ -1691,6 +1670,16 @@ class EnemyStrike extends Strike {
         }
       }
     }
+}
+
+class GolemStrike extends EnemyStrike {
+  constructor(gameEngine, x, y, direction, damage){
+    super(gameEngine, x, y, direction, damage);
+    this.hit = false;
+    this.damage = damage;
+    this.bounding = new Rectangle(x - 75 , y -100, 250, 250);
+    this.isGolem = true;
+  }
 }
 
 class BombStrike extends EnemyStrike {
@@ -1701,6 +1690,8 @@ class BombStrike extends EnemyStrike {
     this.damage = damage;
   }
 }
+
+
 
 class PlayerStrike extends Strike {
   constructor(gameEngine, x, y, direction, damage) {
@@ -1747,6 +1738,9 @@ AM.queueDownload('./img/mana.png');
 AM.queueDownload('./img/playerShot.png');
 AM.queueDownload('./img/bomb.png');
 AM.queueDownload('./img/dshot.png');
+AM.queueDownload('./img/golem.png');
+AM.queueDownload('./img/golemd.png');
+AM.queueDownload('./img/golem_attack.png');
 
 
 AM.queueDownload('./snd/background.mp3');
@@ -1765,7 +1759,8 @@ AM.queueDownload('./snd/win.wav');
 AM.queueDownload('./snd/shoot.wav');
 AM.queueDownload('./snd/death.wav');
 AM.queueDownload('./snd/dragonFire.wav');
-AM.queueDownload('./snd/bomb8BitShort.wav');
+AM.queueDownload('./snd/bomb8Bit.m4a');
+AM.queueDownload('./snd/golemSmash-2.wav');
 
 
 AM.downloadAll(function () {
@@ -1876,7 +1871,7 @@ AM.downloadAll(function () {
       },
       width: 4,
       height: 4,
-      number: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      number: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     },
     {
       name: 'eBomb',
@@ -1887,7 +1882,18 @@ AM.downloadAll(function () {
       width: 1,
       height: 2,
       number: [5, 5, 5, 5, 5, 3, 2, 3, 2, 3, 2, 0]
+    },
+    {
+      name: 'eGolem',
+      constructor: (x, y, level, dir) => {
+        return new Golem(gameEngine, AM.getAsset('./img/golem.png'), x, y,
+          SIZE * 2, SIZE * 2, level, dir);
+      },
+      width: 1,
+      height: 2,
+      number: [5, 5, 5, 5, 5, 3, 2, 3, 2, 3, 2, 0]
     }
+
 
   ];
 
