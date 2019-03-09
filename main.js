@@ -1040,7 +1040,7 @@ class Golem extends Enemy {
     this.attackDistance = 70;
     this.bounding = new Rectangle(x + 4, y + 2, 64, 96);
     this.attackCooldown = 2;
-    this.damage = 10;
+    this.damage = 5;
     this.currentHP = 4;
         statemachine.addState('idleDown', new Animation(AM.getAsset('./img/golem.png'), 0, 0, 64, 96,
           5, 0.20, 5, true));
