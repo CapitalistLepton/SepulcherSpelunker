@@ -1013,19 +1013,19 @@ class Dragon extends Enemy {
       new Animation(spritesheet, 0, 1536, 256, 256, 3, 0.333, 3, true));
 
     statemachine.addState('idleDragonHurt',
-      new Animation(spritesheet, 0, 0, 256, 256, 2, 0.5, 2, true));
+      new Animation(hurtSprite, 0, 0, 256, 256, 2, 0.5, 2, true));
     statemachine.addState('jumpDragonHurt',
-      new Animation(spritesheet, 0, 256, 256, 256, 6, 0.166, 6, true));
+      new Animation(hurtSprite, 0, 256, 256, 256, 6, 0.166, 6, true));
     statemachine.addState('stompLeftDragonHurt',
-      new Animation(spritesheet, 0, 512, 256, 256, 4, 0.25, 4, true));
+      new Animation(hurtSprite, 0, 512, 256, 256, 4, 0.25, 4, true));
     statemachine.addState('stompRightDragonHurt',
-      new Animation(spritesheet, 0, 768, 256, 256, 4, 0.25, 4, true));
+      new Animation(hurtSprite, 0, 768, 256, 256, 4, 0.25, 4, true));
     statemachine.addState('readyFireDragonHurt',
-      new Animation(spritesheet, 0, 1024, 256, 256, 3, 0.333, 3, true));
+      new Animation(hurtSprite, 0, 1024, 256, 256, 3, 0.333, 3, true));
     statemachine.addState('headWestDragonHurt',
-      new Animation(spritesheet, 0, 1280, 256, 256, 3, 0.333, 3, true));
+      new Animation(hurtSprite, 0, 1280, 256, 256, 3, 0.333, 3, true));
     statemachine.addState('headEastDragonHurt',
-      new Animation(spritesheet, 0, 1536, 256, 256, 3, 0.333, 3, true));
+      new Animation(hurtSprite, 0, 1536, 256, 256, 3, 0.333, 3, true));
 
     statemachine.setState('idleDragon');
   }
@@ -1060,6 +1060,15 @@ class Dragon extends Enemy {
         this.stateMachine.setState('idleDragon');
       }
       this.attackCooldown -= this.game.clockTick;
+    }
+
+    if (this.hitCooldown > 0) {
+      this.hitCooldown -= this.game.clockTick;
+      let state = this.stateMachine.getStateName();
+      if (!state.includes('Hurt')) {
+        console.debug('Dragon Hurt', state);
+        this.stateMachine.setState(state + 'Hurt');
+      }
     }
   }
 }
