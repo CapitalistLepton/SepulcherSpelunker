@@ -1132,7 +1132,7 @@ class Golem extends Enemy {
     this.bounding = new Rectangle(x + 4, y + 2, 64, 96);
     this.boundingXOffset = 4;
     this.boundingYOffset = 2;
-    this.damage = 5;
+    this.damage = 2;
     this.currentHP = 4;
     let hurtSprite = AM.getAsset('./img/golemd.png');
     statemachine.addState('idleDown', new Animation(spritesheet, 0, 0, 64, 96,
@@ -1360,10 +1360,13 @@ class Bomb extends AStarEnemy {
   constructor(game, spritesheet, x, y, w, h, level) {
     let statemachine = new StateMachine();
     super(game, statemachine, x, y, w, h, level);
+    this.maxHP = 1;
+    this.currentHP = 1;
     this.attackDistance = 200;
     this.boundingXOffset = 0;
     this.boundingYOffset = 0;
     this.bounding = new Rectangle(x, y, w, h);
+    let hurtSprite = AM.getAsset('./img/bombd.png');
     statemachine.addState('idleDown',
       new Animation(spritesheet, 0, 0, 32, 32, 2,
         0.5, 2, true));
@@ -1387,6 +1390,31 @@ class Bomb extends AStarEnemy {
         0.5, 2, true));
     statemachine.addState('runRight',
       new Animation(spritesheet, 0, 96, 32, 32, 2,
+        0.5, 2, true));
+
+    statemachine.addState('idleDownHurt',
+      new Animation(hurtSprite, 0, 0, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('idleLeftHurt',
+      new Animation(hurtSprite, 0, 32, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('idleUpHurt',
+      new Animation(hurtSprite, 0, 64, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('idleRightHurt',
+      new Animation(hurtSprite, 0, 96, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('runDownHurt',
+      new Animation(hurtSprite, 0, 0, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('runLeftHurt',
+      new Animation(hurtSprite, 0, 32, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('runUpHurt',
+      new Animation(hurtSprite, 0, 64, 32, 32, 2,
+        0.5, 2, true));
+    statemachine.addState('runRightHurt',
+      new Animation(hurtSprite, 0, 96, 32, 32, 2,
         0.5, 2, true));
   }
 
@@ -1967,6 +1995,7 @@ AM.queueDownload('./img/bossAttack.png');
 AM.queueDownload('./img/mana.png');
 AM.queueDownload('./img/playerShot.png');
 AM.queueDownload('./img/bomb.png');
+AM.queueDownload('./img/bombd.png');
 AM.queueDownload('./img/dshot.png');
 AM.queueDownload('./img/golem.png');
 AM.queueDownload('./img/golemd.png');

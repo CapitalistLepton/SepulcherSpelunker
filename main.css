@@ -8,7 +8,7 @@ html {
 }
 canvas {
   display: block;
-  /*margin-left: auto;*/
+  float: left;
   margin-right: auto;
 }
 #stats-left {
