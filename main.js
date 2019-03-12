@@ -2137,7 +2137,7 @@ AM.downloadAll(function () {
 
   let world = new World(13, powerups, enemies, AM);
   gameEngine.setWorld(world);
-  gameEngine.setLevel(12);
+  gameEngine.setLevel(0);
 
   ctx.save();
   ctx.font = '2rem "Press Start", monospace';
