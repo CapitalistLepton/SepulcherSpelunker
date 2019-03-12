@@ -332,13 +332,9 @@ class Enemy {
     this.maxHP = 4 + level;
     this.currentHP = this.maxHP;
     this.points = 5;
-    this.isBomb = false;
-
   }
 
   update() {
-      /**Bomb bounding doesn't respect inheritance **/
-      if(this.isBomb){this.bounding = new Rectangle(this.x, this.y, 32, 32)}
     if (this.currentHP <= 0) {
       this.game.entities.remove(this);
       this.game.player.score += this.points;
@@ -424,20 +420,6 @@ class Enemy {
     let yRange = Math.abs(this.game.player.y) + 30 >= Math.abs(this.y)
       && Math.abs(this.game.player.y) - 30 < Math.abs(this.y);
     let strike = null;
-    if(this.isBomb) {
-        console.log("BOOOOM from enemy attack ");
-      this.game.entities.remove(this);
-      if(this.game.player.x < this.x && yRange){
-        strike = new BombStrike(this.game, this.x, this.y, 'bombLeft', this.damage);
-      } else if(this.game.player.x > this.x && yRange){
-        strike = new BombStrike(this.game, this.x, this.y, 'bombRight', this.damage);
-      } else if(this.game.player.y > this.y){
-        strike = new BombStrike(this.game, this.x, this.y, 'bombDown', this.damage);
-      } else if(this.game.player.y < this.y){
-        strike = new BombStrike(this.game, this.x, this.y, 'bombUp', this.damage);
-      }
-
-    } else
     if (this.game.player.x < this.x && yRange) {
       this.stateMachine.setState('idleLeft');
       strike = new EnemyStrike(this.game, this.x - 6,
@@ -470,52 +452,10 @@ class Enemy {
   }
 }
 
-class Goblin extends Enemy {
-  constructor(game, spritesheet, x, y, w, h, level) {
-    let statemachine = new StateMachine();
-    let hurtSprite = AM.getAsset('./img/goblind.png');
+class AStarEnemy extends Enemy {
+  constructor(game, statemachine, x, y, w, h, level) {
     super(game, statemachine, x, y, w, h, level);
-    this.bounding = new Rectangle(x + w/8, y - h/2 * 2 + 10, w - w/4, h/2);
-    this.speed = SPEED * 0.5;
-    this.boundingXOffset = 1;
-    this.boundingYOffest = 16;
     this.goalPoint = null;
-    this.hitSound = AM.getAsset('./snd/goblin.wav');
-    this.points = 5;
-    this.game.sounds.add(this.hitSound);
-    statemachine.addState('idleDown',
-      new Animation(spritesheet, 0, 0, 32, 64, 4, 0.25, 4, true));
-    statemachine.addState('idleLeft',
-      new Animation(spritesheet, 0, 64, 32, 64, 2, 0.5, 2, true));
-    statemachine.addState('idleUp',
-      new Animation(spritesheet, 0, 128, 32, 64, 2, 0.5, 2, true));
-    statemachine.addState('idleRight',
-      new Animation(spritesheet, 0, 192, 32, 64, 3, 0.333, 3, true));
-    statemachine.addState('runDown',
-      new Animation(spritesheet, 0, 256, 32, 64, 2, 0.5, 2, true));
-    statemachine.addState('runLeft',
-      new Animation(spritesheet, 0, 320, 32, 64, 4, 0.25, 4, true));
-    statemachine.addState('runUp',
-      new Animation(spritesheet, 0, 384, 32, 64, 2, 0.5, 2, true));
-    statemachine.addState('runRight',
-      new Animation(spritesheet, 0, 448, 32, 64, 4, 0.25, 4, true));
-
-    statemachine.addState('idleDownHurt',
-      new Animation(hurtSprite, 0, 0, 32, 64, 4, 0.25, 4, true));
-    statemachine.addState('idleLeftHurt',
-      new Animation(hurtSprite, 0, 64, 32, 64, 2, 0.5, 2, true));
-    statemachine.addState('idleUpHurt',
-      new Animation(hurtSprite, 0, 128, 32, 64, 2, 0.5, 2, true));
-    statemachine.addState('idleRightHurt',
-      new Animation(hurtSprite, 0, 192, 32, 64, 3, 0.333, 3, true));
-    statemachine.addState('runDownHurt',
-      new Animation(hurtSprite, 0, 256, 32, 64, 2, 0.5, 2, true));
-    statemachine.addState('runLeftHurt',
-      new Animation(hurtSprite, 0, 320, 32, 64, 4, 0.25, 4, true));
-    statemachine.addState('runUpHurt',
-      new Animation(hurtSprite, 0, 384, 32, 64, 2, 0.5, 2, true));
-    statemachine.addState('runRightHurt',
-      new Animation(hurtSprite, 0, 448, 32, 64, 4, 0.25, 4, true));
   }
 
   update() {
@@ -604,6 +544,155 @@ class Goblin extends Enemy {
       }
     }
     this.bounding.x = this.x + this.boundingXOffset;
+    this.bounding.y = this.y + this.boundingYOffset;
+  }
+
+  draw(ctx) {
+    super.draw(ctx);
+    if (this.game.collisionDebug && this.goalPoint) {
+      let prevStyle = ctx.strokeStyle;
+      ctx.strokeStyle = 'yellow';
+      ctx.strokeRect(this.goalPoint.x - this.game.camera.x,
+        this.goalPoint.y - this.game.camera.y, this.goalPoint.w, this.goalPoint.h);
+      ctx.strokeStyle = prevStyle;
+    }
+  }
+}
+
+class Goblin extends AStarEnemy {
+  constructor(game, spritesheet, x, y, w, h, level) {
+    let statemachine = new StateMachine();
+    let hurtSprite = AM.getAsset('./img/goblind.png');
+    super(game, statemachine, x, y, w, h, level);
+    this.bounding = new Rectangle(x + w/8, y - h/2 * 2 + 10, w - w/4, h/2);
+    this.speed = SPEED * 0.5;
+    this.boundingXOffset = 1;
+    this.boundingYOffest = 16;
+    this.goalPoint = null;
+    this.hitSound = AM.getAsset('./snd/goblin.wav');
+    this.points = 5;
+    this.game.sounds.add(this.hitSound);
+    statemachine.addState('idleDown',
+      new Animation(spritesheet, 0, 0, 32, 64, 4, 0.25, 4, true));
+    statemachine.addState('idleLeft',
+      new Animation(spritesheet, 0, 64, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleUp',
+      new Animation(spritesheet, 0, 128, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleRight',
+      new Animation(spritesheet, 0, 192, 32, 64, 3, 0.333, 3, true));
+    statemachine.addState('runDown',
+      new Animation(spritesheet, 0, 256, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('runLeft',
+      new Animation(spritesheet, 0, 320, 32, 64, 4, 0.25, 4, true));
+    statemachine.addState('runUp',
+      new Animation(spritesheet, 0, 384, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('runRight',
+      new Animation(spritesheet, 0, 448, 32, 64, 4, 0.25, 4, true));
+
+    statemachine.addState('idleDownHurt',
+      new Animation(hurtSprite, 0, 0, 32, 64, 4, 0.25, 4, true));
+    statemachine.addState('idleLeftHurt',
+      new Animation(hurtSprite, 0, 64, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleUpHurt',
+      new Animation(hurtSprite, 0, 128, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('idleRightHurt',
+      new Animation(hurtSprite, 0, 192, 32, 64, 3, 0.333, 3, true));
+    statemachine.addState('runDownHurt',
+      new Animation(hurtSprite, 0, 256, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('runLeftHurt',
+      new Animation(hurtSprite, 0, 320, 32, 64, 4, 0.25, 4, true));
+    statemachine.addState('runUpHurt',
+      new Animation(hurtSprite, 0, 384, 32, 64, 2, 0.5, 2, true));
+    statemachine.addState('runRightHurt',
+      new Animation(hurtSprite, 0, 448, 32, 64, 4, 0.25, 4, true));
+  }
+/*
+  update() {
+    if (this.currentHP <= 0) {
+      this.game.entities.remove(this);
+      this.game.player.score += this.points;
+    }
+    // Check for collision with DonJon
+    let box1 = this.bounding;
+    let box2 = this.game.player.bounding;
+    if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+      && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+      this.x = this.prevX;
+      this.y = this.prevY;
+    }
+
+    let yRange = Math.abs(this.game.player.y) + 30 >= Math.abs(this.y)
+      && Math.abs(this.game.player.y) - 30 < Math.abs(this.y);
+    let distance = cartesianDistance(this.game.player, this);
+    if (this.attackCooldown > 0) {
+      this.attackCooldown -= this.game.clockTick;
+    } else {
+      if (distance <= MELEE) {
+        this.attack();
+      } else if (distance > this.attackDistance) { // Face player
+        if (this.game.player.x < this.x && yRange) {
+          this.stateMachine.setState('idleLeft');
+        } else if (this.game.player.x > this.x && yRange) {
+          this.stateMachine.setState('idleRight');
+        } else if (this.game.player.y > this.y) {
+          this.stateMachine.setState('idleDown');
+        } else if (this.game.player.y < this.y) {
+          this.stateMachine.setState('idleUp');
+        }
+      } else if (distance <= this.attackDistance) {
+        /*
+         * Use A* to find a path and recalculate A* everytime the first point
+         * is reached.
+         */
+ /*       let currentX = this.x + this.w / 2;
+        let currentY = this.y + this.h / 2;
+        if (!this.goalPoint) { // Hit goal, recalculate A*
+          // Divide by 32 since there 4 squares per tile in A* map
+          let pathStart = new Point(Math.floor(currentX / 32),
+            Math.floor(currentY / 32));
+          let endX = this.game.player.bounding.x +
+            this.game.player.bounding.w / 2;
+          let endY = this.game.player.bounding.y +
+            this.game.player.bounding.h / 2;
+          let pathEnd = new Point(Math.floor(endX / 32), Math.floor(endY / 32));
+          let level = this.game.world.starLevel();
+          let path = aStar(level, pathStart, pathEnd);
+          let point = path[path.length - 2]; // Get next point in path
+          this.goalPoint = new Rectangle(point.x, point.y, 16, 16);
+        } else {
+          this.prevX = this.x;
+          this.prevY = this.y;
+          let maxX = this.goalPoint.x + this.goalPoint.w;
+          let maxY = this.goalPoint.y + this.goalPoint.h;
+          if (maxY > currentY && this.goalPoint.y > currentY) {
+            this.y += this.speed * this.game.clockTick;
+            this.stateMachine.setState('runDown');
+          } else if (maxY < currentY && this.goalPoint.y < currentY) {
+            this.y -= this.speed * this.game.clockTick;
+            this.stateMachine.setState('runUp');
+          }
+          if (maxX > currentX && this.goalPoint.x > currentX) {
+            this.x += this.speed * this.game.clockTick;
+            this.stateMachine.setState('runRight');
+          } else if (maxX < currentX && this.goalPoint.x < currentX) {
+            this.x -= this.speed * this.game.clockTick;
+            this.stateMachine.setState('runLeft');
+          }
+          if (this.goalPoint.contains(currentX, currentY)) {
+            this.goalPoint = null;
+          }
+        }
+      }
+    }
+
+    if (this.hitCooldown > 0) {
+      this.hitCooldown -= this.game.clockTick;
+      let state = this.stateMachine.getStateName();
+      if (!state.includes('Hurt')) {
+        this.stateMachine.setState(state + 'Hurt');
+      }
+    }
+    this.bounding.x = this.x + this.boundingXOffset;
     this.bounding.y = this.y + this.boundingYOffest;
   }
 
@@ -617,6 +706,7 @@ class Goblin extends Enemy {
       ctx.strokeStyle = prevStyle;
     }
   }
+*/
 }
 class Beholder extends Enemy {
   constructor(game, spritesheet, x, y, w, h, level) {
@@ -1037,20 +1127,26 @@ class Golem extends Enemy {
   constructor(game, spritesheet, x, y, w, h, level, dir) {
     let statemachine = new StateMachine();
     super(game, statemachine, x, y, w, h, level);
-    this.attackDistance = 70;
+    this.attackDistance = 120;
+    this.canMove = false;
     this.bounding = new Rectangle(x + 4, y + 2, 64, 96);
-    this.attackCooldown = 2;
+    this.boundingXOffset = 4;
+    this.boundingYOffset = 2;
     this.damage = 5;
     this.currentHP = 4;
-        statemachine.addState('idleDown', new Animation(AM.getAsset('./img/golem.png'), 0, 0, 64, 96,
-          5, 0.20, 5, true));
-        statemachine.addState('attackDown', new Animation(AM.getAsset('./img/golem.png'), 0, 96, 64, 96,
-          9, 0.111, 9, true));
+    let hurtSprite = AM.getAsset('./img/golemd.png');
+    statemachine.addState('idleDown', new Animation(spritesheet, 0, 0, 64, 96,
+      5, 0.20, 5, true));
+    statemachine.addState('attackDown', new Animation(spritesheet, 0, 96, 64, 96,
+      9, 0.111, 9, true));
 
+    statemachine.addState('idleDownHurt', new Animation(hurtSprite, 0, 0, 64, 96,
+      5, 0.20, 5, true));
+    statemachine.addState('attackDownHurt', new Animation(hurtSprite, 0, 96, 64, 96,
+      9, 0.111, 9, true));
   }
 
   update() {
-
     if (this.currentHP <= 0) {
       this.game.entities.remove(this);
       this.game.player.score += this.points;
@@ -1064,23 +1160,33 @@ class Golem extends Enemy {
       this.y = this.prevY;
     }
 
-    let distance = cartesianDistance(this.game.player, this);
+    let mid = new Point(this.x + this.w / 2, this.y + this.h / 2);
+    let playerMid = new Point(this.game.player.x + this.game.player.w / 2,
+      this.game.player.y + this.game.player.h / 2);
+    let distance = cartesianDistance(this.game.player, mid);
 
     if (this.attackCooldown > 0) {
       this.attackCooldown -= this.game.clockTick;
     } else {
-      if (distance <= 100) {
+      if (distance <= this.attackDistance) {
         this.attack();
-      } else if (distance > this.attackDistance) { // Face player
+      } else {
         this.stateMachine.setState('idleDown');
+      }
+    }
+
+    if (this.hitCooldown > 0) {
+      this.hitCooldown -= this.game.clockTick;
+      let state = this.stateMachine.getStateName();
+      if (!state.includes('Hurt')) {
+        this.stateMachine.setState(state + 'Hurt');
       }
     }
   }
 
   attack() {
-
     this.stateMachine.setState('attackDown');
-     let strike = new GolemStrike(this.game, this.x - 10, this.y + 50, 'golemDown',this.damage);
+    let strike = new GolemStrike(this.game, this.x - 10, this.y + 50, 'golemDown',this.damage);
     this.game.entities.add(strike);
     this.attackCooldown = 1;
   }
@@ -1183,7 +1289,6 @@ class Dragon extends Enemy {
       this.hitCooldown -= this.game.clockTick;
       let state = this.stateMachine.getStateName();
       if (!state.includes('Hurt')) {
-        console.debug('Dragon Hurt', state);
         this.stateMachine.setState(state + 'Hurt');
       }
     }
@@ -1251,38 +1356,56 @@ class Stomp {
   }
 }
 
-class Bomb extends Enemy {
+class Bomb extends AStarEnemy {
   constructor(game, spritesheet, x, y, w, h, level) {
     let statemachine = new StateMachine();
     super(game, statemachine, x, y, w, h, level);
-    this.canMove = true;
     this.attackDistance = 200;
-    this.isBomb = true;
+    this.boundingXOffset = 0;
+    this.boundingYOffset = 0;
     this.bounding = new Rectangle(x, y, w, h);
     statemachine.addState('idleDown',
-      new Animation(AM.getAsset('./img/bomb.png'), 0, 0, 32, 32, 2,
+      new Animation(spritesheet, 0, 0, 32, 32, 2,
         0.5, 2, true));
     statemachine.addState('idleLeft',
-      new Animation(AM.getAsset('./img/bomb.png'), 0, 32, 32, 32, 2,
+      new Animation(spritesheet, 0, 32, 32, 32, 2,
         0.5, 2, true));
     statemachine.addState('idleUp',
-      new Animation(AM.getAsset('./img/bomb.png'), 0, 64, 32, 32, 2,
+      new Animation(spritesheet, 0, 64, 32, 32, 2,
         0.5, 2, true));
     statemachine.addState('idleRight',
-      new Animation(AM.getAsset('./img/bomb.png'), 0, 96, 32, 32, 2,
+      new Animation(spritesheet, 0, 96, 32, 32, 2,
         0.5, 2, true));
     statemachine.addState('runDown',
-      new Animation(AM.getAsset('./img/bomb.png'), 0, 0, 32, 32, 2,
+      new Animation(spritesheet, 0, 0, 32, 32, 2,
         0.5, 2, true));
     statemachine.addState('runLeft',
-      new Animation(AM.getAsset('./img/bomb.png'), 0, 32, 32, 32, 2,
+      new Animation(spritesheet, 0, 32, 32, 32, 2,
         0.5, 2, true));
     statemachine.addState('runUp',
-      new Animation(AM.getAsset('./img/bomb.png'), 0, 64, 32, 32, 2,
+      new Animation(spritesheet, 0, 64, 32, 32, 2,
         0.5, 2, true));
     statemachine.addState('runRight',
-      new Animation(AM.getAsset('./img/bomb.png'), 0, 96, 32, 32, 2,
+      new Animation(spritesheet, 0, 96, 32, 32, 2,
         0.5, 2, true));
+  }
+
+  attack() {
+    let yRange = Math.abs(this.game.player.y) + 30 >= Math.abs(this.y)
+      && Math.abs(this.game.player.y) - 30 < Math.abs(this.y);
+    let strike = null;
+    this.game.entities.remove(this);
+
+    if (this.game.player.x < this.x && yRange){
+      strike = new BombStrike(this.game, this.x, this.y, 'bombLeft', this.damage);
+    } else if(this.game.player.x > this.x && yRange){
+      strike = new BombStrike(this.game, this.x, this.y, 'bombRight', this.damage);
+    } else if(this.game.player.y > this.y){
+      strike = new BombStrike(this.game, this.x, this.y, 'bombDown', this.damage);
+    } else if(this.game.player.y < this.y){
+      strike = new BombStrike(this.game, this.x, this.y, 'bombUp', this.damage);
+    }
+    this.game.entities.add(strike);
   }
 }
 
@@ -1745,14 +1868,8 @@ class EnemyStrike extends Strike {
     super(gameEngine, x, y, direction, 1);
     this.hit = false;
     this.damage = damage;
-    this.enemyStrike = AM.getAsset('./snd/hit.ogg');
-    this.game.sounds.add(this.enemyStrike);
-    this.bombSound = AM.getAsset('./snd/bomb8Bit.m4a');
-    this.golemSound = AM.getAsset('./snd/golemSmash-2.wav');
-    this.game.sounds.add(this.golemSound);
-    this.game.sounds.add(this.hitSound);
-    this.isBombStrike = false;
-    this.isGolem = false;
+    this.sound = AM.getAsset('./snd/hit.ogg');
+    this.game.sounds.add(this.sound);
   }
 
   update() {
@@ -1768,39 +1885,27 @@ class EnemyStrike extends Strike {
         this.game.player.currentHP = Math.max(
           this.game.player.currentHP - this.damage, 0);
         this.game.player.godTimer = GOD_COOLOFF;
-
-          if (!this.game.isMuted) {
-            if(this.isBombStrike){
-              console.log('explosion sounds');
-              this.bombSound.play();
-            }  else if(this.isGolem) {
-              this.golemSound.play();
-            } else {
-              this.enemyStrike.play();
-            }
-          }
-          this.hit = true;
-        }
+        this.sound.play();
+        this.hit = true;
       }
     }
+  }
 }
 
 class GolemStrike extends EnemyStrike {
   constructor(gameEngine, x, y, direction, damage){
     super(gameEngine, x, y, direction, damage);
-    this.hit = false;
-    this.damage = damage;
     this.bounding = new Rectangle(x - 75 , y -100, 250, 250);
-    this.isGolem = true;
+    this.sound = AM.getAsset('./snd/golemSmash-2.wav');
+    this.game.sounds.add(this.sound);
   }
 }
 
 class BombStrike extends EnemyStrike {
   constructor(gameEngine, x, y, direction, damage){
     super(gameEngine, x, y, direction, damage);
-    this.hit = false;
-    this.isBombStrike = true;
-    this.damage = damage;
+    this.sound = AM.getAsset('./snd/bomb8Bit.m4a');
+    this.game.sounds.add(this.sound);
   }
 }
 
@@ -2002,7 +2107,7 @@ AM.downloadAll(function () {
       name: 'eBomb',
       constructor: (x, y, level) => {
         return new Bomb(gameEngine, AM.getAsset('./img/bomb.png'), x, y,
-          SIZE * 2, SIZE * 2, level);
+          SIZE / 2, SIZE / 2, level);
     },
       width: 1,
       height: 2,
