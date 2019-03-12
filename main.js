@@ -800,7 +800,6 @@ class Projectile {
   }
 
   update() {
-
     this.cooldown  -= this.game.clockTick;
     if (this.cooldown <= 0) {
       this.game.entities.remove(this);
@@ -843,22 +842,19 @@ class DragonShot extends Projectile {
   constructor(game, x, y, direction, damage) {
     let animation  =  new Animation(
       AM.getAsset('./img/dshot.png'), 0 , 0, 64, 64, 3, 0.333, 3, true);
-
-
     super(game, animation, x, y, 'down', 9);
     this.isDragonShot = true;
     this.bounding = new Rectangle(x, y, 80, 80);
     this.hitSound = AM.getAsset('./snd/hit.ogg');
     this.game.sounds.add(this.hitSound);
-
   }
+
   update() {
     super.update();
     let box1 = this.bounding;
     let box2 = this.game.player.bounding;
     if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
       && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-      if(!this.game.isMuted){this.hitSound.play();}
       if (this.game.player.godTimer <= 0 &&
         this.game.player.blockCooldown <= 0) {
         this.game.player.currentHP = Math.max(
@@ -1250,38 +1246,23 @@ class Dragon extends Enemy {
     let distance = Math.abs(this.game.player.y - this.y);
     if (this.attackCooldown <= 0) {
       if (distance < 220) {
-
-        if(this.game.player.y > this.y ) {
-          this.stateMachine.setState('readyFireDragon');
-          this.game.entities.add(new DragonShot(this.game, this.x + 100, this.y + 75, 'down', this.damage));
-          if (!this.game.isMuted) {
-            this.shootSound.play();
-          }
-        } else {
-          this.stateMachine.setState('jumpDragon');
-          this.game.entities.add(new Stomp(this.game, this.x, this.y + this.bounding.h, 'jump'));
-        }
+        this.stateMachine.setState('jumpDragon');
+        this.game.entities.add(new Stomp(this.game, this.x, this.y + this.bounding.h, 'jump'));
       } else if (distance < 300) {
         if (this.game.player.x > this.x + 128) {
           this.stateMachine.setState('stompRightDragon');
           this.game.entities.add(new Stomp(this.game, this.x + 150, this.y + this.bounding.h, 'right'));
-
         } else {
           this.stateMachine.setState('stompLeftDragon');
           this.game.entities.add(new Stomp(this.game, this.x - 150, this.y + this.bounding.h, 'left'));
         }
+      } else if (distance < 400) {
+        this.stateMachine.setState('readyFireDragon');
+        this.game.entities.add(new DragonShot(this.game, this.x + 100, this.y + 75, 'down', this.damage));
       }
-      this.shootSound; //<---- should this have play ?
+      this.shootSound.play();
       this.attackCooldown = 2;
     } else {
-      if (this.game.player.x < this.x + 64) {
-        this.stateMachine.setState('readyFireDragon');
-      } else if (this.game.player.x > this.x + 192) {
-        this.stateMachine.setState('readyFireDragon');
-
-      } else {
-        this.stateMachine.setState('idleDragon');
-      }
       this.attackCooldown -= this.game.clockTick;
     }
 
@@ -2140,7 +2121,7 @@ AM.downloadAll(function () {
     },
       width: 1,
       height: 2,
-      number: [5, 5, 5, 5, 5, 3, 2, 3, 2, 3, 2, 0]
+      number: [0, 0, 2, 0, 0, 3, 2, 5, 1, 1, 2, 0]
     },
     {
       name: 'eGolem',
@@ -2150,13 +2131,13 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [5, 5, 5, 5, 5, 3, 2, 3, 2, 3, 2, 0]
+      number: [0, 0, 0, 1, 2, 3, 2, 3, 2, 3, 2, 0]
     }
   ];
 
   let world = new World(13, powerups, enemies, AM);
   gameEngine.setWorld(world);
-  gameEngine.setLevel(0);
+  gameEngine.setLevel(12);
 
   ctx.save();
   ctx.font = '2rem "Press Start", monospace';
