@@ -1402,18 +1402,8 @@ class Bomb extends AStarEnemy {
   attack() {
     let yRange = Math.abs(this.game.player.y) + 30 >= Math.abs(this.y)
       && Math.abs(this.game.player.y) - 30 < Math.abs(this.y);
-    let strike = null;
     this.game.entities.remove(this);
-
-    if (this.game.player.x < this.x && yRange){
-      strike = new BombStrike(this.game, this.x, this.y, 'bombLeft', this.damage);
-    } else if(this.game.player.x > this.x && yRange){
-      strike = new BombStrike(this.game, this.x, this.y, 'bombRight', this.damage);
-    } else if(this.game.player.y > this.y){
-      strike = new BombStrike(this.game, this.x, this.y, 'bombDown', this.damage);
-    } else if(this.game.player.y < this.y){
-      strike = new BombStrike(this.game, this.x, this.y, 'bombUp', this.damage);
-    }
+    let strike = new BombStrike(this.game, this.x, this.y, 'bomb', this.damage);
     this.game.entities.add(strike);
   }
 }
@@ -1799,57 +1789,38 @@ class Strike {
     this.y = y;
     this.bounding = new Rectangle(x, y, 64, 64);
     this.cooldown = durationOfAnimation;
-
-      switch (direction) {
-        case 'up': this.animation = new Animation(
-          AM.getAsset('./img/Strike.png'), 0, 0, 64, 64, 5,
-          durationOfAnimation / 5, 5, true);
-          this.bounding.y -= 40;
-          break;
-        case 'right': this.animation = new Animation(
-          AM.getAsset('./img/Strike.png'), 0, 64, 64, 64, 5,
-          durationOfAnimation / 5, 5, true);
-          this.bounding.x += 49;
-          break;
-        case 'down': this.animation = new Animation(
-          AM.getAsset('./img/Strike.png'), 0, 128, 64, 64, 5,
-          durationOfAnimation / 5, 5, true);
-          this.bounding.y += 49;
-          break;
-        case 'left': this.animation = new Animation(
-          AM.getAsset('./img/Strike.png'), 0, 192, 64, 64, 5,
-          durationOfAnimation / 5, 5, true);
-          this.bounding.x -= 49;
-          break;
-        case 'bombRight':
-          this.animation = new Animation(
-            AM.getAsset('./img/bomb.png'), 0, 128, 32, 32, 5,
-            0.20, 5, true);
-          this.bounding.x += 25;
-          break;
-        case 'bombLeft':this.animation = new Animation(
+    switch (direction) {
+      case 'up': this.animation = new Animation(
+        AM.getAsset('./img/Strike.png'), 0, 0, 64, 64, 5,
+        durationOfAnimation / 5, 5, true);
+        this.bounding.y -= 40;
+        break;
+      case 'right': this.animation = new Animation(
+        AM.getAsset('./img/Strike.png'), 0, 64, 64, 64, 5,
+        durationOfAnimation / 5, 5, true);
+        this.bounding.x += 49;
+        break;
+      case 'down': this.animation = new Animation(
+        AM.getAsset('./img/Strike.png'), 0, 128, 64, 64, 5,
+        durationOfAnimation / 5, 5, true);
+        this.bounding.y += 49;
+        break;
+      case 'left': this.animation = new Animation(
+        AM.getAsset('./img/Strike.png'), 0, 192, 64, 64, 5,
+        durationOfAnimation / 5, 5, true);
+        this.bounding.x -= 49;
+        break;
+      case 'bomb':
+        this.animation = new Animation(
           AM.getAsset('./img/bomb.png'), 0, 128, 32, 32, 5,
           0.20, 5, true);
-          this.bounding.x -= 25;
         break;
-        case 'bombUp':
-          this.animation = new Animation(
-            AM.getAsset('./img/bomb.png'), 0, 128, 32, 32, 5,
-            0.20, 5, true);
-          this.bounding.y -= 20;
-          break;
-        case 'bombDown':
-          this.animation = new Animation(
-            AM.getAsset('./img/bomb.png'), 0, 128, 32, 32, 5,
-            0.20, 5, true);
-          this.bounding.y += 20;
-          break;
-        case 'golemDown': this.animation = new Animation(
-          AM.getAsset('./img/golem_attack.png'), 0, 0, 101, 90, 3,
-          1, .037, true);
-          this.bounding.y += 75;
-          break;
-      }
+      case 'golemDown': this.animation = new Animation(
+        AM.getAsset('./img/golem_attack.png'), 0, 0, 101, 90, 3,
+        1, .037, true);
+        this.bounding.y += 75;
+        break;
+    }
   }
 
   update() {
@@ -1917,8 +1888,6 @@ class BombStrike extends EnemyStrike {
     this.game.sounds.add(this.sound);
   }
 }
-
-
 
 class PlayerStrike extends Strike {
   constructor(gameEngine, x, y, direction, damage, xOffset, yOffset) {
