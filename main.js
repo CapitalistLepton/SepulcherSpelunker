@@ -1242,32 +1242,60 @@ class DonJon {
       this.game.lose();
     }
     let that = this;
-    this.game.walls.iterate(function (wall) {
+
+    if (cursor.rightPressed) {	
+		let ppx = this.prevX;
+      this.direction = 'E';
+      this.prevX = this.x;
+      this.x += this.game.clockTick * SPEED;
+	  this.game.walls.iterate(function (wall) {
       let box1 = that.bounding;
       let box2 = wall.bounding;
       if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
         && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
-        that.x = that.prevX;
-        that.y = that.prevY;
+		that.x = that.prevX;
+		that.prevX = ppx;
       }
     });
-    if (cursor.rightPressed) {
-      this.direction = 'E';
-      this.prevX = this.x;
-      this.x += this.game.clockTick * SPEED;
     } else if (cursor.leftPressed) {
+		let ppx = this.prevX;
       this.direction = 'W';
       this.prevX = this.x;
       this.x -= this.game.clockTick * SPEED;
+	  this.game.walls.iterate(function (wall) {
+      let box1 = that.bounding;
+      let box2 = wall.bounding;
+      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+		that.x = that.prevX;
+		that.prevX = ppx;
+      }
+    });
     }
     if (cursor.upPressed) {
       this.direction = 'N';
       this.prevY = this.y;
       this.y -= this.game.clockTick * SPEED;
+	      this.game.walls.iterate(function (wall) {
+      let box1 = that.bounding;
+      let box2 = wall.bounding;
+      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+		that.y = that.prevY;
+      }
+    });
     } else if (cursor.downPressed) {
       this.direction = 'S';
       this.prevY = this.y;
       this.y += this.game.clockTick * SPEED;
+	  this.game.walls.iterate(function (wall) {
+      let box1 = that.bounding;
+      let box2 = wall.bounding;
+      if (box1.x < box2.x + box2.w && box1.x + box1.w > box2.x
+        && box1.y < box2.y + box2.h && box1.y + box1.h > box2.y) {
+		that.y = that.prevY;
+      }
+    });
     }
     if (cursor.upPressed || cursor.downPressed
       || cursor.leftPressed || cursor.rightPressed) {
