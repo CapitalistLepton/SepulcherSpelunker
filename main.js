@@ -1129,7 +1129,6 @@ class Golem extends Enemy {
     this.boundingXOffset = 4;
     this.boundingYOffset = 2;
     this.damage = 2;
-    this.currentHP = 4;
     let hurtSprite = AM.getAsset('./img/golemd.png');
     statemachine.addState('idleDown', new Animation(spritesheet, 0, 0, 64, 96,
       5, 0.20, 5, true));
@@ -2039,7 +2038,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [3, 5, 5, 5, 5, 3, 2, 3, 2, 3, 2, 0]
+      number: [3, 5, 5, 5, 2, 1, 2, 3, 2, 3, 2, 0]
     },
     {
       name: 'eBeholder',
@@ -2049,7 +2048,7 @@ AM.downloadAll(function () {
       },
       width: 2,
       height: 2,
-      number: [2, 2, 2, 2, 3, 4, 3, 2, 2, 3, 3, 2, 0]
+      number: [2, 2, 2, 2, 2, 4, 3, 2, 2, 2, 1, 2, 0]
     },
     {
       name: 'eWraith',
@@ -2059,7 +2058,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [0, 0, 2, 2, 3, 4, 3, 3, 3, 3, 4, 5, 0]
+      number: [0, 0, 2, 2, 3, 4, 3, 3, 3, 2, 2, 5, 0]
     },
     {
       name: 'eGargoyle',
@@ -2069,7 +2068,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [0, 1, 1, 2, 3, 1, 1, 2, 2, 3, 3, 2, 0] // must be <= # of powerups
+      number: [0, 1, 1, 2, 1, 1, 1, 2, 2, 3, 3, 2, 0] // must be <= # of powerups
     }
     ,
     {
