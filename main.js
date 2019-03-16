@@ -1927,6 +1927,9 @@ AM.queueDownload('./img/potion.png');
 AM.queueDownload('./img/life.png');
 AM.queueDownload('./img/strength.png');
 AM.queueDownload('./img/map2.png');
+AM.queueDownload('./img/MapCracks.png');
+AM.queueDownload('./img/MapHot.png');
+AM.queueDownload('./img/MapMoss.png');
 AM.queueDownload('./img/goblin.png');
 AM.queueDownload('./img/goblind.png');
 AM.queueDownload('./img/beholder.png');
@@ -2038,7 +2041,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [3, 5, 5, 5, 2, 1, 2, 3, 2, 3, 2, 0]
+      number: [3, 5, 5, 5, 0, 1, 2, 3, 0, 3, 0, 0, 0]
     },
     {
       name: 'eBeholder',
@@ -2048,7 +2051,7 @@ AM.downloadAll(function () {
       },
       width: 2,
       height: 2,
-      number: [2, 2, 2, 2, 2, 4, 3, 2, 2, 2, 1, 2, 0]
+      number: [2, 2, 2, 2, 0, 4, 3, 2, 0, 2, 6, 2, 0]
     },
     {
       name: 'eWraith',
@@ -2058,7 +2061,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [0, 0, 2, 2, 3, 4, 3, 3, 3, 2, 2, 5, 0]
+      number: [0, 0, 2, 2, 0, 4, 3, 3, 10, 0, 0, 5, 0]
     },
     {
       name: 'eGargoyle',
@@ -2068,7 +2071,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [0, 1, 1, 2, 1, 1, 1, 2, 2, 3, 3, 2, 0] // must be <= # of powerups
+      number: [0, 1, 1, 2, 0, 1, 1, 2, 0, 3, 0, 2, 0] // must be <= # of powerups
     }
     ,
     {
@@ -2089,7 +2092,7 @@ AM.downloadAll(function () {
     },
       width: 1,
       height: 2,
-      number: [0, 0, 2, 0, 0, 3, 2, 5, 1, 1, 2, 0]
+      number: [0, 0, 2, 0, 30, 3, 2, 5, 0, 1, 0, 0, 0]
     },
     {
       name: 'eGolem',
@@ -2099,7 +2102,7 @@ AM.downloadAll(function () {
       },
       width: 1,
       height: 2,
-      number: [0, 0, 0, 1, 2, 3, 2, 3, 2, 3, 2, 0]
+      number: [0, 0, 0, 0, 0, 3, 2, 3, 0, 3, 2, 0, 0]
     }
   ];
 

@@ -50,6 +50,12 @@ class World {
       game.setCamera(camera);
     }
 
+    let map = this.AM.getAsset('./img/map2.png');
+    switch (levelIndex) {
+      case 4: map = this.AM.getAsset('./img/MapHot.png'); break;
+      case 8: map = this.AM.getAsset('./img/MapCracks.png'); break;
+      case 10: map = this.AM.getAsset('./img/MapMoss.png'); break;
+    }
     if (!this.levelEntities[levelIndex]) {
       let levelEntities = new LinkedList();
       let levelWalls = new LinkedList();
@@ -58,16 +64,16 @@ class World {
           let pos = { x: i * SIZE, y: j * SIZE };
           switch (level.tiles[j][i]) {
             case 'W':
-              let wall = new Wall(game, this.AM.getAsset('./img/map2.png'),
+              let wall = new Wall(game, map,
                 this.wallVersion(level, i, j), pos.x, pos.y, SIZE, SIZE);
               stationary.push(wall);
               levelWalls.add(wall);
               break;
             case 'F': tiles.push(new Dirt(game,
-              this.AM.getAsset('./img/map2.png'), pos.x, pos.y, SIZE, SIZE));
+              map, pos.x, pos.y, SIZE, SIZE));
               break;
             case 'End':
-              stationary.push(new Hole(game, this.AM.getAsset('./img/map2.png'),
+              stationary.push(new Hole(game, map,
                 this.AM.getAsset('./snd/hole.wav'), pos.x, pos.y,
                 SIZE, SIZE));
               // Place at hole if going up to previous level
@@ -76,7 +82,7 @@ class World {
               }
               break;
             case 'Start':
-              let ladder = new Ladder(game, this.AM.getAsset('./img/map2.png'),
+              let ladder = new Ladder(game, map,
                 this.AM.getAsset('./snd/ladder.wav'), pos.x, pos.y,
                 SIZE, SIZE);
               stationary.push(ladder);
@@ -88,28 +94,28 @@ class World {
               break;
             case 'statueNorth':
               tiles.push(new Dirt(game,
-              this.AM.getAsset('./img/map2.png'), pos.x, pos.y, SIZE, SIZE));
+              map, pos.x, pos.y, SIZE, SIZE));
               stationary.push(new Statue(game,
                 this.AM.getAsset('./img/gargoyle.png'), pos.x, pos.y, SIZE,
                 SIZE, 'N'));
               break;
             case 'statueEast':
               tiles.push(new Dirt(game,
-              this.AM.getAsset('./img/map2.png'), pos.x, pos.y, SIZE, SIZE));
+              map, pos.x, pos.y, SIZE, SIZE));
               stationary.push(new Statue(game,
                 this.AM.getAsset('./img/gargoyle.png'), pos.x, pos.y, SIZE,
                 SIZE, 'E'));
               break;
             case 'statueSouth':
               tiles.push(new Dirt(game,
-              this.AM.getAsset('./img/map2.png'), pos.x, pos.y, SIZE, SIZE));
+              map, pos.x, pos.y, SIZE, SIZE));
               stationary.push(new Statue(game,
                 this.AM.getAsset('./img/gargoyle.png'), pos.x, pos.y, SIZE,
                 SIZE, 'S'));
               break;
             case 'statueWest':
               tiles.push(new Dirt(game,
-              this.AM.getAsset('./img/map2.png'), pos.x, pos.y, SIZE, SIZE));
+              map, pos.x, pos.y, SIZE, SIZE));
               stationary.push(new Statue(game,
                 this.AM.getAsset('./img/gargoyle.png'), pos.x, pos.y, SIZE,
                 SIZE, 'W'));
@@ -117,7 +123,7 @@ class World {
           }
           for (let k = 0; k < this.powerups.length; k++) {
             if (level.tiles[j][i] === this.powerups[k].name) {
-              tiles.push(new Dirt(game, this.AM.getAsset('./img/map2.png'),
+              tiles.push(new Dirt(game, map,
                 pos.x, pos.y, SIZE, SIZE));
               powerupEntities.push(this.powerups[k].constructor(pos.x, pos.y));
             }
@@ -125,13 +131,13 @@ class World {
           for (let k = 0; k < this.enemies.length; k++) {
             let str = level.tiles[j][i];
             if (str === this.enemies[k].name) {
-              tiles.push(new Dirt(game, this.AM.getAsset('./img/map2.png'),
+              tiles.push(new Dirt(game, map,
                 pos.x, pos.y, SIZE, SIZE));
               enemyEntities.push(this.enemies[k].constructor(pos.x, pos.y,
                 levelIndex));
             } else if (str.startsWith('eGargoyle')) {
               let dir = str.charAt(str.length - 1);
-              tiles.push(new Dirt(game, this.AM.getAsset('./img/map2.png'),
+              tiles.push(new Dirt(game, map,
                 pos.x, pos.y, SIZE, SIZE));
               enemyEntities.push(new Gargoyle(game,
                 AM.getAsset('./img/gargoyle.png'), pos.x, pos.y, SIZE / 2,
